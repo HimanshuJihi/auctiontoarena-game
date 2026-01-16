@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket News - IPL 2026 Auction Analysis</title>
+    <link rel="icon" href="data:,">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5; /* Light grey background like news sites */
+            color: #1c1e21; /* Standard dark text for readability */
+        }
+        .container {
+            max-width: 960px; /* Wider layout for news */
+            margin: 20px auto;
+            padding: 0 15px; /* Padding on the sides */
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #333;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background-color: #0d6efd; /* A modern blue */
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .btn:hover {
+            background-color: #0b5ed7; /* Darker blue on hover */
+        }
+
+        .btn-read-more {
+            display: inline-block;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #0d6efd;
+            background-color: transparent;
+            border: 1px solid #0d6efd;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 15px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .btn-read-more:hover {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+
+        .latest-news {
+            background-color: #fff;
+            padding: 20px 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .latest-news h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .latest-news ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .latest-news li {
+            padding: 8px 0;
+        }
+
+        .latest-news a {
+            text-decoration: none;
+            color: #0d6efd;
+            font-weight: 500;
+        }
+
+        .news-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        .news-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+
+        .news-card img.card-img-top {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+
+        .news-card-content {
+            padding: 25px;
+        }
+
+        .news-card-content h2 {
+            font-size: 1.75rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .news-card-content h2 a {
+            color: #212529;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .news-card-content h2 a:hover {
+            color: #0d6efd;
+            text-decoration: underline;
+        }
+
+        .article-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .news-card-content p {
+            font-size: 1.05rem;
+            color: #495057;
+            margin-bottom: 1em;
+        }
+        
+        strong {
+            color: #198754; /* A nice green for emphasis */
+        }
+
+        .highlight {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #0d6efd;
+            margin: 20px 0;
+            font-style: italic;
+            border-radius: 0 4px 4px 0;
+        }
+        .news-card-content .img-fluid {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: block;
+        }
+
+        /* Responsive Design for Mobile Devices */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px; /* Add space between title and button */
+            }
+
+            .header h1 {
+                font-size: 2rem; /* Reduce heading size */
+            }
+
+            .news-card-content h2 {
+                font-size: 1.5rem; /* Reduce article title size */
+            }
+
+            .latest-news, .news-card-content {
+                padding: 20px; /* Adjust padding for smaller screens */
+            }
+        }
+
+        .back-to-top-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: none; /* Hidden by default */
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            text-align: center;
+            font-size: 24px;
+            color: #fff;
+            background-color: #0d6efd;
+            border-radius: 50%;
+            text-decoration: none;
+            z-index: 1000;
+            transition: opacity 0.3s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .back-to-top-btn:hover {
+            background-color: #0b5ed7;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px 15px;
+            margin-top: 40px;
+            background-color: #fff;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+        }
+
+        footer p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Cricket News</h1>
+            <a href="index.html" class="btn">← Back to Game</a>
+        </div>
+        
+        <div class="latest-news">
+            <h2>Latest News</h2>
+            <ul>
+                <li><a href="article-ipl-auction.html">Pant Shatters Records, Green Dominates Mini-Auction: A New Era for IPL?</a></li>
+                <li><a href="article-ind-vs-nz.html">IND vs NZ: KL Rahul Creates History, Breaks MS Dhoni’s Long-Standing Record</a></li>
+                <li><a href="article-nz-chase.html">डेरिल मिचेल की दिलेरी, न्यूज़ीलैंड की शानदार जीत</a></li>
+            </ul>
+        </div>
+        
+        <div class="news-grid">
+            <!-- Article 1: IPL Auction -->
+            <article class="news-card">
+                <img src="auction-images.gif" alt="IPL Auction Hall Atmosphere" class="card-img-top">
+                <div class="news-card-content">
+                    <h2><a href="article-ipl-auction.html">Pant Shatters Records, Green Dominates Mini-Auction: A New Era for IPL?</a></h2>
+                    <span class="article-meta">Published: January 14, 2026 | By: Cricket Insights Desk</span>
+
+                    <p>The dust has finally settled on a frantic and record-shattering period of player acquisitions ahead of the IPL 2026 season. With two players breaching the ₹25 Crore mark for the first time, the auctions have redefined player valuations and given us a tantalizing glimpse into the future of the league.</p>
+                    <a href="article-ipl-auction.html" class="btn-read-more">Read More →</a>
+                </div>
+            </article>
+
+            <!-- Article 2: IND vs NZ -->
+            <article class="news-card">
+                <img src="klrahul.jpg" alt="KL Rahul celebrating his century against New Zealand" class="card-img-top">
+                <div class="news-card-content">
+                    <h2><a href="article-ind-vs-nz.html">IND vs NZ: KL Rahul Creates History, Breaks MS Dhoni’s Long-Standing Record</a></h2>
+                    <span class="article-meta">Published: January 15, 2026 | By: Cricket Insights Desk</span>
+
+                    <p>KL Rahul scored a historic unbeaten century at the Naranjan Shah Stadium, becoming the first Indian wicketkeeper-batter to score an ODI hundred against New Zealand. His stellar knock of 112* helped India post a competitive total and secure a series-clinching victory.</p>
+                    <a href="article-ind-vs-nz.html" class="btn-read-more">Read More →</a>
+                </div>
+            </article>
+
+            <!-- Article 3: NZ Chase -->
+            <article class="news-card">
+                <img src="dairel.webp" alt="Daryl Mitchell playing a powerful shot" class="card-img-top">
+                <div class="news-card-content">
+                    <h2><a href="article-nz-chase.html">डेरिल मिचेल की दिलेरी, न्यूज़ीलैंड की शानदार जीत</a></h2>
+                    <span class="article-meta">Published: January 15, 2026 | By: Cricket Insights Desk</span>
+
+                    <p>जब लक्ष्य बड़ा हो और हौसले बुलंद, तो जंग देखने लायक होती है। डेरिल मिचेल ने अपनी शानदार बल्लेबाज़ी से भारतीय टीम को मुश्किल में डाल दिया और सीरीज़ 1-1 से बराबर कर दी। पढ़ें इस रोमांचक मुकाबले का शायराना विश्लेषण।</p>
+                    <a href="article-nz-chase.html" class="btn-read-more">और पढ़ें →</a>
+                </div>
+            </article>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Cricket Auction Game. All Rights Reserved.</p>
+    </footer>
+
+    <a href="#" id="back-to-top" class="back-to-top-btn" title="Go to top">↑</a>
+
+    <script>
+        // Get the button
+        let backToTopButton = document.getElementById("back-to-top");
+
+        // When the user scrolls down 200px from the top of the document, show the button
+        window.onscroll = function() {
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                backToTopButton.style.display = "block";
+            } else {
+                backToTopButton.style.display = "none";
+            }
+        };
+
+        // When the user clicks on the button, scroll to the top of the document smoothly
+        backToTopButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        });
+    </script>
+
+</body>
+</html>
