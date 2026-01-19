@@ -32,6 +32,16 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4993635171115303"
      crossorigin="anonymous"></script>
     
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6FBZXVMTR6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-6FBZXVMTR6');
+    </script>
+    
     <!-- Structured Data (JSON-LD) for SEO -->
     <script type="application/ld+json">
     {
@@ -81,6 +91,21 @@
             #mobile-controls { display: flex; }
             #controls-hint { display: none !important; }
             #pause-btn, #exit-btn, #cam-btn, #master-sound-btn, #commentary-mute-btn, #crowd-mute-btn, #field-btn { bottom: 150px !important; top: auto !important; } /* Keep buttons accessible above controls */
+        }
+
+        /* Mobile Portrait Adjustments */
+        @media (max-width: 600px) {
+            /* Move Pause and Exit to top left to save space */
+            #pause-btn { left: 10px !important; top: 10px !important; bottom: auto !important; }
+            #exit-btn { left: 70px !important; top: 10px !important; bottom: auto !important; }
+
+            /* Reposition utility buttons to the right side */
+            #cam-btn { left: auto !important; right: 10px !important; bottom: 150px !important; }
+            #field-btn { left: auto !important; right: 70px !important; bottom: 150px !important; }
+            
+            #master-sound-btn { left: auto !important; right: 10px !important; bottom: 210px !important; }
+            #commentary-mute-btn { left: auto !important; right: 70px !important; bottom: 210px !important; }
+            #crowd-mute-btn { left: auto !important; right: 130px !important; bottom: 210px !important; }
         }
 
         .control-btn {
@@ -443,6 +468,14 @@
             <div id="speedo-bar"></div>
         </div>
 
+        <!-- Bowling Variations (Fast Bowler) -->
+        <div id="bowling-controls-ui" style="display: none; position: absolute; top: 50%; right: 20px; transform: translateY(-50%); z-index: 1000; flex-direction: column; gap: 10px;">
+            <button class="btn" id="btn-normal" style="font-size: 1rem; padding: 5px 10px; border-color: gold;">Normal</button>
+            <button class="btn" id="btn-inswing" style="font-size: 1rem; padding: 5px 10px;">In Swing</button>
+            <button class="btn" id="btn-outswing" style="font-size: 1rem; padding: 5px 10px;">Out Swing</button>
+            <button class="btn" id="btn-slower" style="font-size: 1rem; padding: 5px 10px;">Slower</button>
+        </div>
+
         <!-- Mobile Controls Overlay -->
         <div id="mobile-controls">
             <div class="d-pad">
@@ -518,8 +551,8 @@
             { name: "Quinton de Kock", role: "Wicketkeeper Batter", base: 2.0, jerseyNumber: 42, handedness: 'left' },
             { name: "Sam Curran", role: "All-Rounder", base: 2.0, jerseyNumber: 58, handedness: 'left', bowlingStyle: 'Fast' },
             { name: "Liam Livingstone", role: "All-Rounder", base: 2.0, jerseyNumber: 23, handedness: 'right', bowlingStyle: 'Spin' },
-            { name: "Rohit Sharma", role: "Batter", base: 2.0, jerseyNumber: 45, handedness: 'right', bowlingStyle: null },
-            { name: "Virat Kohli", role: "Batter", base: 2.0, jerseyNumber: 18, handedness: 'right', bowlingStyle: null },
+            { name: "Rohit Sharma", role: "Batter", base: 2.0, jerseyNumber: 45, handedness: 'right', bowlingStyle: 'Spin' },
+            { name: "Virat Kohli", role: "Batter", base: 2.0, jerseyNumber: 18, handedness: 'right', bowlingStyle: 'Fast' },
             { name: "Jasprit Bumrah", role: "Bowler", base: 2.0, jerseyNumber: 93, handedness: 'right', bowlingStyle: 'Fast' },
             { name: "Suryakumar Yadav", role: "Batter", base: 2.0, jerseyNumber: 68, handedness: 'right' },
             { name: "Hardik Pandya", role: "All-Rounder", base: 2.0, jerseyNumber: 33, handedness: 'right', bowlingStyle: 'Fast' },
@@ -623,9 +656,9 @@
                 let minP, maxP;
                 // Stats based on Role
                 const isBowler = p.role === "Bowler" || p.role === "All-Rounder";
-                if (p.role === "Batter") { minP = 90; maxP = 99; }
-                else if (p.role === "Wicketkeeper Batter") { minP = 85; maxP = 95; }
-                else if (p.role === "All-Rounder") { minP = 70; maxP = 85; }
+                if (p.role === "Batter") { minP = 95; maxP = 99; }
+                else if (p.role === "Wicketkeeper Batter") { minP = 90; maxP = 95; }
+                else if (p.role === "All-Rounder") { minP = 85; maxP = 95; }
                 else if (p.role === "Bowler") { minP = 30; maxP = 50; }
                 else { minP = 50; maxP = 70; }
 
@@ -672,6 +705,30 @@
                 {x: 25, z: 5}, {x: -25, z: 5}, // Cover Point / Cover
                 {x: 15, z: -5}, {x: -15, z: -5}, // Silly Mid-off / Silly Mid-on
                 {x: -12, z: 10},    // Short Leg
+            ],
+            'Powerplay': [ // Inner circle restrictions
+                {x: 0, z: 12},      // Wicket-Keeper
+                {x: 6, z: 15},      // Slip
+                {x: 25, z: 10},     // Point (Inner)
+                {x: -25, z: 10},    // Cover (Inner)
+                {x: 15, z: -10},    // Mid-off (Inner)
+                {x: -15, z: -10},   // Mid-on (Inner)
+                {x: -25, z: -5},    // Mid-wicket (Inner)
+                {x: 25, z: 5},      // Square Leg (Inner)
+                {x: 20, z: 20},     // Third Man (Short)
+                {x: -20, z: 20},    // Fine Leg (Short)
+            ],
+            'Leg Side Attack': [ // Spin/Short ball trap
+                {x: 0, z: 12},      // Wicket-Keeper
+                {x: -6, z: 15},     // Leg Slip
+                {x: -10, z: 5},     // Short Leg
+                {x: -50, z: 5},     // Deep Square Leg
+                {x: -45, z: -35},   // Deep Mid Wicket
+                {x: -20, z: -45},   // Long On
+                {x: -15, z: -10},   // Mid On
+                {x: 30, z: 10},     // Point
+                {x: -30, z: 10},    // Cover
+                {x: 40, z: 20},     // Third Man
             ]
         };
 
@@ -2304,8 +2361,9 @@
                 this.isCommentaryMuted = false;
                 this.isCrowdMuted = false;
                 this.aiBowlingLineup = [];
-                this.formationTypes = ['Default', 'Aggressive', 'Defensive'];
+                this.formationTypes = ['Default', 'Aggressive', 'Defensive', 'Powerplay', 'Leg Side Attack'];
                 this.currentFormation = 'Default';
+                this.bowlingVariation = 'Normal';
                 
                 
                 this.touchStartX = 0; // For batsman swipe movement
@@ -2400,6 +2458,12 @@
                 get('commentary-mute-btn').onclick = () => this.toggleCommentaryMute();
                 get('crowd-mute-btn').onclick = () => this.toggleCrowdMute();
                 get('field-btn').onclick = () => this.cycleFieldingFormation();
+
+                // Bowling Variations
+                get('btn-inswing').onclick = () => this.setBowlingVariation('InSwing');
+                get('btn-outswing').onclick = () => this.setBowlingVariation('OutSwing');
+                get('btn-slower').onclick = () => this.setBowlingVariation('Slower');
+                get('btn-normal').onclick = () => this.setBowlingVariation('Normal');
             }
 
             goFullscreenAndLockOrientation() {
@@ -2441,6 +2505,16 @@
                 this.currentFormation = formationName;
                 this.game3D.applyFieldingFormation(formationName);
                 this.showCommentary(`Field: ${formationName}`, false);
+            }
+
+            setBowlingVariation(type) {
+                this.bowlingVariation = type;
+                this.showCommentary(type, false);
+                // Highlight active button
+                ['btn-inswing', 'btn-outswing', 'btn-slower', 'btn-normal'].forEach(id => {
+                    const btn = document.getElementById(id);
+                    if(btn) btn.style.borderColor = (id === `btn-${type.toLowerCase()}`) ? 'gold' : 'white';
+                });
             }
 
             // Helper functions for audio controls
@@ -3226,6 +3300,16 @@
                     this.showCommentary(`Selected: ${this.currentBowler.name} (${this.bowlingType})`, false);
                 }
 
+                // Update UI for Fast Bowler
+                const controlsUI = document.getElementById('bowling-controls-ui');
+                if (controlsUI) {
+                    if (this.playerRole === 'bowling' && this.bowlingType === 'Fast') {
+                        controlsUI.style.display = 'flex';
+                    } else {
+                        controlsUI.style.display = 'none';
+                    }
+                }
+
                 if(!this.isGameActive) {
                     this.initiateMatchSequence();
                 } else {
@@ -3341,6 +3425,16 @@
                     if(groundBtn) groundBtn.style.display = 'flex';
                     if(fastBtn) fastBtn.style.display = 'none';
                     if(spinBtn) spinBtn.style.display = 'none';
+                }
+
+                // Update UI for Fast Bowler Variations
+                const controlsUI = document.getElementById('bowling-controls-ui');
+                if (controlsUI) {
+                    if (this.playerRole === 'bowling' && this.bowlingType === 'Fast') {
+                        controlsUI.style.display = 'flex';
+                    } else {
+                        controlsUI.style.display = 'none';
+                    }
                 }
                 
                 if(this.playerRole === 'bowling') {
@@ -3588,6 +3682,8 @@
                 document.getElementById('controls-hint').style.display = 'none';
                 document.getElementById('speedometer').style.display = 'none';
                 document.getElementById('field-btn').style.display = 'none';
+                const controlsUI = document.getElementById('bowling-controls-ui');
+                if(controlsUI) controlsUI.style.display = 'none';
                 this.showScreen('menu-screen');
             }
 
@@ -3651,6 +3747,10 @@
                 const maxSpeed = -0.7;
                 const vz = minSpeed + (this.bowlingPower * (maxSpeed - minSpeed));
                 const t = (aimPos.z - releasePos.z) / vz;
+                
+                if (this.bowlingType === 'Fast' && this.bowlingVariation === 'Slower') {
+                    this.ballVelocity.z = vz * 0.6; // Apply slower ball speed
+                }
 
                 if (t <= 0) {
                     console.error("Invalid aim position");
@@ -3658,11 +3758,21 @@
                 } else {
                     const vx = (aimPos.x - releasePos.x) / t;
                     const my_vy = (0.004 * t * t - 2) / t;
-                    this.ballVelocity.set(vx, my_vy, vz);
+                    
+                    // Apply slower ball to calculated velocity
+                    if (this.bowlingType === 'Fast' && this.bowlingVariation === 'Slower') {
+                        this.ballVelocity.set(vx * 0.8, my_vy, vz * 0.6);
+                    } else {
+                        this.ballVelocity.set(vx, my_vy, vz);
+                    }
                 }
                 
                 let spinX = 0;
                 if(this.bowlingType === 'Spin') spinX = (Math.random() - 0.5) * 0.02; // Reduced sideways spin
+                if(this.bowlingType === 'Fast') {
+                    if (this.bowlingVariation === 'InSwing') spinX = -0.015;
+                    if (this.bowlingVariation === 'OutSwing') spinX = 0.015;
+                }
 
                 this.isUserCurrentlyBowling = true;
                 this.currentSpinX = spinX;
@@ -3701,6 +3811,17 @@
                 if (this.currentBowler && this.currentBowler.bowlingStyle) {
                     if (this.currentBowler.bowlingStyle === 'Fast') {
                         vz = -0.55 - (Math.random() * 0.2); // -0.55 to -0.75 (Faster)
+                        
+                        // AI Variations
+                        const rand = Math.random();
+                        if (rand < 0.2) { // 20% Slower
+                            vz *= 0.6;
+                            this.showCommentary("Slower Ball", false);
+                        } else if (rand < 0.4) { // 20% In Swing
+                            spinX = -0.015;
+                        } else if (rand < 0.6) { // 20% Out Swing
+                            spinX = 0.015;
+                        }
                     } else if (this.currentBowler.bowlingStyle === 'Spin') {
                         vz = -0.3 - (Math.random() * 0.1); // -0.3 to -0.4 (Slower)
                         spinX = (Math.random() - 0.5) * 0.03; // Add spin
