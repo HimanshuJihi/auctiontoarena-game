@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://auctiontoarena.netlify.app/sitemap.xml
