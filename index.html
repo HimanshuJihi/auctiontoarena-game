@@ -88,7 +88,7 @@
 
         /* Show controls on smaller screens */
         @media (max-width: 1024px) {
-            #mobile-controls { display: flex; }
+            /* #mobile-controls { display: flex; } JS will handle this */
             #controls-hint { display: none !important; }
             #pause-btn, #exit-btn, #cam-btn, #master-sound-btn, #commentary-mute-btn, #crowd-mute-btn, #field-btn { bottom: 150px !important; top: auto !important; } /* Keep buttons accessible above controls */
         }
@@ -469,11 +469,11 @@
         </div>
 
         <!-- Bowling Variations (Fast Bowler) -->
-        <div id="bowling-controls-ui" style="display: none; position: absolute; top: 50%; right: 20px; transform: translateY(-50%); z-index: 1000; flex-direction: column; gap: 10px;">
-            <button class="btn" id="btn-normal" style="font-size: 1rem; padding: 5px 10px; border-color: gold;">Normal</button>
-            <button class="btn" id="btn-inswing" style="font-size: 1rem; padding: 5px 10px;">In Swing</button>
-            <button class="btn" id="btn-outswing" style="font-size: 1rem; padding: 5px 10px;">Out Swing</button>
-            <button class="btn" id="btn-slower" style="font-size: 1rem; padding: 5px 10px;">Slower</button>
+        <div id="bowling-controls-ui" style="display: none; position: absolute; top: 50%; left: 20px; transform: translateY(-50%); z-index: 1000; flex-direction: column; gap: 5px; pointer-events: auto;">
+            <button class="btn" id="btn-normal" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center; border-color: gold;">Normal</button>
+            <button class="btn" id="btn-inswing" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center;">In Swing</button>
+            <button class="btn" id="btn-outswing" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center;">Out Swing</button>
+            <button class="btn" id="btn-slower" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center;">Slower</button>
         </div>
 
         <!-- Mobile Controls Overlay -->
@@ -2513,7 +2513,12 @@
                 // Highlight active button
                 ['btn-inswing', 'btn-outswing', 'btn-slower', 'btn-normal'].forEach(id => {
                     const btn = document.getElementById(id);
-                    if(btn) btn.style.borderColor = (id === `btn-${type.toLowerCase()}`) ? 'gold' : 'white';
+                    if(btn) {
+                        const isSelected = (id === `btn-${type.toLowerCase()}`);
+                        btn.style.borderColor = isSelected ? 'gold' : 'white';
+                        btn.style.background = isSelected ? '#4caf50' : '';
+                        btn.style.color = isSelected ? 'white' : '';
+                    }
                 });
             }
 
@@ -3305,6 +3310,7 @@
                 if (controlsUI) {
                     if (this.playerRole === 'bowling' && this.bowlingType === 'Fast') {
                         controlsUI.style.display = 'flex';
+                        this.setBowlingVariation('Normal');
                     } else {
                         controlsUI.style.display = 'none';
                     }
@@ -3406,25 +3412,26 @@
                 document.getElementById('hud').style.display = 'block';
                 document.getElementById('controls-hint').style.display = 'block';
                 document.getElementById('field-btn').style.display = (this.playerRole === 'bowling') ? 'block' : 'none';
-                
-                // Update Mobile Buttons Text based on Role
-                const loftBtn = document.getElementById('btn-loft');
-                if(loftBtn) loftBtn.innerText = (this.playerRole === 'bowling') ? "BOWL" : "HIT";
-                if(document.getElementById('btn-ground')) document.getElementById('btn-ground').style.display = (this.playerRole === 'bowling') ? 'none' : 'flex';
-                const groundBtn = document.getElementById('btn-ground');
-                const fastBtn = document.getElementById('btn-fast-bowl');
-                const spinBtn = document.getElementById('btn-spin-bowl');
 
-                if (this.playerRole === 'bowling') {
-                    if(loftBtn) loftBtn.innerText = "BOWL";
-                    if(groundBtn) groundBtn.style.display = 'none';
-                    if(fastBtn) fastBtn.style.display = 'none';
-                    if(spinBtn) spinBtn.style.display = 'none';
-                } else {
-                    if(loftBtn) loftBtn.innerText = "HIT";
-                    if(groundBtn) groundBtn.style.display = 'flex';
-                    if(fastBtn) fastBtn.style.display = 'none';
-                    if(spinBtn) spinBtn.style.display = 'none';
+                // --- Mobile Controls Visibility ---
+                const mobileControls = document.getElementById('mobile-controls');
+                const loftBtn = document.getElementById('btn-loft');
+                const groundBtn = document.getElementById('btn-ground');
+                const dPad = document.querySelector('.d-pad');
+
+                if (window.innerWidth <= 1024) { // On mobile-like devices
+                    mobileControls.style.display = 'flex';
+                    if (this.playerRole === 'bowling') {
+                        if(loftBtn) loftBtn.innerText = "BOWL";
+                        if(groundBtn) groundBtn.style.display = 'none';
+                        if(dPad) dPad.style.visibility = 'hidden';
+                    } else { // Batting
+                        if(loftBtn) loftBtn.innerText = "HIT";
+                        if(groundBtn) groundBtn.style.display = 'flex';
+                        if(dPad) dPad.style.visibility = 'visible';
+                    }
+                } else { // On desktop, always hide them
+                    if(mobileControls) mobileControls.style.display = 'none';
                 }
 
                 // Update UI for Fast Bowler Variations
@@ -3432,6 +3439,7 @@
                 if (controlsUI) {
                     if (this.playerRole === 'bowling' && this.bowlingType === 'Fast') {
                         controlsUI.style.display = 'flex';
+                        this.setBowlingVariation('Normal');
                     } else {
                         controlsUI.style.display = 'none';
                     }
@@ -3684,6 +3692,8 @@
                 document.getElementById('field-btn').style.display = 'none';
                 const controlsUI = document.getElementById('bowling-controls-ui');
                 if(controlsUI) controlsUI.style.display = 'none';
+                // Hide mobile controls when exiting a match
+                document.getElementById('mobile-controls').style.display = 'none';
                 this.showScreen('menu-screen');
             }
 
