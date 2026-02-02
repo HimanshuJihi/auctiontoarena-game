@@ -765,13 +765,13 @@
                 // Load Custom Audio Files
                 this.sounds = {
                     six: [
-                        loadAudio('Six1.wav'), loadAudio('Six2.wav'), loadAudio('Six3.wav'), loadAudio('Six4.wav')
+                        loadAudio('Six1.wav'), loadAudio('Six2.wav'), loadAudio('Six3.wav'), loadAudio('Six4.wav'), loadAudio('six5.wav'), loadAudio('six6.wav'), loadAudio('six7.wav'), loadAudio('six8.wav'), loadAudio('six9.wav')
                     ],
                     four: [
-                        loadAudio('Four1.wav'), loadAudio('Four2.wav'), loadAudio('Four3.wav'), loadAudio('Four4.wav')
+                        loadAudio('Four1.wav'), loadAudio('Four2.wav'), loadAudio('Four3.wav'), loadAudio('Four4.wav'), loadAudio('four5.wav'), loadAudio('four6.wav'), loadAudio('four7.wav')
                     ],
                     wicket: [
-                        loadAudio('Wicket1.wav'), loadAudio('Wicket2.wav')
+                        loadAudio('Wicket1.wav'), loadAudio('Wicket2.wav'), loadAudio('wicket3.wav')
                     ],
                     caught: [
                         loadAudio('Caught1.wav')
@@ -781,7 +781,7 @@
                     umpireWide: [loadAudio('wideball.wav')],
                     umpireNoBall: [loadAudio('noball.wav')],
                     win: [
-                        loadAudio('Win1.wav'), loadAudio('Win2.wav'), loadAudio('Win3.wav')
+                        loadAudio('Win1.wav'), loadAudio('Win2.wav'), loadAudio('Win3.wav'), loadAudio('win4.wav')
                     ],
                     playerYes: [loadAudio('yes.wav')],
                     playerNo: [loadAudio('no.wav')],
@@ -2201,7 +2201,7 @@
                             this.camera.position.set(0, 5, 18); // Zoomed in
                             this.camera.lookAt(0, 0, -20);
                         } else if (app.currentCameraMode === 'Broadcast') {
-                            this.camera.position.set(-10, 5, 0); // Zoomed in
+                            this.camera.position.set(-25, 5, 0); // Zoomed in
                             this.camera.lookAt(0, 0, 0);
                         } else {
                             // Default: Batsman
