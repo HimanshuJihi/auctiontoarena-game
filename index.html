@@ -63,11 +63,29 @@
     <style>
         /* Responsive & Mobile Adjustments */
         body { margin: 0; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
-        #game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+        #game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; z-index: 1; }
         canvas { display: block; width: 100%; height: 100%; }
 
         /* Responsive UI */
-        .screen { width: 100% !important; height: 100% !important; max-width: 100% !important; padding: 20px !important; box-sizing: border-box; }
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: none; /* Pass clicks through by default */
+        }
+        .screen { 
+            display: none; /* Hide all screens by default */
+            width: 100% !important; height: 100% !important; max-width: 100% !important; padding: 20px !important; box-sizing: border-box;
+            background: linear-gradient(135deg, #4a00e0, #8e2de2, #2c3e50);
+            color: white; /* Ensure text is readable */
+            position: absolute;
+            pointer-events: auto; /* Active screen receives clicks */
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .screen.active {
+            display: flex; /* Show only the active screen */
+        }
         h1 { font-size: clamp(1.5rem, 5vw, 3rem) !important; }
         h2 { font-size: clamp(1rem, 4vw, 2rem) !important; }
         .btn { padding: 10px 20px !important; font-size: clamp(0.8rem, 3vw, 1.2rem) !important; margin: 5px !important; touch-action: manipulation; }
@@ -80,7 +98,7 @@
             width: 100%;
             height: 120px;
             pointer-events: none;
-            z-index: 2000;
+            z-index: 30;
             justify-content: space-between;
             padding: 0 20px;
             box-sizing: border-box;
@@ -136,7 +154,7 @@
             background: rgba(0,0,0,0.5);
             border: 2px solid gold;
             border-radius: 10px;
-            z-index: 2000;
+            z-index: 25;
             padding: 3px;
         }
         #speedo-bar {
@@ -428,13 +446,13 @@
 
         <!-- Game HUD -->
         <div id="hud">
-            <button id="pause-btn" style="position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 1000; pointer-events: auto;">II</button>
-            <button id="exit-btn" style="position: absolute; bottom: 20px; left: 80px; background: rgba(221, 31, 45, 0.8); color: white; border: 1px solid white; border-radius: 5px; height: 50px; padding: 0 15px; font-size: 1.2rem; cursor: pointer; z-index: 1000; pointer-events: auto;">EXIT</button>
-            <button id="cam-btn" style="position: absolute; bottom: 20px; left: 150px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 1000; pointer-events: auto;">🎥</button>
-            <button id="master-sound-btn" style="position: absolute; bottom: 20px; left: 210px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 1000; pointer-events: auto;">🔊</button>
-            <button id="commentary-mute-btn" style="position: absolute; bottom: 20px; left: 270px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 1000; pointer-events: auto;">🗣️</button>
-            <button id="crowd-mute-btn" style="position: absolute; bottom: 20px; left: 330px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 1000; pointer-events: auto;">🏟️</button>
-            <button id="field-btn" style="position: absolute; bottom: 20px; left: 390px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 1000; pointer-events: auto; display: none;">🎽</button>
+            <button id="pause-btn" style="position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;">II</button>
+            <button id="exit-btn" style="position: absolute; bottom: 20px; left: 80px; background: rgba(221, 31, 45, 0.8); color: white; border: 1px solid white; border-radius: 5px; height: 50px; padding: 0 15px; font-size: 1.2rem; cursor: pointer; z-index: 20; pointer-events: auto;">EXIT</button>
+            <button id="cam-btn" style="position: absolute; bottom: 20px; left: 150px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;">🎥</button>
+            <button id="master-sound-btn" style="position: absolute; bottom: 20px; left: 210px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;">🔊</button>
+            <button id="commentary-mute-btn" style="position: absolute; bottom: 20px; left: 270px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;">🗣️</button>
+            <button id="crowd-mute-btn" style="position: absolute; bottom: 20px; left: 330px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;">🏟️</button>
+            <button id="field-btn" style="position: absolute; bottom: 20px; left: 390px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto; display: none;">🎽</button>
             <div class="score-board" style="position: relative;">
                 <div style="text-align: left;">
                     <div id="match-teams" style="font-size: 1.2rem; color: #aaa;">MI vs CSK</div>
@@ -487,7 +505,7 @@
                 <div class="control-btn big-btn" id="btn-loft">HIT</div>
             </div>
         </div>
-        <div id="countdown-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; justify-content: center; align-items: center; font-size: 15vw; color: white; text-shadow: 3px 3px 10px #000; background-color: rgba(0,0,0,0.4); z-index: 3000;">
+        <div id="countdown-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; justify-content: center; align-items: center; font-size: 15vw; color: white; text-shadow: 3px 3px 10px #000; background-color: rgba(0,0,0,0.4); z-index: 40;">
             5
         </div>
     </div>
@@ -1175,8 +1193,30 @@
         class Game3D {
             constructor() {
                 this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x87CEEB); // Sky Blue
-                this.scene.fog = new THREE.Fog(0x87CEEB, 100, 500); // Fog for depth
+                // Day Gradient
+                const bgCanvas = document.createElement('canvas');
+                bgCanvas.width = 2;
+                bgCanvas.height = 512;
+                const bgCtx = bgCanvas.getContext('2d');
+                const bgGradient = bgCtx.createLinearGradient(0, 0, 0, 512);
+                bgGradient.addColorStop(0, '#8a2be2'); // Purple at top
+                bgGradient.addColorStop(0.5, '#87ceeb'); // Sky blue in middle
+                bgGradient.addColorStop(1, '#ffc0cb'); // Pink at bottom (horizon)
+                bgCtx.fillStyle = bgGradient;
+                bgCtx.fillRect(0, 0, 2, 512);
+                this.dayBackground = new THREE.CanvasTexture(bgCanvas);
+
+                // Night Gradient
+                const nightCanvas = document.createElement('canvas');
+                nightCanvas.width = 2; nightCanvas.height = 512;
+                const nightCtx = nightCanvas.getContext('2d');
+                const nightGradient = nightCtx.createLinearGradient(0, 0, 0, 512);
+                nightGradient.addColorStop(0, '#000033'); nightGradient.addColorStop(0.5, '#191970'); nightGradient.addColorStop(1, '#483d8b');
+                nightCtx.fillStyle = nightGradient; nightCtx.fillRect(0, 0, 2, 512);
+                this.nightBackground = new THREE.CanvasTexture(nightCanvas);
+
+                this.scene.background = this.dayBackground; // Set default
+                this.scene.fog = new THREE.Fog(0x87ceeb, 100, 500); // Fog for depth
                 this.stadiumModel = null;
                 this.animationState = null; // Can be 'intro', 'countdown', 'match'
                 this.introAnimationTime = 0;
@@ -1289,15 +1329,15 @@
 
             setDayNightMode(isNight) {
                 if(isNight) {
-                    this.scene.background = new THREE.Color(0x050510);
-                    this.scene.fog = new THREE.Fog(0x050510, 100, 500);
+                    this.scene.background = this.nightBackground;
+                    this.scene.fog = new THREE.Fog(0x191970, 100, 500); // Match fog to gradient
                     this.ambientLight.intensity = 0.2;
                     this.hemiLight.intensity = 0.2;
                     this.dirLight.intensity = 0.1; // Moon/Floodlight main
                     this.lights.forEach(l => l.intensity = 1.5); // Turn on floodlights
                 } else {
-                    this.scene.background = new THREE.Color(0x87CEEB);
-                    this.scene.fog = new THREE.Fog(0x87CEEB, 100, 500);
+                    this.scene.background = this.dayBackground;
+                    this.scene.fog = new THREE.Fog(0x87CEEB, 100, 500); // Match fog to gradient
                     this.ambientLight.intensity = 0.6;
                     this.hemiLight.intensity = 0.6;
                     this.dirLight.intensity = 1.0; // Sun
@@ -2358,6 +2398,8 @@
                 this.isReplayActive = false; // For commentary delay on boundaries
                 this.isMasterMuted = false;
                 this.isPotentialCatch = false;
+                this.isThrowing = false;
+                this.thrower = null;
                 this.isCommentaryMuted = false;
                 this.isCrowdMuted = false;
                 this.aiBowlingLineup = [];
@@ -2757,7 +2799,6 @@
             loadCareer() {
                 this.isPracticeMode = false;
                 this.isTargetMode = false;
-                this.pendingFreeHit = false;
                 const json = localStorage.getItem('cricket_career_2025');
                 if (!json) return;
 
@@ -2799,27 +2840,8 @@
                 // Restore audio and graphics settings from the career save
                 if (data.settings) {
                     Object.assign(this.settings, data.settings);
-                    // Restore mute states which are now saved inside the settings object
-                    this.isMasterMuted = data.settings.isMasterMuted || false;
-                    this.isCommentaryMuted = data.settings.isCommentaryMuted || false;
-                    this.isCrowdMuted = data.settings.isCrowdMuted || false;
                 }
-
-                // Apply loaded settings to UI and SoundManager
-                const masterVolSlider = document.getElementById('master-vol-slider');
-                if(masterVolSlider) { masterVolSlider.value = this.settings.masterVolume; if(document.getElementById('vol-display')) document.getElementById('vol-display').innerText = Math.round(this.settings.masterVolume * 100) + "%"; }
-                const commentaryVolSlider = document.getElementById('commentary-vol-slider');
-                if(commentaryVolSlider) { commentaryVolSlider.value = this.settings.commentaryVolume; if(document.getElementById('commentary-vol-display')) document.getElementById('commentary-vol-display').innerText = Math.round(this.settings.commentaryVolume * 100) + "%"; }
-                const crowdVolSlider = document.getElementById('crowd-vol-slider');
-                if(crowdVolSlider) { crowdVolSlider.value = this.settings.crowdVolume; if(document.getElementById('crowd-vol-display')) document.getElementById('crowd-vol-display').innerText = Math.round(this.settings.crowdVolume * 100) + "%"; }
-
-                if(this.soundManager) {
-                    this.applyMuteStatesToSoundManager();
-                    this.updateMuteButtonsUI();
-                }
-                const graphSelect = document.getElementById('graphics-select');
-                if(graphSelect) { graphSelect.value = this.settings.graphics; }
-                if(this.game3D) { this.game3D.updateQuality(this.settings.graphics); }
+                this.loadSettings(); // This will apply all loaded settings, including mute states
 
                 if(data.isAuctionComplete) this.startTournament(); else this.startAuction();
             }
@@ -3733,6 +3755,15 @@
             deliverManualBall() {
                 this.isWide = false;
                 this.isNoBall = false;
+                // Random No Ball Chance (5%)
+                if(!this.isPracticeMode && Math.random() < 0.05) {
+                    this.isNoBall = true;
+                    this.runs += 1;
+                    this.soundManager.playSound('umpireNoBall');
+                    if(this.currentBowler) this.currentBowler.matchRunsConceded += 1;
+                    this.showCommentary("NO BALL! (+1 Run)", true);
+                    this.pendingFreeHit = true; // Next ball is Free Hit
+                }
                 this.isPotentialCatch = false;
                 this.shotPlayed = false;
                 this.game3D.resetTrail();
@@ -3856,6 +3887,29 @@
             updateBallPhysics() {
                 if (this.isPaused || !this.ballActive) return;
 
+                if (this.isThrowing) {
+                    const strikerStumpsPos = new THREE.Vector3(0, 0.355, -11);
+                    const bowlerStumpsPos = new THREE.Vector3(0, 0.355, 11);
+                    const distToStrikerStumps = this.game3D.ball.position.distanceTo(strikerStumpsPos);
+                    const distToBowlerStumps = this.game3D.ball.position.distanceTo(bowlerStumpsPos);
+
+                    if (distToStrikerStumps < 0.5 || distToBowlerStumps < 0.5) {
+                        this.ballActive = false;
+                        this.isThrowing = false;
+                        this.game3D.createExplosion(this.game3D.ball.position);
+                        this.soundManager.playSound('wicket');
+
+                        if (this.isRunning) {
+                            const isAtStrikerEnd = distToStrikerStumps < 0.5;
+                            this.checkRunOut(isAtStrikerEnd);
+                        } else {
+                            this.completeDelivery();
+                        }
+                        return;
+                    }
+                }
+
+
                 const ball = this.game3D.ball;
                 if (!ball) return;
 
@@ -3880,17 +3934,24 @@
                                     this.soundManager.playSound('umpireNotOut');
                                     this.showCommentary("CAUGHT, BUT NOT OUT!", true);
                                     this.isPotentialCatch = false; // Chance missed
-                                    this.ballVelocity.y *= -0.5; // Drop the ball
+                                // Ball bounces off hands, can take runs
+                                this.ballVelocity.y *= -0.4; // Bounce off hands
+                                this.ballVelocity.x *= 0.5;
+                                this.ballVelocity.z *= 0.5;
                                 } else { // OUT
                                     this.wickets++;
-                                    if(this.currentBowler) this.currentBowler.matchWickets++;
+                                    if (this.playerRole === 'batting') {
+                                        if(this.currentBowler) this.currentBowler.matchWickets++;
+                                    } else {
+                                        // User is bowling, so they get the wicket
+                                        if(this.currentBowler) this.currentBowler.matchWickets++;
+                                    }
                                     this.soundManager.playSound('umpireOut');
                                     this.showCommentary("CAUGHT!", true);
                                     this.isReplayActive = true;
                                     this.soundManager.playSound('caught');
                                     this.soundManager.playCheer();
 
-                                    // --- NEW CATCH ANIMATION ---
                                     this.game3D.triggerFielderAnimation(fielder, 'catch');
 
                                     if(this.isPracticeMode || this.isTargetMode) {
@@ -3914,10 +3975,20 @@
                                     setTimeout(() => { if(this.wickets < 10 && this.battedPlayers.length < 11) { this.showBatsmanSelector('next'); } else { this.endMatch(); } }, 10000);
                                     return; // Exit physics loop
                                 }
-                            } else if (ball.position.y < 0.5) { // GROUND FIELDING LOGIC: Ball is on the ground
-                                this.ballVelocity.multiplyScalar(0.1); // Drastically slow down the ball
-                                this.showCommentary("Stopped well!", false);
-                                this.shotPlayed = false; // Prevent this from triggering again for this delivery
+                            } else if (ball.position.y < 0.5 && this.shotPlayed) { // GROUND FIELDING LOGIC
+                                // New Runout Logic
+                                if (this.isRunning && !this.isThrowing) {
+                                    this.ballActive = false; // Stop the ball temporarily
+                                    this.shotPlayed = false; // Fielder has it now
+                                    this.thrower = fielder; // Store the fielder
+                                    this.throwToStumps();
+                                    return; // Exit physics for this frame
+                                } else {
+                                    // Original stop logic if not running
+                                    this.ballVelocity.multiplyScalar(0.1);
+                                    this.showCommentary("Stopped well!", false);
+                                    this.shotPlayed = false;
+                                }
                             }
                         }
                         // --- NEW DIVE LOGIC ---
@@ -4058,20 +4129,81 @@
 
             onRunComplete() {
                 this.isRunning = false;
-                
-                // If ball is still active (physics running), force complete it to count the ball
-                if(this.ballActive) {
-                    this.completeDelivery();
+
+                // If ball is still active (e.g. throw missed stumps and went for overthrows), let it complete.
+                // If not, and we were waiting for a run, start next ball.
+                if(!this.ballActive && this.waitingForRun) {
+                    this.waitingForRun = false;
+                    // Don't call completeDelivery here, as the ball is already dead from the throw.
+                    // Just start the next bowling loop.
+                    setTimeout(() => {
+                        if (this.playerRole === 'bowling') {
+                            this.bowlingState = 'idle';
+                            this.showCommentary("Press BOWL to start", false);
+                        } else {
+                            this.startBowlingLoop();
+                        }
+                    }, 1000);
+                }
+            }
+
+            throwToStumps() {
+                if (!this.thrower) return;
+
+                this.isThrowing = true;
+
+                // Simple logic: throw to the end the ball is closer to.
+                const distToStrikerEnd = this.thrower.position.distanceTo(new THREE.Vector3(0, 0, -11));
+                const distToBowlerEnd = this.thrower.position.distanceTo(new THREE.Vector3(0, 0, 11));
+
+                const targetPos = new THREE.Vector3(0, 0.355, distToStrikerEnd < distToBowlerEnd ? -11 : 11);
+
+                this.game3D.ball.position.copy(this.thrower.position);
+                this.game3D.ball.position.y = 1.5; // Fielder's hand height
+
+                const direction = new THREE.Vector3().subVectors(targetPos, this.game3D.ball.position).normalize();
+                this.ballVelocity.copy(direction).multiplyScalar(1.0); // Fast throw
+
+                this.ballActive = true;
+                this.game3D.ball.visible = true;
+                this.showCommentary("Fielder throws!", false);
+                this.thrower = null; // Reset thrower
+            }
+
+            checkRunOut(isAtStrikerEnd) {
+                const runAnim = this.game3D.runAnim;
+                if (!runAnim || !runAnim.active) {
+                    this.completeDelivery(); // Not running, so no runout
+                    return;
                 }
 
-                if(this.waitingForRun) {
-                    this.waitingForRun = false;
-                    setTimeout(() => this.startBowlingLoop(), 1000);
+                const batsmanGroup = this.game3D.batsmanGroup;
+                const nonStrikerGroup = this.game3D.nonStrikerGroup;
+                let runnerInDanger;
+                let creaseZ, isPastCrease;
+
+                if (isAtStrikerEnd) {
+                    creaseZ = -9.8; // Popping crease
+                    runnerInDanger = (runAnim.targetZ_Bat < 0) ? batsmanGroup : nonStrikerGroup;
+                    isPastCrease = runnerInDanger.position.z < creaseZ;
+                } else { // at bowler's end
+                    creaseZ = 9.8;
+                    runnerInDanger = (runAnim.targetZ_Bat > 0) ? batsmanGroup : nonStrikerGroup;
+                    isPastCrease = runnerInDanger.position.z > creaseZ;
                 }
-                if(this.playerRole === 'bowling') {
-                    // After a run, the ball is dead. Reset state to allow next delivery.
-                    this.bowlingState = 'idle';
-                    this.showCommentary("Press BOWL to start", false);
+
+                if (!isPastCrease) {
+                    this.showCommentary("RUN OUT!", true);
+                    this.soundManager.playSound('umpireOut');
+                    this.wickets++;
+                    runAnim.active = false;
+                    this.isRunning = false;
+                    if(!this.isNoBall && !this.isWide) { this.ballsBowled++; if(this.currentBowler) this.currentBowler.matchBallsBowled++; }
+                    this.updateScoreboard();
+                    if (this.wickets >= 10) { setTimeout(() => this.endMatch(), 3000); } else { setTimeout(() => this.showBatsmanSelector('next'), 3000); }
+                } else {
+                    this.showCommentary("Safe!", false);
+                    this.waitingForRun = true;
                 }
             }
 
@@ -4104,6 +4236,7 @@
 
             completeDelivery() {
                 if(!this.ballActive) return;
+                this.isThrowing = false; // Reset throwing state
                 this.ballActive = false;
                 this.game3D.pitchMarker.visible = false;
                 this.game3D.ball.visible = false;
@@ -4322,7 +4455,7 @@
                         this.soundManager.playBatHit();
                         this.game3D.createExplosion(ball.position); // Visual feedback
 
-                        if(!this.isNoBall) this.currentBatsman.matchBalls++;
+                        if(!this.isNoBall && !this.isWide) this.currentBatsman.matchBalls++;
 
                         // User Target Chase Check (User Batting in 2nd Innings)
                         if(this.target && (this.runs + 6) >= this.target) { 
@@ -4482,7 +4615,7 @@
                 el.style.fontSize = isBig ? "5rem" : "3rem";
                 el.style.color = isBig ? "#ffd700" : "#ffffff";
                 setTimeout(() => { el.style.opacity = 0; }, 2000);
-            }
+            };
 
             endMatch() {
                 // Handle Innings Break
@@ -4698,6 +4831,7 @@
                 `;
             }
         }
+        
 
         // Initialize Game Systems
         // This structure ensures that the game code only runs after the HTML document
