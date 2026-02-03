@@ -88,7 +88,24 @@
         }
         h1 { font-size: clamp(1.5rem, 5vw, 3rem) !important; }
         h2 { font-size: clamp(1rem, 4vw, 2rem) !important; }
-        .btn { padding: 10px 20px !important; font-size: clamp(0.8rem, 3vw, 1.2rem) !important; margin: 5px !important; touch-action: manipulation; }
+        .btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 10px 20px !important; font-size: clamp(0.8rem, 3vw, 1.2rem) !important; margin: 5px !important; touch-action: manipulation;
+        }
+        .btn:hover {
+            background: rgba(234, 20, 20, 0.789);
+            box-shadow: 0 4px 15px rgba(94, 42, 42, 0.828);
+        }
 
         /* Mobile Touch Controls */
         #mobile-controls {
@@ -2130,9 +2147,11 @@
                     if (app.bowlingState === 'aiming') {
                         // Use W/S/Arrows for aiming, A/D is for bowler position
                         if (!app.isSwiping) {
+                            const isMobile = window.innerWidth <= 1024;
                             const aimSpeed = 0.1;
-                            if (app.activeKeys['ArrowLeft']) app.bowlingAim.x -= aimSpeed;
-                            if (app.activeKeys['ArrowRight']) app.bowlingAim.x += aimSpeed;
+                            // On mobile, aiming is via swipe, so disable arrow key aiming for left/right
+                            if (!isMobile && app.activeKeys['ArrowLeft']) app.bowlingAim.x -= aimSpeed;
+                            if (!isMobile && app.activeKeys['ArrowRight']) app.bowlingAim.x += aimSpeed;
                             if (app.activeKeys['w'] || app.activeKeys['ArrowUp']) app.bowlingAim.z -= aimSpeed;
                             if (app.activeKeys['s'] || app.activeKeys['ArrowDown']) app.bowlingAim.z += aimSpeed;
                         }
@@ -3446,7 +3465,7 @@
                     if (this.playerRole === 'bowling') {
                         if(loftBtn) loftBtn.innerText = "BOWL";
                         if(groundBtn) groundBtn.style.display = 'none';
-                        if(dPad) dPad.style.visibility = 'hidden';
+                        if(dPad) dPad.style.visibility = 'visible';
                     } else { // Batting
                         if(loftBtn) loftBtn.innerText = "HIT";
                         if(groundBtn) groundBtn.style.display = 'flex';
