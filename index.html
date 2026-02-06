@@ -6,8 +6,8 @@
     <title>Auction to Arena: IPL 2026 Cricket Game - Play 3D Cricket Online</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Play Auction to Arena: IPL 2026, the best 3D online cricket game. Experience the IPL auction, build your dream team, and compete in realistic 3D matches. Free to play in your browser!">
-    <meta name="keywords" content="IPL 2026, Cricket Game, 3D Cricket, Online Cricket, IPL Auction Game, WebGL Game, Sports Game, Cricket Simulator">
+    <meta name="description" content="Play Auction to Arena: IPL 2026, the best 3D online cricket game. Experience the IPL auction, build your dream team, and compete in realistic 3D matches. Auction cricket game, ipl auction game, best ipl game, auctio to arena,  Free to play in your browser!">
+    <meta name="keywords" content="IPL 2026, Cricket Game, 3D Cricket, Online Cricket, IPL Auction Game, WebGL Game, Sports Game, Cricket Simulator, best bid game, new bid game, ipl bid game, 2026 cricket game, Auction cricket game, ipl auction game, best ipl game, auctio to arena, ">
     <meta name="author" content="Auction to Arena Team">
     <meta name="robots" content="index, follow">
     <meta name="google-site-verification" content="ttR62D_WfNyTiaM26cpYCAsq40XCEqOuwfo1CC2ieJQ" />
@@ -180,6 +180,28 @@
             background: linear-gradient(to top, #4caf50, yellow, red);
             border-radius: 5px;
         }
+        
+        /* Live News Ticker in Menu */
+        #live-news-section {
+            width: 90%; max-width: 500px;
+            margin: 15px auto;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: left;
+        }
+        #live-news-section h3 {
+            margin: 0 0 8px 0;
+            color: gold;
+            font-size: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 5px;
+        }
+        #live-news-list { list-style: none; padding: 0; margin: 0; max-height: 100px; overflow-y: auto; }
+        #live-news-list li { padding: 4px 0; font-size: 0.85rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        #live-news-list a { color: #eee; text-decoration: none; }
+        #live-news-list a:hover { color: gold; }
     </style>
 </head>
 <body>
@@ -191,6 +213,11 @@
         <div id="menu-screen" class="screen active">
             <h1>Auction To Arena IPL 2026</h1>
             <h2>Next Gen 3D Web Game</h2>
+            <div id="career-stats-display" style="margin: 10px; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px; font-size: 0.9rem; width: 90%; max-width: 400px;">
+                <h3 style="margin: 0 0 5px 0; color: gold; font-size: 1rem;">Career Stats</h3>
+                <p style="margin: 5px 0;">Runs: <span id="stat-runs">0</span> | Wickets: <span id="stat-wickets">0</span> | 100s: <span id="stat-100s">0</span></p>
+                <div id="achievements-list" style="display: flex; justify-content: center; gap: 10px; margin-top: 5px; flex-wrap: wrap;"></div>
+            </div>
             <button class="btn" id="btn-new-career">New Career</button>
             <button class="btn" id="btn-practice-mode">Practice Mode</button>
             <a href="news.html"><button class="btn">Cricket News</button></a>
@@ -198,6 +225,12 @@
             <button class="btn" id="resume-btn" style="display:none;">Resume Career</button>
             <button class="btn btn-secondary" id="btn-settings">Settings</button>
             <button class="btn btn-secondary" id="btn-help">Help</button>
+            
+            <div id="live-news-section">
+                <h3>Live Cricket Updates</h3>
+                <ul id="live-news-list"><li>Loading...</li></ul>
+            </div>
+
             <div style="margin-top: 20px;">
                 <!-- Auction to arena -->
                 <ins class="adsbygoogle"
@@ -206,14 +239,12 @@
                      data-ad-slot="2735076524"
                      data-ad-format="auto"
                      data-full-width-responsive="true"></ins>
-                <script>
-                     (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
             </div>
             <div id="footer-links" style="padding-top: 10px; text-align: center;">
                 <a href="privacy.html" style="color: #aaa; margin: 0 15px; text-decoration: none;">Privacy Policy</a>
                 <a href="terms.html" style="color: #aaa; margin: 0 15px; text-decoration: none;">Terms and Conditions</a>
                 <a href="contact.html" style="color: #aaa; margin: 0 15px; text-decoration: none;">Contact Us</a>
+                <a href="https://font-photo-video.netlify.app/" style="color: #aaa; margin: 0 15px; text-decoration: none;">Font-photo-video-editor</a>
             </div>
         </div>
 
@@ -504,11 +535,19 @@
         </div>
 
         <!-- Bowling Variations (Fast Bowler) -->
-        <div id="bowling-controls-ui" style="display: none; position: absolute; top: 50%; left: 20px; transform: translateY(-50%); z-index: 1000; flex-direction: column; gap: 5px; pointer-events: auto;">
+        <div id="fast-bowling-controls" style="display: none; position: absolute; top: 50%; left: 20px; transform: translateY(-50%); z-index: 1000; flex-direction: column; gap: 5px; pointer-events: auto;">
             <button class="btn" id="btn-normal" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center; border-color: gold;">Normal</button>
             <button class="btn" id="btn-inswing" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center;">In Swing</button>
             <button class="btn" id="btn-outswing" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center;">Out Swing</button>
             <button class="btn" id="btn-slower" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center;">Slower</button>
+        </div>
+
+        <!-- Bowling Variations (Spin Bowler) -->
+        <div id="spin-bowling-controls" style="display: none; position: absolute; top: 50%; left: 20px; transform: translateY(-50%); z-index: 1000; flex-direction: column; gap: 5px; pointer-events: auto;">
+            <button class="btn" id="btn-offspin" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center; border-color: gold;">Off Spin</button>
+            <button class="btn" id="btn-legspin" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center;">Leg Spin</button>
+            <button class="btn" id="btn-googly" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center;">Googly</button>
+            <button class="btn" id="btn-slider" style="width: 50px; height: 50px; border-radius: 50%; font-size: 0.8rem; padding: 0 !important; display: flex; align-items: center; justify-content: center; text-align: center;">Slider</button>
         </div>
 
         <!-- Mobile Controls Overlay -->
@@ -1991,7 +2030,7 @@
             }
 
             triggerVictoryAnimation(winningTeamPlayers) {
-                const duration = 10000; // 10 seconds
+                const duration = 15000; // 15 seconds
                 const startTime = Date.now();
 
                 const intervalId = setInterval(() => {
@@ -2393,9 +2432,12 @@
                 this.finalOpponentId = null;
                 this.checkSaveGame();
                 this.bowlingPower = 0;
+                this.scheduledOpponents = [];
                 this.isSwiping = false;
                 this.touchStartPos = null;
                 this.initialAimPos = null;
+                this.careerStats = { totalRuns: 0, totalWickets: 0, centuries: 0, unlockedAchievements: [] };
+                this.spinEffectOnBounce = 0;
                 this.bowlingAim = new THREE.Vector3(0, 0.05, -5); // Default aim
                 this.isUserCurrentlyBowling = false;
                 this.currentSpinX = 0;
@@ -2449,12 +2491,47 @@
 
                 // When the menu screen is shown, request the banner ad.
                 if (id === 'menu-screen') {
-                    try {
-                        // This will fill the <ins> tag on the menu screen.
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    } catch (e) {
-                        console.error("AdSense push error:", e);
-                    }
+                    this.updateCareerStatsUI();
+                    // Use setTimeout to allow the DOM to update visibility/width before requesting ad
+                    setTimeout(() => {
+                        try {
+                            const adIns = document.querySelector('#menu-screen ins.adsbygoogle');
+                            // Only push if element is visible (width > 0) and not already processed
+                            if (adIns && adIns.offsetWidth > 0 && !adIns.getAttribute('data-ad-status')) {
+                                (adsbygoogle = window.adsbygoogle || []).push({});
+                            }
+                        } catch (e) { console.log("AdSense info:", e); }
+                    }, 200);
+                }
+            }
+
+            updateCareerStatsUI() {
+                if (!document.getElementById('stat-runs')) return;
+                document.getElementById('stat-runs').innerText = this.careerStats.totalRuns;
+                document.getElementById('stat-wickets').innerText = this.careerStats.totalWickets;
+                document.getElementById('stat-100s').innerText = this.careerStats.centuries;
+                
+                const list = document.getElementById('achievements-list');
+                list.innerHTML = '';
+                if (this.careerStats.unlockedAchievements.includes('Silver Bat')) {
+                    const span = document.createElement('span');
+                    span.innerText = '🏏 Silver Bat';
+                    span.title = '1000 Runs Scored';
+                    span.style.color = 'silver';
+                    span.style.border = '1px solid silver';
+                    span.style.padding = '2px 5px';
+                    span.style.borderRadius = '4px';
+                    list.appendChild(span);
+                }
+                if (this.careerStats.unlockedAchievements.includes('Golden Ball')) {
+                    const span = document.createElement('span');
+                    span.innerText = '⚾ Golden Ball';
+                    span.title = '50 Wickets Taken';
+                    span.style.color = 'gold';
+                    span.style.border = '1px solid gold';
+                    span.style.padding = '2px 5px';
+                    span.style.borderRadius = '4px';
+                    list.appendChild(span);
                 }
             }
 
@@ -2525,6 +2602,15 @@
                 get('btn-outswing').onclick = () => this.setBowlingVariation('OutSwing');
                 get('btn-slower').onclick = () => this.setBowlingVariation('Slower');
                 get('btn-normal').onclick = () => this.setBowlingVariation('Normal');
+                get('btn-offspin').onclick = () => this.setBowlingVariation('OffSpin');
+                get('btn-legspin').onclick = () => this.setBowlingVariation('LegSpin');
+                get('btn-googly').onclick = () => this.setBowlingVariation('Googly');
+                get('btn-slider').onclick = () => this.setBowlingVariation('Slider');
+            }
+
+            // Initialize the game UI
+            init() {
+                this.showScreen('menu-screen');
             }
 
             goFullscreenAndLockOrientation() {
@@ -2571,12 +2657,18 @@
             setBowlingVariation(type) {
                 this.bowlingVariation = type;
                 this.showCommentary(type, false);
+                
+                // Combine all variation buttons into one list for easier management
+                const allVariationButtons = [
+                    'btn-normal', 'btn-inswing', 'btn-outswing', 'btn-slower',
+                    'btn-offspin', 'btn-legspin', 'btn-googly', 'btn-slider'
+                ];
+
                 // Highlight active button
-                ['btn-inswing', 'btn-outswing', 'btn-slower', 'btn-normal'].forEach(id => {
+                allVariationButtons.forEach(id => {
                     const btn = document.getElementById(id);
                     if(btn) {
                         const isSelected = (id === `btn-${type.toLowerCase()}`);
-                        btn.style.borderColor = isSelected ? 'gold' : 'white';
                         btn.style.background = isSelected ? '#4caf50' : '';
                         btn.style.color = isSelected ? 'white' : '';
                     }
@@ -2588,6 +2680,13 @@
             checkSaveGame() {
                 if(localStorage.getItem('cricket_career_2025')) {
                     document.getElementById('resume-btn').style.display = 'inline-block';
+                    try {
+                        const data = JSON.parse(localStorage.getItem('cricket_career_2025'));
+                        if(data.careerStats) {
+                            this.careerStats = data.careerStats;
+                            this.updateCareerStatsUI();
+                        }
+                    } catch(e) {}
                 }
             }
 
@@ -2758,6 +2857,14 @@
                     auctionSystem.currentPlayerIndex = 0;
                     auctionSystem.isAuctionComplete = false;
                 }
+                this.careerStats = { totalRuns: 0, totalWickets: 0, centuries: 0, unlockedAchievements: [] };
+                this.updateCareerStatsUI();
+                this.scheduledOpponents = TEAMS.filter(t => t.id !== this.userTeamId).map(t => t.id);
+                // Shuffle for variety each season
+                for (let i = this.scheduledOpponents.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [this.scheduledOpponents[i], this.scheduledOpponents[j]] = [this.scheduledOpponents[j], this.scheduledOpponents[i]];
+                }
             }
 
             toggleMasterSound() {
@@ -2809,7 +2916,9 @@
                     isAuctionComplete: auctionSystem.isAuctionComplete,
                     playerList: PLAYERS_2025,
                     tournamentStage: this.tournamentStage,
-                    finalOpponentId: this.finalOpponentId
+                    finalOpponentId: this.finalOpponentId,
+                    careerStats: this.careerStats,
+                    scheduledOpponents: this.scheduledOpponents
                 };
                 localStorage.setItem('cricket_career_2025', JSON.stringify(data));
                 this.checkSaveGame();
@@ -2855,6 +2964,8 @@
                 auctionSystem.isAuctionComplete = data.isAuctionComplete;
                 this.tournamentStage = data.tournamentStage || 'league';
                 this.finalOpponentId = data.finalOpponentId || null;
+                this.careerStats = data.careerStats || { totalRuns: 0, totalWickets: 0, centuries: 0, unlockedAchievements: [] };
+                this.scheduledOpponents = data.scheduledOpponents || [];
 
                 // Restore audio and graphics settings from the career save
                 if (data.settings) {
@@ -2937,6 +3048,14 @@
                     });
 
                     this.currentBowler = this.matchSquad.find(p => p.role === 'Bowler' || p.role === 'All-Rounder') || this.matchSquad[0];
+                    
+                    // Set bowling type based on the selected bowler for practice
+                    if (this.currentBowler && this.currentBowler.bowlingStyle) {
+                        this.bowlingType = this.currentBowler.bowlingStyle;
+                    } else {
+                        this.bowlingType = 'Fast'; // Default if no style defined
+                    }
+
                     this.startMatch();
                     this.showCommentary("Practice Mode: Endless Bowling", true);
                 });
@@ -3018,7 +3137,7 @@
 
             playNextMatch() {
                 const myTeam = TEAMS.find(t => t.id === this.userTeamId);
-                const LEAGUE_MATCHES = 5;
+                const LEAGUE_MATCHES = 9;
                 const simOvers = parseInt(document.getElementById('overs-select').value) || 2;
 
                 if (this.tournamentStage === 'completed') {
@@ -3058,8 +3177,24 @@
                         }
                     } else {
                         // Regular League Match
-                        const opponents = TEAMS.filter(t => t.id !== this.userTeamId);
-                        this.currentOpponent = opponents[Math.floor(Math.random() * opponents.length)];
+                        // If the schedule is empty or doesn't exist (e.g. loading old save), create it.
+                        if (!this.scheduledOpponents || this.scheduledOpponents.length === 0) {
+                            this.scheduledOpponents = TEAMS.filter(t => t.id !== this.userTeamId).map(t => t.id);
+                            for (let i = this.scheduledOpponents.length - 1; i > 0; i--) {
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [this.scheduledOpponents[i], this.scheduledOpponents[j]] = [this.scheduledOpponents[j], this.scheduledOpponents[i]];
+                            }
+                            console.warn("Opponent schedule was missing or empty. A new one has been generated.");
+                        }
+
+                        const nextOpponentId = this.scheduledOpponents[myTeam.played];
+                        this.currentOpponent = TEAMS.find(t => t.id === nextOpponentId);
+
+                        if (!this.currentOpponent) {
+                            console.error("Scheduled opponent not found! Falling back to random selection.");
+                            const opponents = TEAMS.filter(t => t.id !== this.userTeamId);
+                            this.currentOpponent = opponents[Math.floor(Math.random() * opponents.length)];
+                        }
                         
                         // Simulate other matches
                         TEAMS.forEach(t => {
@@ -3333,38 +3468,52 @@
             }
 
             confirmBowlerSelection() {
-                if(this.tempSelection.length < 1) { alert("Select a bowler!"); return; }
-                this.currentBowler = this.matchSquad[this.tempSelection[0]];
-                
-                if(this.currentBowler.matchWickets === undefined) this.currentBowler.matchWickets = 0;
-                if(this.currentBowler.matchRunsConceded === undefined) this.currentBowler.matchRunsConceded = 0;
-                if(this.currentBowler.matchBallsBowled === undefined) this.currentBowler.matchBallsBowled = 0;
+    if(this.tempSelection.length < 1) { alert("Select a bowler!"); return; }
+    this.currentBowler = this.matchSquad[this.tempSelection[0]];
+    
+    if(this.currentBowler.matchWickets === undefined) this.currentBowler.matchWickets = 0;
+    if(this.currentBowler.matchRunsConceded === undefined) this.currentBowler.matchRunsConceded = 0;
+    if(this.currentBowler.matchBallsBowled === undefined) this.currentBowler.matchBallsBowled = 0;
 
-                // --- NEW: Set bowling type based on ability ---
-                if (this.currentBowler.bowlingStyle) {
-                    this.bowlingType = this.currentBowler.bowlingStyle;
-                    this.showCommentary(`Selected: ${this.currentBowler.name} (${this.bowlingType})`, false);
-                }
+    // --- LOGIC FIX: Set bowling type explicitly ---
+    if (this.currentBowler.bowlingStyle) {
+        this.bowlingType = this.currentBowler.bowlingStyle; 
+    } else {
+        this.bowlingType = 'Fast'; // Fallback default
+    }
+    
+    this.showCommentary(`Selected: ${this.currentBowler.name} (${this.bowlingType})`, false);
 
-                // Update UI for Fast Bowler
-                const controlsUI = document.getElementById('bowling-controls-ui');
-                if (controlsUI) {
-                    if (this.playerRole === 'bowling' && this.bowlingType === 'Fast') {
-                        controlsUI.style.display = 'flex';
-                        this.setBowlingVariation('Normal');
-                    } else {
-                        controlsUI.style.display = 'none';
-                    }
-                }
-
-                if(!this.isGameActive) {
-                    this.initiateMatchSequence();
-                } else {
-                    this.showScreen('');
-                    document.getElementById('hud').style.display = 'block';
-                    if(this.playerRole === 'bowling') this.showCommentary("Press Space to Bowl", false);
-                }
+    // --- UI FIX: Immediately show/hide correct controls based on type ---
+    const fastControls = document.getElementById('fast-bowling-controls');
+    const spinControls = document.getElementById('spin-bowling-controls');
+    
+    if (fastControls && spinControls) {
+        if (this.playerRole === 'bowling') {
+            if (this.bowlingType === 'Fast') {
+                fastControls.style.display = 'flex';
+                spinControls.style.display = 'none';
+                this.setBowlingVariation('Normal');
+            } else {
+                // Assume Spin if not Fast
+                fastControls.style.display = 'none';
+                spinControls.style.display = 'flex';
+                this.setBowlingVariation('OffSpin'); 
             }
+        } else {
+            fastControls.style.display = 'none';
+            spinControls.style.display = 'none';
+        }
+    }
+
+    if(!this.isGameActive) {
+        this.initiateMatchSequence();
+    } else {
+        this.showScreen('');
+        document.getElementById('hud').style.display = 'block';
+        if(this.playerRole === 'bowling') this.showCommentary("Press Space to Bowl", false);
+    }
+}
 
             selectNextAIBowler() {
                 let maxOversPerBowler;
@@ -3434,106 +3583,114 @@
             }
 
             startMatch() {
-                this.isGameActive = true;
-                this.game3D.animationState = 'match'; // Start game loop
-                
-                // FORCE CAMERA RESET: Ensure camera snaps to player view immediately
-                this.game3D.camera.position.set(0, 5, -22);
-                this.game3D.camera.lookAt(0, 1, -10);
+    this.isGameActive = true;
+    this.game3D.animationState = 'match'; 
+    
+    // FORCE CAMERA RESET
+    this.game3D.camera.position.set(0, 5, -22);
+    this.game3D.camera.lookAt(0, 1, -10);
 
-                this.playerRole = this.playerRole || 'batting'; // Use role set during toss/practice setup
-                this.target = this.target || null; // Use target set during innings break
-                this.runs = 0;
-                this.wickets = 0;
-                this.ballsBowled = 0;
-                this.matchOvers = this.isPracticeMode ? 1000 : (parseInt(document.getElementById('overs-select').value) || 2);
-                const isNight = document.getElementById('time-select').value === 'night';
+    this.playerRole = this.playerRole || 'batting'; 
+    this.target = this.target || null; 
+    this.runs = 0;
+    this.wickets = 0;
+    this.ballsBowled = 0;
+    this.matchOvers = this.isPracticeMode ? 1000 : (parseInt(document.getElementById('overs-select').value) || 2);
+    const isNight = document.getElementById('time-select').value === 'night';
 
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                document.getElementById('hud').style.display = 'block';
-                document.getElementById('controls-hint').style.display = 'block';
-                document.getElementById('field-btn').style.display = (this.playerRole === 'bowling') ? 'block' : 'none';
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('hud').style.display = 'block';
+    document.getElementById('controls-hint').style.display = 'block';
+    document.getElementById('field-btn').style.display = (this.playerRole === 'bowling') ? 'block' : 'none';
 
-                // --- Mobile Controls Visibility ---
-                const mobileControls = document.getElementById('mobile-controls');
-                const loftBtn = document.getElementById('btn-loft');
-                const groundBtn = document.getElementById('btn-ground');
-                const dPad = document.querySelector('.d-pad');
+    // --- Mobile Controls Visibility ---
+    const mobileControls = document.getElementById('mobile-controls');
+    const loftBtn = document.getElementById('btn-loft');
+    const groundBtn = document.getElementById('btn-ground');
+    const dPad = document.querySelector('.d-pad');
 
-                if (window.innerWidth <= 1024) { // On mobile-like devices
-                    mobileControls.style.display = 'flex';
-                    if (this.playerRole === 'bowling') {
-                        if(loftBtn) loftBtn.innerText = "BOWL";
-                        if(groundBtn) groundBtn.style.display = 'none';
-                        if(dPad) dPad.style.visibility = 'visible';
-                    } else { // Batting
-                        if(loftBtn) loftBtn.innerText = "HIT";
-                        if(groundBtn) groundBtn.style.display = 'flex';
-                        if(dPad) dPad.style.visibility = 'visible';
-                    }
-                } else { // On desktop, always hide them
-                    if(mobileControls) mobileControls.style.display = 'none';
-                }
+    if (window.innerWidth <= 1024) { 
+        mobileControls.style.display = 'flex';
+        if (this.playerRole === 'bowling') {
+            if(loftBtn) loftBtn.innerText = "BOWL";
+            if(groundBtn) groundBtn.style.display = 'none';
+            if(dPad) dPad.style.visibility = 'visible';
+        } else { 
+            if(loftBtn) loftBtn.innerText = "HIT";
+            if(groundBtn) groundBtn.style.display = 'flex';
+            if(dPad) dPad.style.visibility = 'visible';
+        }
+    } else { 
+        if(mobileControls) mobileControls.style.display = 'none';
+    }
 
-                // Update UI for Fast Bowler Variations
-                const controlsUI = document.getElementById('bowling-controls-ui');
-                if (controlsUI) {
-                    if (this.playerRole === 'bowling' && this.bowlingType === 'Fast') {
-                        controlsUI.style.display = 'flex';
-                        this.setBowlingVariation('Normal');
-                    } else {
-                        controlsUI.style.display = 'none';
-                    }
-                }
-                
-                if(this.playerRole === 'bowling') {
-                    // Setup dummy AI batsmen if user is bowling
-                    this.currentBatsman = { name: "AI Rohit", power: 80, jerseyNumber: 45 };
-                    this.currentNonStriker = { name: "AI Virat", power: 80, jerseyNumber: 18 };
-                    this.showCommentary("Press BOWL to start", false);
-                    document.getElementById('bowling-controls').style.display = 'block';
-                } else {
-                    // --- MODIFIED: Use real players for AI bowling lineup ---
-                    this.aiBowlingLineup = PLAYERS_2025.filter(p => p.role === 'Bowler' || p.role === 'All-Rounder').slice(0, 5);
-                    if (this.aiBowlingLineup.length < 5) {
-                        // Fallback if not enough bowlers in the main list
-                        this.aiBowlingLineup.push(...PLAYERS_2025.slice(0, 5 - this.aiBowlingLineup.length));
-                    }
-                    // Reset their match stats for the current game
-                    this.aiBowlingLineup.forEach(p => {
-                        p.matchWickets = 0;
-                        p.matchRunsConceded = 0;
-                        p.matchBallsBowled = 0;
-                    });
+    // --- FIX STARTS HERE: Correct Logic for Showing Bowling Variations ---
+    const fastControls = document.getElementById('fast-bowling-controls');
+    const spinControls = document.getElementById('spin-bowling-controls');
 
-                    // Select first AI bowler
-                    if (!this.currentBowler) this.currentBowler = this.aiBowlingLineup[0];
-                    document.getElementById('bowling-controls').style.display = 'none';
-                }
-
-                const userTeamName = TEAMS.find(t=>t.id===this.userTeamId).name;
-                document.getElementById('match-teams').innerText = `${userTeamName} vs ${this.currentOpponent.name}`;
-                
-                let statusText = this.target ? `Target: ${this.target}` : "1st Innings";
-                if(this.tournamentStage === 'semi-final') statusText += " (SF)";
-                if(this.tournamentStage === 'final') statusText += " (FINAL)";
-                if(this.isSuperOver) statusText = "SUPER OVER!";
-                
-                document.getElementById('match-status').innerText = statusText;
-                if(this.isPracticeMode) document.getElementById('match-status').innerText = "Practice Mode";
-                if(this.isTargetMode) {
-                    document.getElementById('match-status').innerText = "Target Practice";
-                    this.game3D.createTargets();
-                } else {
-                    this.game3D.clearTargets();
-                }
-                
-                this.updateScoreboard();
-                this.game3D.setDayNightMode(isNight);
-                this.game3D.setupMatchScene();
-                this.soundManager.playCrowdLoop();
-                this.startBowlingLoop();
+    if (fastControls && spinControls) {
+        if (this.playerRole === 'bowling') {
+            if (this.bowlingType === 'Fast') {
+                fastControls.style.display = 'flex';
+                spinControls.style.display = 'none';
+                this.setBowlingVariation('Normal'); // Default logic for Fast
+            } else {
+                // Logic for Spin
+                fastControls.style.display = 'none';
+                spinControls.style.display = 'flex';
+                this.setBowlingVariation('OffSpin'); // Default logic for Spin
             }
+        } else {
+            // Hide both if Batting
+            fastControls.style.display = 'none';
+            spinControls.style.display = 'none';
+        }
+    }
+    // --- FIX ENDS HERE ---
+    
+    if(this.playerRole === 'bowling') {
+        // Setup dummy AI batsmen
+        this.currentBatsman = { name: "AI Rohit", power: 80, jerseyNumber: 45 };
+        this.currentNonStriker = { name: "AI Virat", power: 80, jerseyNumber: 18 };
+        this.showCommentary("Press BOWL to start", false);
+        document.getElementById('bowling-controls').style.display = 'block';
+    } else {
+        // User Batting Logic
+        this.aiBowlingLineup = PLAYERS_2025.filter(p => p.role === 'Bowler' || p.role === 'All-Rounder').slice(0, 5);
+        if (this.aiBowlingLineup.length < 5) {
+            this.aiBowlingLineup.push(...PLAYERS_2025.slice(0, 5 - this.aiBowlingLineup.length));
+        }
+        this.aiBowlingLineup.forEach(p => {
+            p.matchWickets = 0; p.matchRunsConceded = 0; p.matchBallsBowled = 0;
+        });
+
+        if (!this.currentBowler) this.currentBowler = this.aiBowlingLineup[0];
+        document.getElementById('bowling-controls').style.display = 'none';
+    }
+
+    const userTeamName = TEAMS.find(t=>t.id===this.userTeamId).name;
+    document.getElementById('match-teams').innerText = `${userTeamName} vs ${this.currentOpponent.name}`;
+    
+    let statusText = this.target ? `Target: ${this.target}` : "1st Innings";
+    if(this.tournamentStage === 'semi-final') statusText += " (SF)";
+    if(this.tournamentStage === 'final') statusText += " (FINAL)";
+    if(this.isSuperOver) statusText = "SUPER OVER!";
+    
+    document.getElementById('match-status').innerText = statusText;
+    if(this.isPracticeMode) document.getElementById('match-status').innerText = "Practice Mode";
+    if(this.isTargetMode) {
+        document.getElementById('match-status').innerText = "Target Practice";
+        this.game3D.createTargets();
+    } else {
+        this.game3D.clearTargets();
+    }
+    
+    this.updateScoreboard();
+    this.game3D.setDayNightMode(isNight);
+    this.game3D.setupMatchScene();
+    this.soundManager.playCrowdLoop();
+    this.startBowlingLoop();
+}
 
             updateScoreboard() {
                 if(this.isTargetMode) {
@@ -3730,9 +3887,11 @@
                 document.getElementById('hud').style.display = 'none';
                 document.getElementById('controls-hint').style.display = 'none';
                 document.getElementById('speedometer').style.display = 'none';
-                document.getElementById('field-btn').style.display = 'none';
-                const controlsUI = document.getElementById('bowling-controls-ui');
-                if(controlsUI) controlsUI.style.display = 'none';
+                document.getElementById('field-btn').style.display = 'none';;
+                const fastControls = document.getElementById('fast-bowling-controls');
+                if(fastControls) fastControls.style.display = 'none';
+                const spinControls = document.getElementById('spin-bowling-controls');
+                if(spinControls) spinControls.style.display = 'none';
                 // Hide mobile controls when exiting a match
                 document.getElementById('mobile-controls').style.display = 'none';
                 this.showScreen('menu-screen');
@@ -3793,49 +3952,69 @@
 
                 const ball = this.game3D.ball;
                 ball.visible = true;
-                const releasePos = new THREE.Vector3(this.game3D.bowlerGroup.position.x, 2, 8);
+                const releasePos = new THREE.Vector3(this.game3D.bowlerGroup.position.x, 1.5, 8);
                 ball.position.copy(releasePos);
                 this.ballActive = true;
                 
-                let speed = -0.4; // Medium
-                if(this.bowlingType === 'Fast') speed = -0.6;
-                if(this.bowlingType === 'Spin') speed = -0.25;
-                // Calculate velocity to hit the target
                 const aimPos = this.bowlingAim.clone();
-                const gravity = 0.016; // 2 * 0.008
-                const minSpeed = -0.4;
-                const maxSpeed = -0.7;
+                const gravity = 0.016;
+                
+                let minSpeed, maxSpeed;
+                if (this.bowlingType === 'Fast') {
+                    minSpeed = -0.5;
+                    maxSpeed = -0.75; // Increased max speed for fast bowlers
+                } else { // Spin
+                    minSpeed = -0.3;
+                    maxSpeed = -0.45;
+                }
+                
                 const vz = minSpeed + (this.bowlingPower * (maxSpeed - minSpeed));
-                const t = (aimPos.z - releasePos.z) / vz;
                 
                 if (this.bowlingType === 'Fast' && this.bowlingVariation === 'Slower') {
-                    this.ballVelocity.z = vz * 0.6; // Apply slower ball speed
+                    vz *= 0.7; 
                 }
+                if (this.bowlingType === 'Spin' && this.bowlingVariation === 'Slider') {
+                    vz *= 1.25; // Make it quicker
+                }
+
+                const t = (aimPos.z - releasePos.z) / vz;
 
                 if (t <= 0) {
                     console.error("Invalid aim position");
-                    this.ballVelocity.set(0, 0, -0.5); // Default bowl
+                    this.ballVelocity.set(0, 0, -0.5);
                 } else {
                     const vx = (aimPos.x - releasePos.x) / t;
                     const my_vy = (0.004 * t * t - 2) / t;
-                    
-                    // Apply slower ball to calculated velocity
-                    if (this.bowlingType === 'Fast' && this.bowlingVariation === 'Slower') {
-                        this.ballVelocity.set(vx * 0.8, my_vy, vz * 0.6);
-                    } else {
-                        this.ballVelocity.set(vx, my_vy, vz);
-                    }
+                    this.ballVelocity.set(vx, my_vy, vz);
                 }
                 
-                let spinX = 0;
-                if(this.bowlingType === 'Spin') spinX = (Math.random() - 0.5) * 0.02; // Reduced sideways spin
-                if(this.bowlingType === 'Fast') {
-                    if (this.bowlingVariation === 'InSwing') spinX = -0.015;
-                    if (this.bowlingVariation === 'OutSwing') spinX = 0.015;
+                this.currentSpinX = 0; // Reset drift/swing force
+                this.spinEffectOnBounce = 0; // Reset turn effect
+
+                // --- ENHANCED: Apply more distinct spin/swing effects ---
+                if (this.bowlingType === 'Fast') {
+                    const swingAmount = 0.0003; // A small continuous force for air swing
+                    if (this.bowlingVariation === 'InSwing') this.currentSpinX = -swingAmount;
+                    if (this.bowlingVariation === 'OutSwing') this.currentSpinX = swingAmount;
+                } else if (this.bowlingType === 'Spin') {
+                    const driftAmount = 0.0002;
+                    const turnAmount = 0.06; // Sharp turn off the pitch
+                    if (this.bowlingVariation === 'OffSpin') {
+                        this.currentSpinX = -driftAmount; // Drift in
+                        this.spinEffectOnBounce = -turnAmount; // Turn away
+                    } else if (this.bowlingVariation === 'LegSpin') {
+                        this.currentSpinX = driftAmount; // Drift away
+                        this.spinEffectOnBounce = turnAmount; // Turn in
+                    } else if (this.bowlingVariation === 'Googly') {
+                        this.currentSpinX = driftAmount; // Drift like a leg-spinner
+                        this.spinEffectOnBounce = -turnAmount * 0.8; // But turns the other way
+                    } else if (this.bowlingVariation === 'Slider') {
+                        this.currentSpinX = 0; // No drift
+                        this.spinEffectOnBounce = 0.01; // Just skids on
+                    }
                 }
 
                 this.isUserCurrentlyBowling = true;
-                this.currentSpinX = spinX;
             }
 
             deliverBall() {
@@ -3849,7 +4028,7 @@
                 if(this.isFreeHit) this.showCommentary("FREE HIT!", true);
 
                 // Random No Ball Chance (5%)
-                if(!this.isPracticeMode && Math.random() < 0.05) {
+                if(!this.isPracticeMode && Math.random() < 0.02) { // Reduced no-ball chance to 2%
                     this.isNoBall = true;
                     this.runs += 1;
                     this.soundManager.playSound('umpireNoBall');
@@ -3860,35 +4039,51 @@
 
                 const ball = this.game3D.ball;
                 ball.visible = true;
-                ball.position.set(0, 2, 8); // Release point
+                ball.position.set(0, 1.5, 8); // Release point
                 this.ballActive = true;
                 const xSpread = (this.isPracticeMode || this.isTargetMode) ? 0.05 : 0.046; // Reduced spread to lower wide chance to ~20%
                 const vx = (Math.random() - 0.5) * xSpread;
                 
-                // --- NEW: Use Bowler's Ability ---
                 let vz = -0.45 - (Math.random() * 0.1); // Default medium pace
-                let spinX = 0;
+                this.currentSpinX = 0; // Reset drift/swing
+                this.spinEffectOnBounce = 0; // Reset turn
+
                 if (this.currentBowler && this.currentBowler.bowlingStyle) {
-                    if (this.currentBowler.bowlingStyle === 'Fast') {
-                        vz = -0.55 - (Math.random() * 0.2); // -0.55 to -0.75 (Faster)
+                    if (this.currentBowler.bowlingStyle === 'Fast') { // AI Fast Bowler
+                        vz = -0.6 - (Math.random() * 0.2); // Faster
                         
                         // AI Variations
                         const rand = Math.random();
+                        const swingAmount = 0.0003;
                         if (rand < 0.2) { // 20% Slower
                             vz *= 0.6;
                             this.showCommentary("Slower Ball", false);
-                        } else if (rand < 0.4) { // 20% In Swing
-                            spinX = -0.015;
-                        } else if (rand < 0.6) { // 20% Out Swing
-                            spinX = 0.015;
+                        } else if (rand < 0.5) {
+                            this.currentSpinX = -swingAmount; // In-swing
+                        } else if (rand < 0.8) {
+                            this.currentSpinX = swingAmount; // Out-swing
                         }
-                    } else if (this.currentBowler.bowlingStyle === 'Spin') {
-                        vz = -0.3 - (Math.random() * 0.1); // -0.3 to -0.4 (Slower)
-                        spinX = (Math.random() - 0.5) * 0.03; // Add spin
+                    } else if (this.currentBowler.bowlingStyle === 'Spin') { // AI Spin Bowler
+                        vz = -0.3 - (Math.random() * 0.15); // Slower
+                        const rand = Math.random();
+                        const driftAmount = 0.0002;
+                        const turnAmount = 0.06;
+                        if (rand < 0.4) { // 40% Off Spin
+                            this.currentSpinX = -driftAmount;
+                            this.spinEffectOnBounce = -turnAmount;
+                            this.showCommentary("Off Break", false);
+                        } else if (rand < 0.8) { // 40% Leg Spin
+                            this.currentSpinX = driftAmount;
+                            this.spinEffectOnBounce = turnAmount;
+                            this.showCommentary("Leg Break", false);
+                        } else { // 20% Googly/Slider
+                            this.currentSpinX = driftAmount;
+                            this.spinEffectOnBounce = -turnAmount * 0.8;
+                            this.showCommentary("Googly!", false);
+                        }
                     }
                 }
                 this.ballVelocity.set(vx, 0, vz);
-                this.currentSpinX = spinX; // Store spin for physics loop
 
                 // Predict Landing Spot for Marker
                 // y = 2, vy = 0, g = 0.008. 0 = 2 - 0.004t^2 => t = 22.36 frames
@@ -3900,7 +4095,6 @@
                 this.game3D.pitchMarker.visible = true;
 
                 this.isUserCurrentlyBowling = false;
-                this.currentSpinX = 0;
             }
 
             updateBallPhysics() {
@@ -3933,9 +4127,9 @@
                 if (!ball) return;
 
                 ball.position.add(this.ballVelocity);
-                // --- MODIFIED: Apply Spin (for both AI and User) ---
+                // --- ENHANCED: Apply continuous swing/drift force ---
                 if (!this.shotPlayed && this.currentSpinX !== 0) {
-                    ball.position.x += this.currentSpinX;
+                    this.ballVelocity.x += this.currentSpinX;
                 }
                 // --- NEW Fielder Interaction Logic ---
                 if (this.shotPlayed) {
@@ -3987,7 +4181,7 @@
                                     this.ballActive = false;
                                     this.game3D.ball.visible = false;
 
-                                    if(!this.isNoBall && !this.isWide) { this.ballsBowled++; if(this.currentBowler) this.currentBowler.matchBallsBowled++; }
+                                    if(!this.isNoBall && !this.isWide) { this.ballsBowled++; if(this.currentBowler) this.currentBowler.matchBallsBowled++; } // Only count legal deliveries
                                     this.updateScoreboard();
                                     const overEnd = this.checkOverStatus();
                                     if(this.ballsBowled >= this.matchOvers * 6) { setTimeout(() => this.endMatch(), 10000); return; }
@@ -3996,7 +4190,7 @@
                                 }
                             } else if (ball.position.y < 0.5 && this.shotPlayed) { // GROUND FIELDING LOGIC
                                 // New Runout Logic
-                                if (this.isRunning && !this.isThrowing) {
+                                if (this.isRunning && !this.isThrowing && fielder.position.distanceTo(ball.position) < 1.0) { // Only if fielder is close enough
                                     this.ballActive = false; // Stop the ball temporarily
                                     this.shotPlayed = false; // Fielder has it now
                                     this.thrower = fielder; // Store the fielder
@@ -4005,7 +4199,7 @@
                                 } else {
                                     // Original stop logic if not running
                                     this.ballVelocity.multiplyScalar(0.1);
-                                    this.showCommentary("Stopped well!", false);
+                                    this.showCommentary("Good fielding!", false);
                                     this.shotPlayed = false;
                                 }
                             }
@@ -4045,9 +4239,16 @@
                         this.ballVelocity.x *= 0.9; // Stronger friction for ground shots
                         this.ballVelocity.z *= 0.9;
                     } else {
-                        this.ballVelocity.y = 0.15; // Standard bowling bounce
+                        // Standard bowling bounce
+                        this.ballVelocity.y = 0.15;
                         this.ballVelocity.x *= 0.95;
                         this.ballVelocity.z *= 0.95;
+
+                        // --- NEW: Apply spin effect on bounce ---
+                        if (this.spinEffectOnBounce) {
+                            this.ballVelocity.x += this.spinEffectOnBounce;
+                            this.spinEffectOnBounce = 0; // Apply only once
+                        }
                     }
                 } else {
                     this.ballVelocity.y -= 0.008; // Gravity
@@ -4075,7 +4276,7 @@
                 }
 
                 // User Bowled Check (When User is Batting)
-                if (!this.isUserCurrentlyBowling && !this.shotPlayed && ball.position.z < -11 && ball.position.z > -11.5) {
+                if (!this.isUserCurrentlyBowling && !this.shotPlayed && ball.position.z < -10.8 && ball.position.z > -11.2) { // Check closer to stumps
                     if (Math.abs(ball.position.x) < 0.15) { // Hit stumps
                         if (this.isNoBall || this.isFreeHit) {
                             this.showCommentary("NOT OUT (" + (this.isNoBall ? "No Ball" : "Free Hit") + ")", true);
@@ -4129,7 +4330,7 @@
                 }
 
                 // Wide Ball Check (When ball passes stumps)
-                if (!this.isPracticeMode && !this.isTargetMode && ball.position.z < -11 && ball.position.z > -13 && !this.shotPlayed && !this.isWide) {
+                if (!this.isPracticeMode && !this.isTargetMode && ball.position.z < -10.8 && ball.position.z > -11.2 && !this.shotPlayed && !this.isWide) { // Check closer to stumps
                     if (Math.abs(ball.position.x) > 0.7) { // 0.7 is approx wide line
                         this.isWide = true;
                         this.runs += 1;
@@ -4234,7 +4435,7 @@
                     this.currentBatsman = this.currentNonStriker;
                     this.currentNonStriker = temp;
                     
-                    if(this.playerRole === 'bowling') {
+                    if(this.playerRole === 'bowling') { // User is bowling, show bowler selector
                         this.bowlingState = 'idle'; // Reset state
                         // User Bowling: Show Selector
                         this.isReplayActive = true;
@@ -4242,7 +4443,7 @@
                         return true; // Over ended
                     } else {
                         // User Batting: Rotate AI Bowler
-                        this.currentBowler = this.selectNextAIBowler();
+                        this.currentBowler = this.selectNextAIBowler(); // Select next AI bowler
                         // --- NEW: Use bowler's ability for commentary ---
                         const style = this.currentBowler.bowlingStyle ? `(${this.currentBowler.bowlingStyle})` : '';
                         this.showCommentary(`End of Over. New Bowler: ${this.currentBowler.name} ${style}`, false);
@@ -4303,7 +4504,7 @@
                 } else {
                     // Over is not ended, prepare for next ball.
                     if (this.playerRole === 'bowling') {
-                    if (this.isRunning) {
+                    if (this.isRunning) { // If batsmen are still running, wait for them to finish
                         // Don't show "Press BOWL" yet, wait for run to complete.
                         this.showCommentary("Batsmen Running...", false);
                     } else {
@@ -4313,7 +4514,7 @@
                             this.showCommentary("Press BOWL to start", false);
                         }, replayDelay);
                     }
-                    } else { // User is batting
+                    } else { // User is batting, AI will bowl next
                         if (this.isRunning) {
                             // Ball is dead, but we are waiting for a run to complete.
                             // The onRunComplete callback will trigger the next bowling loop.
@@ -4330,7 +4531,7 @@
                 // Simple AI
                 const hitChance = (this.bowlingType === 'Fast') ? 0.7 : 0.85;
                 const isReachable = Math.abs(this.game3D.ball.position.x) < 1.0;
-
+                
                 if(Math.random() < hitChance && isReachable) {
                     this.shotPlayed = true;
                     this.soundManager.playBatHit();
@@ -4348,7 +4549,7 @@
                     }
 
                     // AI Shot Logic
-                    const shotOutcome = Math.random();
+                    const shotOutcome = Math.random(); // Random outcome for AI shot
                     if (shotOutcome > 0.8) { // 20% chance of a six
                         this.ballVelocity.z = 0.8; 
                         this.ballVelocity.y = 0.6;
@@ -4373,7 +4574,7 @@
                         this.game3D.triggerRun(1);
                         if(this.currentBowler) this.currentBowler.matchRunsConceded += 1;
                         this.showCommentary("1 Run", false);
-                        
+                        // Swap AI Batsmen if odd runs
                         // Swap AI Batsmen
                         const temp = this.currentBatsman;
                         this.currentBatsman = this.currentNonStriker;
@@ -4382,7 +4583,7 @@
                     this.ballVelocity.x = (Math.random() - 0.5) * 0.5;
                     this.updateScoreboard();
                 } else {
-                    // Missed - Check Wicket
+                    // AI Missed - Check Wicket
                     const distToStumps = Math.abs(this.game3D.ball.position.x);
                     if(distToStumps < 0.3) {
                         if(this.isNoBall || this.isFreeHit) {
@@ -4419,7 +4620,7 @@
                         this.updateScoreboard();
 
                         // Check End of Over (Even if Wicket)
-                        if(this.checkOverStatus()) isOverEnded = true;
+                        let isOverEnded = this.checkOverStatus();
                         
                         // AI All Out Check
                         if(this.wickets >= 10) {
@@ -4433,7 +4634,7 @@
                             setTimeout(() => {
                                 this.ballActive = false;
                                 this.game3D.ball.visible = false;
-                            this.bowlingState = 'idle'; // State reset karein taaki agli delivery ho sake
+                                this.bowlingState = 'idle'; // Reset state for next delivery
                                 this.showCommentary("Press Space to Bowl", false);
                             }, 10000); // Replay Delay
                         }
@@ -4746,6 +4947,31 @@
                     oppTeam.ballsBowled += (userWickets === 10) ? fullBalls : userBalls;
                 }
 
+                // --- Career Stats Update ---
+                this.careerStats.totalRuns += userRuns;
+                this.careerStats.totalWickets += oppWickets;
+                
+                // Check Centuries
+                if (this.matchSquad) {
+                    this.matchSquad.forEach(p => {
+                        if (p.matchRuns >= 100) this.careerStats.centuries++;
+                    });
+                }
+
+                // Check Achievements
+                let newUnlock = false;
+                if (this.careerStats.totalRuns >= 1000 && !this.careerStats.unlockedAchievements.includes('Silver Bat')) {
+                    this.careerStats.unlockedAchievements.push('Silver Bat');
+                    alert("🏆 ACHIEVEMENT UNLOCKED: Silver Bat! (1000 Runs)");
+                    newUnlock = true;
+                }
+                if (this.careerStats.totalWickets >= 50 && !this.careerStats.unlockedAchievements.includes('Golden Ball')) {
+                    this.careerStats.unlockedAchievements.push('Golden Ball');
+                    alert("🏆 ACHIEVEMENT UNLOCKED: Golden Ball! (50 Wickets)");
+                    newUnlock = true;
+                }
+                if (newUnlock) this.soundManager.playSound('win');
+
                 if(won) { 
                     if (myTeam) { myTeam.won++; myTeam.pts += 2; }
                     this.soundManager.playSound('win'); // Play Win Sound
@@ -4860,8 +5086,36 @@
             try {
                 // `auctionSystem` must be created first and assigned to the window object
                 // because the `GameApp` constructor binds events that use it.
+                
+                // Fetch Live News
+                async function fetchLiveNews() {
+                    const rssUrl = 'https://navbharattimes.indiatimes.com/sports/cricket/rssfeedsection/2279801.cms';
+                    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+                    try {
+                        const response = await fetch(apiUrl);
+                        const data = await response.json();
+                        if (data.status === 'ok' && data.items.length > 0) {
+                            const list = document.getElementById('live-news-list');
+                            if(list) {
+                                list.innerHTML = '';
+                                data.items.slice(0, 3).forEach(item => {
+                                    const li = document.createElement('li');
+                                    li.innerHTML = `<a href="${item.link}" target="_blank" rel="noopener">${item.title}</a>`;
+                                    list.appendChild(li);
+                                });
+                            }
+                        }
+                    } catch (e) { 
+                        console.log("News fetch error", e);
+                        const list = document.getElementById('live-news-list');
+                        if(list) list.innerHTML = '<li><a href="https://www.cricbuzz.com/" target="_blank">Check Live Scores</a></li>';
+                    }
+                }
+                fetchLiveNews();
+
                 window.auctionSystem = new AuctionSystem();
                 window.gameApp = new GameApp();
+                window.gameApp.init(); // Trigger initial screen and ad load
             } catch (e) {
                 console.error("Fatal Error: Failed to initialize the game systems.", e);
                 // Display a user-friendly error if initialization fails catastrophically.
