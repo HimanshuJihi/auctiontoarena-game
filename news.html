@@ -280,7 +280,10 @@
     <div class="container">
         <div class="header">
             <h1>Cricket News & चर्चा</h1>
-            <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="user-info" style="font-weight: bold; display: none;"></span>
+                <button id="login-btn" class="btn" style="background-color: #4285F4;">Login</button>
+                <button id="logout-btn" class="btn" style="background-color: #dc3545; display: none;">Logout</button>
                 <a href="write-blog.html" class="btn" style="margin-right: 10px; background-color: #198754;">✍️ Write Blog</a>
                 <a href="index.html" class="btn">← Back to Game</a>
             </div>
@@ -351,6 +354,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         // TODO: यहाँ अपनी Firebase Config पेस्ट करें (वही जो write-blog.html में डाली थी)
         const firebaseConfig = {
@@ -365,6 +369,41 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // Login/Logout Logic
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userInfo = document.getElementById('user-info');
+
+        loginBtn.addEventListener('click', () => {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    console.log("User logged in:", result.user);
+                })
+                .catch((error) => {
+                    console.error("Login Error:", error);
+                    alert(`Login Failed:\n${error.message}\n(Code: ${error.code})`);
+                });
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline-block';
+                userInfo.style.display = 'inline-block';
+                userInfo.textContent = `Hi, ${user.displayName.split(' ')[0]}`;
+            } else {
+                loginBtn.style.display = 'inline-block';
+                logoutBtn.style.display = 'none';
+                userInfo.style.display = 'none';
+            }
+        });
 
         // Get the button
         
@@ -525,7 +564,7 @@
             const text = input.value.trim();
             if (!text) return;
             
-            const authorName = prompt("Enter your name for the comment:", "Fan") || "Anonymous";
+            const authorName = auth.currentUser ? auth.currentUser.displayName : (prompt("Enter your name for the comment:", "Fan") || "Anonymous");
 
             const blogRef = doc(db, "blogs", id);
             const docSnap = await getDoc(blogRef);

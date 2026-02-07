@@ -82,6 +82,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         // TODO: यहाँ अपनी Firebase Config पेस्ट करें
         const firebaseConfig = {
@@ -96,6 +97,14 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const authorInput = document.getElementById('author');
+                if (authorInput && !authorInput.value) authorInput.value = user.displayName;
+            }
+        });
 
         // Check if we are editing an existing blog
         const urlParams = new URLSearchParams(window.location.search);
@@ -161,7 +170,7 @@
                         window.location.href = 'news.html';
                     } catch (e) {
                         console.error("Error:", e);
-                        alert('Error saving blog. Check console for details.');
+                        alert('Error saving blog: ' + e.message + "\n\n(Check Firestore Rules in Firebase Console)");
                     }
                 };
 
