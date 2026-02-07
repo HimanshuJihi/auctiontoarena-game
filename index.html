@@ -840,6 +840,25 @@
                 name: 'Collapse Saver', 
                 description: 'Your team is 50/5. Chase 80 runs in 5 overs.', 
                 target: 80, overs: 5, wickets: 5, role: 'batting', score: 50 
+            },
+            { 
+                id: 'super_over_thriller', 
+                name: '3-Ball Thriller', 
+                description: 'Need 12 runs in 3 balls to win (Super Over).', 
+                target: 12, overs: 0.5, wickets: 0, role: 'batting', score: 0 
+            },
+            { 
+                id: 'survive_bumrah', 
+                name: 'Survive Bumrah', 
+                description: 'Last Wicket left, survive 1 over against Bumrah.', 
+                target: 999, overs: 1, wickets: 9, role: 'batting', score: 0,
+                type: 'survive', userTeam: 'CSK', opponent: 'MI'
+            },
+            { 
+                id: 'sixes_streak', 
+                name: 'Six Hitting Spree', 
+                description: 'Hit 3 Sixes in a row (18 runs in 3 balls).', 
+                target: 18, overs: 0.5, wickets: 0, role: 'batting', score: 0 
             }
         ];
 
@@ -3062,8 +3081,9 @@
             startChallenge(challenge) {
                 this.isChallengeMode = true;
                 this.activeChallenge = challenge;
-                this.userTeamId = 'MI'; // Default for challenges
-                this.currentOpponent = TEAMS.find(t => t.id === 'CSK'); // Default opponent
+                this.userTeamId = challenge.userTeam || 'MI'; // Default for challenges
+                const oppId = challenge.opponent || 'CSK';
+                this.currentOpponent = TEAMS.find(t => t.id === oppId); // Default opponent
                 
                 // Go to squad selection (or skip if we want fixed squads, but selection is fun)
                 // Ensure we have a squad to pick from
@@ -3737,6 +3757,13 @@
         if (this.aiBowlingLineup.length < 5) {
             this.aiBowlingLineup.push(...PLAYERS_2025.slice(0, 5 - this.aiBowlingLineup.length));
         }
+        
+        // Force Bumrah for specific challenge
+        if (this.isChallengeMode && this.activeChallenge && this.activeChallenge.id === 'survive_bumrah') {
+            const bumrah = PLAYERS_2025.find(p => p.name.includes('Bumrah'));
+            if (bumrah) this.aiBowlingLineup = [bumrah, ...this.aiBowlingLineup];
+        }
+
         this.aiBowlingLineup.forEach(p => {
             p.matchWickets = 0; p.matchRunsConceded = 0; p.matchBallsBowled = 0;
         });
@@ -5103,7 +5130,11 @@
                     }
                 } else if (this.isChallengeMode) {
                     // Challenge specific end
-                    const msg = won ? "🔥 Challenge Completed!" : "❌ Challenge Failed!";
+                    let challengeWon = won;
+                    if (this.activeChallenge.type === 'survive') {
+                         challengeWon = (this.wickets < 10);
+                    }
+                    const msg = challengeWon ? "🔥 Challenge Completed!" : "❌ Challenge Failed!";
                     setTimeout(() => alert(msg), 1000);
                 }
                 
