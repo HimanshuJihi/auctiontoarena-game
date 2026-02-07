@@ -70,27 +70,57 @@
                 <label for="content">सामग्री (Content)</label>
                 <textarea id="content" required placeholder="यहाँ अपने विचार लिखें..."></textarea>
             </div>
+            <div class="form-group">
+                <label for="image">तस्वीर (Image - Optional)</label>
+                <input type="file" id="image" accept="image/*">
+            </div>
             <button type="submit" class="btn">Publish Blog</button>
             <a href="news.html" class="btn btn-cancel">Cancel</a>
         </form>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // TODO: यहाँ अपनी Firebase Config पेस्ट करें
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCeBjF5RT-VeTuYBKrqIn-ITjBhapYLyo",
+            authDomain: "autiointoarena.firebaseapp.com",
+            projectId: "autiointoarena",
+            storageBucket: "autiointoarena.firebasestorage.app",
+            messagingSenderId: "189047143221",
+            appId: "1:189047143221:web:aa35971cca4dcfa26dea7c",
+            measurementId: "G-5QCHD08LTM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         // Check if we are editing an existing blog
         const urlParams = new URLSearchParams(window.location.search);
         const editId = urlParams.get('id');
         
-        if (editId) {
-            const blogs = JSON.parse(localStorage.getItem('cricket_user_blogs') || '[]');
-            const blog = blogs.find(b => b.id == editId);
-            if (blog) {
+        async function loadBlogForEdit() {
+            if (!editId) return;
+            
+            try {
+                const docRef = doc(db, "blogs", editId);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const blog = docSnap.data();
                 document.querySelector('h1').innerText = "Edit Blog";
                 document.getElementById('title').value = blog.title;
                 document.getElementById('author').value = blog.author;
                 document.getElementById('content').value = blog.content;
                 document.querySelector('.btn').innerText = "Update Blog";
+                }
+            } catch (error) {
+                console.error("Error loading blog:", error);
             }
         }
+        loadBlogForEdit();
 
         document.getElementById('blogForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -98,37 +128,52 @@
             const title = document.getElementById('title').value;
             const author = document.getElementById('author').value;
             const content = document.getElementById('content').value;
+            const imageInput = document.getElementById('image');
             
             if(title && author && content) {
-                let blogs = JSON.parse(localStorage.getItem('cricket_user_blogs') || '[]');
-                
-                if (editId) {
-                    // Update existing blog
-                    const index = blogs.findIndex(b => b.id == editId);
-                    if (index !== -1) {
-                        blogs[index].title = title;
-                        blogs[index].author = author;
-                        blogs[index].content = content;
+                const processBlog = async (imageData) => {
+                    try {
+                    if (editId) {
+                        // Update existing blog
+                            const blogRef = doc(db, "blogs", editId);
+                            const updateData = {
+                                title: title,
+                                author: author,
+                                content: content
+                            };
+                            if (imageData) updateData.image = imageData;
+                            
+                            await updateDoc(blogRef, updateData);
+                    } else {
+                        // Create new blog
+                            await addDoc(collection(db, "blogs"), {
+                            title: title,
+                            author: author,
+                            content: content,
+                            date: new Date().toISOString(),
+                            image: imageData || 'game-logo.png', // Default image
+                                comments: [],
+                                likes: 0
+                            });
                     }
-                } else {
-                    // Create new blog
-                    const blog = {
-                        id: Date.now(),
-                        title: title,
-                        author: author,
-                        content: content,
-                        date: new Date().toISOString(),
-                        image: 'game-logo.png', // Default image
-                        comments: []
+                    
+                        alert(editId ? 'Blog Updated Successfully!' : 'Blog Published Successfully!');
+                        window.location.href = 'news.html';
+                    } catch (e) {
+                        console.error("Error:", e);
+                        alert('Error saving blog. Check console for details.');
+                    }
+                };
+
+                if (imageInput.files && imageInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        processBlog(e.target.result);
                     };
-                    blogs.push(blog);
+                    reader.readAsDataURL(imageInput.files[0]);
+                } else {
+                    processBlog(null);
                 }
-                
-                // Save back to local storage
-                localStorage.setItem('cricket_user_blogs', JSON.stringify(blogs));
-                
-                alert(editId ? 'Blog Updated Successfully!' : 'Blog Published Successfully!');
-                window.location.href = 'news.html';
             }
         });
     </script>
