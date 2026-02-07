@@ -344,13 +344,14 @@
         
         // Function to fetch live news
         async function fetchLiveNews() {
-            // Using Navbharat Times Cricket RSS Feed (Hindi) for auto updates
-            const rssUrl = 'https://navbharattimes.indiatimes.com/sports/cricket/rssfeedsection/2279801.cms';
+            // Using News18 Hindi Cricket RSS Feed for auto updates
+            const rssUrl = 'https://hindi.news18.com/rss/sports/cricket.xml';
             // Using rss2json service to convert RSS to JSON
             const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
 
             try {
                 const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error("Network response was not ok");
                 const data = await response.json();
 
                 if (data.status === 'ok' && data.items.length > 0) {
@@ -362,10 +363,12 @@
                         li.innerHTML = `<a href="${item.link}" target="_blank" rel="noopener">${item.title}</a>`;
                         list.appendChild(li);
                     });
+                } else {
+                    throw new Error("Feed status not ok");
                 }
             } catch (error) {
                 console.log("Live news fetch failed", error);
-                document.getElementById('live-news-list').innerHTML = '<li><a href="https://navbharattimes.indiatimes.com/sports/cricket/articlelist/2279801.cms" target="_blank">ताज़ा खबरें पढ़ने के लिए यहाँ क्लिक करें</a></li>';
+                document.getElementById('live-news-list').innerHTML = '<li><a href="https://hindi.news18.com/sports/cricket/" target="_blank">ताज़ा खबरें पढ़ने के लिए यहाँ क्लिक करें</a></li>';
             }
         }
         fetchLiveNews();

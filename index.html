@@ -219,6 +219,7 @@
                 <div id="achievements-list" style="display: flex; justify-content: center; gap: 10px; margin-top: 5px; flex-wrap: wrap;"></div>
             </div>
             <button class="btn" id="btn-new-career">New Career</button>
+            <button class="btn" id="btn-challenge-mode" style="border-color: #ff5722; color: #ff5722;">🔥 Challenge Mode</button>
             <button class="btn" id="btn-practice-mode">Practice Mode</button>
             <a href="news.html"><button class="btn">Cricket News</button></a>
             <button class="btn" id="btn-target-practice">Target Practice</button>
@@ -244,8 +245,16 @@
                 <a href="privacy.html" style="color: #aaa; margin: 0 15px; text-decoration: none;">Privacy Policy</a>
                 <a href="terms.html" style="color: #aaa; margin: 0 15px; text-decoration: none;">Terms and Conditions</a>
                 <a href="contact.html" style="color: #aaa; margin: 0 15px; text-decoration: none;">Contact Us</a>
-                <a href="https://font-photo-video.netlify.app/" style="color: #aaa; margin: 0 15px; text-decoration: none;">Font-photo-video-editor</a>
+                <a href="https://font-photo-video.netlify.app/" style="color: #d9ff00; border-radius: 1px; margin: 0 15px; text-decoration: none;">Font-photo-video-editor</a>
             </div>
+        </div>
+
+        <!-- Challenge Select Screen -->
+        <div id="challenge-select-screen" class="screen">
+            <h1>Challenges</h1>
+            <p>Complete these scenarios to prove your skill!</p>
+            <div id="challenges-list" style="display: flex; flex-direction: column; gap: 15px; width: 90%; max-width: 600px; max-height: 60vh; overflow-y: auto; padding: 10px;"></div>
+            <button class="btn btn-secondary" id="btn-back-from-challenges">Back</button>
         </div>
 
         <!-- Practice Select Screen -->
@@ -805,6 +814,34 @@
                 {x: 40, z: 20},     // Third Man
             ]
         };
+
+        // --- DATA: Challenges ---
+        const CHALLENGES = [
+            { 
+                id: 'super_chase', 
+                name: 'Super Over Chase', 
+                description: 'Chase 15 runs in just 1 over! You have 2 wickets in hand.', 
+                target: 15, overs: 1, wickets: 8, role: 'batting', score: 0 
+            },
+            { 
+                id: 'death_overs', 
+                name: 'Death Overs Blast', 
+                description: 'Need 45 runs in the last 3 overs. 4 Wickets down.', 
+                target: 145, overs: 3, wickets: 4, role: 'batting', score: 100 
+            },
+            { 
+                id: 'defend_low', 
+                name: 'Defend the Total', 
+                description: 'Defend 12 runs in the last over against aggressive AI.', 
+                target: 12, overs: 1, wickets: 0, role: 'bowling', score: 0 
+            },
+            { 
+                id: 'collapse_save', 
+                name: 'Collapse Saver', 
+                description: 'Your team is 50/5. Chase 80 runs in 5 overs.', 
+                target: 80, overs: 5, wickets: 5, role: 'batting', score: 50 
+            }
+        ];
 
         // --- SYSTEM: Audio Manager (Web Audio API) ---
         class SoundManager {
@@ -2467,6 +2504,9 @@
                 this.formationTypes = ['Default', 'Aggressive', 'Defensive', 'Powerplay', 'Leg Side Attack'];
                 this.currentFormation = 'Default';
                 this.bowlingVariation = 'Normal';
+                this.ballLife = 0; // Failsafe timer
+                this.isChallengeMode = false;
+                this.activeChallenge = null;
                 
                 
                 this.touchStartX = 0; // For batsman swipe movement
@@ -2541,6 +2581,7 @@
                 // Main Menu
                 get('btn-new-career').onclick = () => this.startNewCareer();
                 get('btn-practice-mode').onclick = () => this.showScreen('practice-select-screen');
+                get('btn-challenge-mode').onclick = () => this.showChallengeSelect();
                 get('btn-target-practice').onclick = () => this.startTargetPractice();
                 get('resume-btn').onclick = () => this.loadCareer();
                 get('btn-settings').onclick = () => this.showScreen('settings-screen');
@@ -2550,6 +2591,9 @@
                 get('btn-practice-batting').onclick = () => this.startPracticeMode();
                 get('btn-practice-bowling').onclick = () => this.startBowlingPractice();
                 get('btn-back-from-practice-select').onclick = () => this.showScreen('menu-screen');
+
+                // Challenge Select
+                get('btn-back-from-challenges').onclick = () => this.showScreen('menu-screen');
 
                 // Team Select
                 get('btn-confirm-team').onclick = () => this.confirmTeam();
@@ -2999,6 +3043,34 @@
                 auctionSystem.start();
             }
 
+            showChallengeSelect() {
+                this.showScreen('challenge-select-screen');
+                const list = document.getElementById('challenges-list');
+                list.innerHTML = '';
+                CHALLENGES.forEach(c => {
+                    const btn = document.createElement('div');
+                    btn.className = 'player-card-select'; // Reuse styling
+                    btn.style.width = '100%';
+                    btn.style.textAlign = 'left';
+                    btn.style.cursor = 'pointer';
+                    btn.innerHTML = `<h3 style="margin:0; color:gold;">${c.name}</h3><p style="margin:5px 0;">${c.description}</p>`;
+                    btn.onclick = () => this.startChallenge(c);
+                    list.appendChild(btn);
+                });
+            }
+
+            startChallenge(challenge) {
+                this.isChallengeMode = true;
+                this.activeChallenge = challenge;
+                this.userTeamId = 'MI'; // Default for challenges
+                this.currentOpponent = TEAMS.find(t => t.id === 'CSK'); // Default opponent
+                
+                // Go to squad selection (or skip if we want fixed squads, but selection is fun)
+                // Ensure we have a squad to pick from
+                if (auctionSystem.mySquad.length === 0) auctionSystem.mySquad = PLAYERS_2025.slice(0, 15);
+                this.showPlaying11Selector();
+            }
+
             startPracticeMode() {
                 this.goFullscreenAndLockOrientation().then(() => {
                     this.isPracticeMode = true;
@@ -3226,6 +3298,7 @@
             }
 
             resetMatchStats() {
+                if (this.isChallengeMode) return; // Don't reset if we want to track challenge stats specifically? Actually reset is fine for new match instance.
                 if(auctionSystem.mySquad) {
                     auctionSystem.mySquad.forEach(p => {
                         p.matchRuns = 0;
@@ -3289,8 +3362,12 @@
                 this.matchSquad = this.playing11.map(i => auctionSystem.mySquad[i]);
                 this.battedPlayers = [];
                 
-                // Proceed to Toss
-                this.startToss();
+                if (this.isChallengeMode) {
+                    this.playerRole = this.activeChallenge.role;
+                    this.startMatchFromToss(); // Skip toss, go straight to setup
+                } else {
+                    this.startToss();
+                }
             }
 
             startToss() {
@@ -3864,6 +3941,7 @@
                 this.isPracticeMode = false;
                 this.isTargetMode = false;
                 this.isRunning = false;
+                    this.isChallengeMode = false;
                 this.shotPlayed = false;
                 this.bowlingState = 'idle';
 
@@ -3971,7 +4049,8 @@
                 const vz = minSpeed + (this.bowlingPower * (maxSpeed - minSpeed));
                 
                 if (this.bowlingType === 'Fast' && this.bowlingVariation === 'Slower') {
-                    vz *= 0.7; 
+                    vz *= 0.85; 
+                    vz *= 0.9; 
                 }
                 if (this.bowlingType === 'Spin' && this.bowlingVariation === 'Slider') {
                     vz *= 1.25; // Make it quicker
@@ -4015,6 +4094,7 @@
                 }
 
                 this.isUserCurrentlyBowling = true;
+                this.ballLife = 0;
             }
 
             deliverBall() {
@@ -4022,6 +4102,7 @@
                 this.isNoBall = false;
                 this.isPotentialCatch = false;
                 this.game3D.resetTrail();
+                this.bowlingVariation = 'Normal'; // Reset for AI
                 
                 this.isFreeHit = this.pendingFreeHit;
                 this.pendingFreeHit = this.isFreeHit; // Maintain status for Wides
@@ -4041,8 +4122,6 @@
                 ball.visible = true;
                 ball.position.set(0, 1.5, 8); // Release point
                 this.ballActive = true;
-                const xSpread = (this.isPracticeMode || this.isTargetMode) ? 0.05 : 0.046; // Reduced spread to lower wide chance to ~20%
-                const vx = (Math.random() - 0.5) * xSpread;
                 
                 let vz = -0.45 - (Math.random() * 0.1); // Default medium pace
                 this.currentSpinX = 0; // Reset drift/swing
@@ -4056,8 +4135,11 @@
                         const rand = Math.random();
                         const swingAmount = 0.0003;
                         if (rand < 0.2) { // 20% Slower
-                            vz *= 0.6;
+                            vz *= 0.8;
+                            vz *= 0.85;
                             this.showCommentary("Slower Ball", false);
+                            // Reduce swing for slower ball to prevent massive wides
+                            this.currentSpinX = (Math.random() < 0.5 ? -1 : 1) * (swingAmount * 0.3);
                         } else if (rand < 0.5) {
                             this.currentSpinX = -swingAmount; // In-swing
                         } else if (rand < 0.8) {
@@ -4083,6 +4165,13 @@
                         }
                     }
                 }
+
+                // Calculate bias to counteract drift/swing so ball lands near stumps
+                const estimatedTime = 18 / Math.abs(vz); // Approx frames to reach stumps (z=8 to z=-10)
+                const driftCorrection = -0.5 * this.currentSpinX * estimatedTime;
+                const xSpread = (this.isPracticeMode || this.isTargetMode) ? 0.05 : 0.03; // Reduced spread
+                const vx = driftCorrection + (Math.random() - 0.5) * xSpread;
+
                 this.ballVelocity.set(vx, 0, vz);
 
                 // Predict Landing Spot for Marker
@@ -4095,10 +4184,19 @@
                 this.game3D.pitchMarker.visible = true;
 
                 this.isUserCurrentlyBowling = false;
+                this.ballLife = 0;
             }
 
             updateBallPhysics() {
                 if (this.isPaused || !this.ballActive) return;
+
+                // Failsafe: If ball is active for too long (stuck or slow), force end
+                this.ballLife++;
+                if (this.ballLife > 600) { // ~10 seconds
+                    console.warn("Ball stuck, forcing delivery completion.");
+                    this.completeDelivery();
+                    return;
+                }
 
                 if (this.isThrowing) {
                     const strikerStumpsPos = new THREE.Vector3(0, 0.355, -11);
@@ -4226,6 +4324,7 @@
 
                 // Air Resistance / Ground Friction
                 this.ballVelocity.multiplyScalar(0.995);
+                this.ballVelocity.multiplyScalar(0.999); // Reduced air resistance
 
                 // Bounce logic
                 if (ball.position.y <= 0) {
@@ -4243,6 +4342,11 @@
                         this.ballVelocity.y = 0.15;
                         this.ballVelocity.x *= 0.95;
                         this.ballVelocity.z *= 0.95;
+                        if (this.bowlingVariation === 'Slider') {
+                            this.ballVelocity.z *= 0.99; // Skids through
+                        } else {
+                            this.ballVelocity.z *= 0.95;
+                        }
 
                         // --- NEW: Apply spin effect on bounce ---
                         if (this.spinEffectOnBounce) {
@@ -4839,7 +4943,7 @@
 
             endMatch() {
                 // Handle Innings Break
-                if (this.innings === 1) {
+                if (this.innings === 1 && !this.isChallengeMode) {
                     this.innings = 2;
                     this.firstInningsScore = this.runs;
                     this.firstInningsWickets = this.wickets;
@@ -4850,11 +4954,11 @@
                     const newTarget = this.runs + 1;
                     this.target = newTarget;
                     const nextRole = (this.playerRole === 'batting') ? 'bowling' : 'batting';
+                    this.playerRole = nextRole;
                     
                     alert(`Innings Break! Target: ${newTarget}`);
                     
                     if (nextRole === 'batting') {
-                        this.playerRole = 'batting';
                         this.showBatsmanSelector('openers');
                     } else {
                         this.showBowlerSelector();
@@ -4997,6 +5101,10 @@
                     } else {
                         setTimeout(() => alert("🥈 Runner Up! Well played."), 1000);
                     }
+                } else if (this.isChallengeMode) {
+                    // Challenge specific end
+                    const msg = won ? "🔥 Challenge Completed!" : "❌ Challenge Failed!";
+                    setTimeout(() => alert(msg), 1000);
                 }
                 
                 // Delay summary screen to show victory animation
@@ -5089,10 +5197,12 @@
                 
                 // Fetch Live News
                 async function fetchLiveNews() {
-                    const rssUrl = 'https://navbharattimes.indiatimes.com/sports/cricket/rssfeedsection/2279801.cms';
+                    // Using News18 Hindi Cricket RSS as fallback
+                    const rssUrl = 'https://hindi.news18.com/rss/sports/cricket.xml';
                     const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
                     try {
                         const response = await fetch(apiUrl);
+                        if (!response.ok) throw new Error("Network response was not ok");
                         const data = await response.json();
                         if (data.status === 'ok' && data.items.length > 0) {
                             const list = document.getElementById('live-news-list');
@@ -5104,6 +5214,8 @@
                                     list.appendChild(li);
                                 });
                             }
+                        } else {
+                            throw new Error("Feed status not ok");
                         }
                     } catch (e) { 
                         console.log("News fetch error", e);
