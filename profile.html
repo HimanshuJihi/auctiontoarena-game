@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile</title>
+    <style>
+        body { font-family: sans-serif; background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; backdrop-filter: blur(10px); width: 100%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #ff9800; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold; margin-top: 10px; }
+        button:hover { background: #e68900; }
+        .profile-pic { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid white; margin-bottom: 15px; cursor: pointer; }
+        .back-btn { background: transparent; border: 1px solid white; margin-top: 10px; }
+        .back-btn:hover { background: rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>My Profile</h2>
+    <img id="preview" src="https://via.placeholder.com/100" class="profile-pic" onclick="document.getElementById('file-input').click()" title="Click to change photo">
+    <input type="file" id="file-input" style="display: none;" accept="image/*">
+    <p style="font-size: 0.8rem; opacity: 0.8;">Tap image to change</p>
+    
+    <input type="text" id="name" placeholder="Display Name">
+    <textarea id="bio" rows="3" placeholder="Bio (e.g. Cricket Lover from Mumbai)"></textarea>
+    
+    <button id="save-btn">Save Profile</button>
+    <button class="back-btn" onclick="window.location.href='news.html'">Back to News</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDCeBjF5RT-VeTuYBKrqIn-ITjBhapYLyo",
+        authDomain: "autiointoarena.firebaseapp.com",
+        projectId: "autiointoarena",
+        storageBucket: "autiointoarena.firebasestorage.app",
+        messagingSenderId: "189047143221",
+        appId: "1:189047143221:web:aa35971cca4dcfa26dea7c",
+        measurementId: "G-5QCHD08LTM"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    let currentUser = null;
+
+    // Handle Image Selection
+    const fileInput = document.getElementById('file-input');
+    const preview = document.getElementById('preview');
+    let base64Image = null;
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                base64Image = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            // Load existing profile
+            try {
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('name').value = data.name || user.displayName;
+                    document.getElementById('bio').value = data.bio || "";
+                    if (data.photoURL) {
+                        preview.src = data.photoURL;
+                        base64Image = data.photoURL;
+                    } else if (user.photoURL) {
+                        preview.src = user.photoURL;
+                    }
+                } else {
+                    document.getElementById('name').value = user.displayName;
+                    if (user.photoURL) preview.src = user.photoURL;
+                }
+            } catch (e) {
+                console.error("Error loading profile:", e);
+            }
+        } else {
+            window.location.href = 'news.html';
+        }
+    });
+
+    document.getElementById('save-btn').addEventListener('click', async () => {
+        if (!currentUser) return;
+        
+        const name = document.getElementById('name').value;
+        const bio = document.getElementById('bio').value;
+        const photoURL = base64Image || currentUser.photoURL;
+
+        try {
+            // 1. Update Firebase Auth Profile (for basic display)
+            await updateProfile(currentUser, {
+                displayName: name,
+                photoURL: photoURL
+            });
+
+            // 2. Save detailed profile to Firestore
+            await setDoc(doc(db, "users", currentUser.uid), {
+                name: name,
+                bio: bio,
+                photoURL: photoURL,
+                email: currentUser.email
+            }, { merge: true });
+
+            alert("Profile Saved Successfully!");
+            window.location.href = 'news.html';
+        } catch (error) {
+            console.error("Error saving profile:", error);
+            alert("Error saving profile: " + error.message);
+        }
+    });
+</script>
+
+</body>
+</html>

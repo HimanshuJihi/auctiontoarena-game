@@ -154,10 +154,24 @@
                             
                             await updateDoc(blogRef, updateData);
                     } else {
+                        // Fetch latest user profile for author details
+                        let authorName = author;
+                        let authorPhoto = null;
+                        if (auth.currentUser) {
+                            try {
+                                const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+                                if (userDoc.exists()) {
+                                    const userData = userDoc.data();
+                                    if (userData.photoURL) authorPhoto = userData.photoURL;
+                                }
+                            } catch(e) {}
+                        }
+
                         // Create new blog
                             await addDoc(collection(db, "blogs"), {
                             title: title,
-                            author: author,
+                            author: authorName,
+                            authorPhoto: authorPhoto,
                             content: content,
                             date: new Date().toISOString(),
                             image: imageData || 'game-logo.png', // Default image
