@@ -351,6 +351,19 @@
             .news-card-content h2 { font-size: 1.4rem; }
             .image-carousel img { max-height: 200px; }
         }
+
+        /* Lightbox */
+        .lightbox-modal { display: none; position: fixed; z-index: 2000; padding-top: 50px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+        .lightbox-content { margin: auto; display: block; max-width: 90%; max-height: 90vh; object-fit: contain; }
+        .close-lightbox { position: absolute; top: 20px; right: 30px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; z-index: 2001; }
+        .close-lightbox:hover { color: #bbb; }
+
+        /* Carousel Arrows */
+        .carousel-container { position: relative; }
+        .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; cursor: pointer; z-index: 5; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: background 0.3s; }
+        .carousel-btn:hover { background: rgba(0,0,0,0.9); }
+        .carousel-btn.prev { left: 10px; }
+        .carousel-btn.next { right: 10px; }
     </style>
 </head>
 <body>
@@ -439,6 +452,12 @@
     </footer>
 
     <a href="#" id="back-to-top" class="back-to-top-btn" title="Go to top">↑</a>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox-modal" class="lightbox-modal" onclick="if(event.target === this) window.closeLightbox()">
+        <span class="close-lightbox" onclick="window.closeLightbox()">&times;</span>
+        <img class="lightbox-content" id="lightbox-img">
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -596,11 +615,18 @@
 
                     let imagesHtml = '';
                     if (blog.images && blog.images.length > 0) {
-                        imagesHtml = `<div class="image-carousel">
-                            ${blog.images.map(img => `<img src="${img}" alt="Blog Image">`).join('')}
+                        const imagesList = blog.images.map(img => 
+                            `<img src="${img}" alt="Blog Image" onclick="window.openLightbox('${img}')" style="cursor: pointer;">`
+                        ).join('');
+                        const arrows = blog.images.length > 1 ? `
+                            <button class="carousel-btn prev" onclick="window.scrollCarousel(this, -1)">&#10094;</button>
+                            <button class="carousel-btn next" onclick="window.scrollCarousel(this, 1)">&#10095;</button>` : '';
+                        imagesHtml = `<div class="carousel-container">
+                            ${arrows}
+                            <div class="image-carousel">${imagesList}</div>
                         </div>`;
                     } else if (blog.image) {
-                        imagesHtml = `<img src="${blog.image}" class="card-img-top" alt="Blog Image" style="max-height: 300px; object-fit: cover;">`;
+                        imagesHtml = `<img src="${blog.image}" class="card-img-top" alt="Blog Image" style="max-height: 300px; object-fit: cover; cursor: pointer;" onclick="window.openLightbox('${blog.image}')">`;
                     }
                     
                     // Follow Button Logic
@@ -1108,6 +1134,22 @@
                 });
             });
         }
+
+        // Lightbox & Carousel Functions
+        window.openLightbox = function(src) {
+            const modal = document.getElementById('lightbox-modal');
+            const modalImg = document.getElementById('lightbox-img');
+            modal.style.display = "flex";
+            modalImg.src = src;
+        };
+        window.closeLightbox = function() {
+            document.getElementById('lightbox-modal').style.display = "none";
+        };
+        window.scrollCarousel = function(btn, direction) {
+            const container = btn.parentElement.querySelector('.image-carousel');
+            const scrollAmount = container.clientWidth;
+            container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+        };
     </script>
 
 </body>
