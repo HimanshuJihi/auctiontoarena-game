@@ -52,6 +52,12 @@
         .btn:hover { background-color: #0b5ed7; }
         .btn-cancel { background-color: #6c757d; margin-left: 10px; }
         .btn-cancel:hover { background-color: #5c636a; }
+        
+        @media (max-width: 600px) {
+            .container { margin: 20px 10px; padding: 15px; }
+            .btn { width: 100%; margin: 5px 0; display: block; }
+            .btn-cancel { margin-left: 0; }
+        }
     </style>
 </head>
 <body>
@@ -84,17 +90,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { firebaseConfig } from "./firebase-config.js";
 
-        // TODO: यहाँ अपनी Firebase Config पेस्ट करें
-        const firebaseConfig = {
-            apiKey: "AIzaSyDCeBjF5RT-VeTuYBKrqIn-ITjBhapYLyo",
-            authDomain: "autiointoarena.firebaseapp.com",
-            projectId: "autiointoarena",
-            storageBucket: "autiointoarena.firebasestorage.app",
-            messagingSenderId: "189047143221",
-            appId: "1:189047143221:web:aa35971cca4dcfa26dea7c",
-            measurementId: "G-5QCHD08LTM"
-        };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);

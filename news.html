@@ -302,6 +302,55 @@
         .pinned-badge { background: #ffd700; color: #000; font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; margin-left: 8px; font-weight: bold; vertical-align: middle; }
         .follow-btn { padding: 2px 8px; font-size: 0.7rem; border-radius: 10px; border: 1px solid #0d6efd; background: transparent; color: #0d6efd; cursor: pointer; margin-left: 10px; transition: all 0.2s; }
         .follow-btn.following { background: #0d6efd; color: white; }
+
+        /* Search & Notifications */
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .search-box { position: relative; }
+        .search-box input { padding: 8px; border-radius: 20px; border: none; background: rgba(255,255,255,0.2); color: white; width: 200px; }
+        .search-results { position: absolute; top: 100%; left: 0; width: 100%; background: #1e1e1e; border: 1px solid #444; border-radius: 8px; display: none; z-index: 1000; max-height: 300px; overflow-y: auto; }
+        .search-result-item { padding: 10px; border-bottom: 1px solid #333; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .search-result-item:hover { background: #333; }
+        
+        .notif-box { position: relative; }
+        .notif-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; position: relative; }
+        .notif-badge { position: absolute; top: -5px; right: -5px; background: red; color: white; font-size: 0.7rem; padding: 2px 5px; border-radius: 50%; display: none; }
+        .notif-dropdown { position: absolute; top: 100%; right: 0; width: 300px; background: #1e1e1e; border: 1px solid #444; border-radius: 8px; display: none; z-index: 1000; max-height: 400px; overflow-y: auto; }
+        .notif-item { padding: 10px; border-bottom: 1px solid #333; font-size: 0.9rem; color: #ddd; }
+        .notif-item strong { color: gold; }
+
+        /* Navigation Buttons Container */
+        .nav-buttons { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        /* Enhanced Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .container { padding: 0 10px; }
+            
+            .header { 
+                flex-direction: column; 
+                align-items: center; 
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
+            
+            .header-actions { 
+                width: 100%; 
+                justify-content: center; 
+                margin-top: 10px; 
+                gap: 10px;
+            }
+            
+            .search-box { width: 100%; max-width: 100%; }
+            .search-box input { width: 100%; box-sizing: border-box; }
+            
+            .nav-buttons { justify-content: center; width: 100%; gap: 8px; }
+            .btn { padding: 8px 12px; font-size: 0.9rem; flex: 1 1 auto; min-width: 100px; text-align: center; }
+            
+            .news-card-content { padding: 15px; }
+            .news-card-content h2 { font-size: 1.4rem; }
+            .image-carousel img { max-height: 200px; }
+        }
     </style>
 </head>
 <body>
@@ -309,7 +358,17 @@
     <div class="container">
         <div class="header">
             <h1>Cricket News & चर्चा</h1>
-            <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="header-actions">
+                <div class="search-box">
+                    <input type="text" id="user-search" placeholder="Search users (@id)...">
+                    <div id="search-results" class="search-results"></div>
+                </div>
+                <div class="notif-box">
+                    <button id="notif-btn" class="notif-btn">🔔 <span id="notif-badge" class="notif-badge">0</span></button>
+                    <div id="notif-dropdown" class="notif-dropdown"><p style="padding:10px; text-align:center;">No notifications</p></div>
+                </div>
+            </div>
+            <div class="nav-buttons">
                 <span id="user-info" style="font-weight: bold; display: none;"></span>
                 <a href="profile.html" id="profile-btn" class="btn" style="background-color: #6f42c1; display: none; padding: 8px 15px;">👤 Profile</a>
                 <button id="login-btn" class="btn" style="background-color: #4285F4;">Login</button>
@@ -383,19 +442,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, orderBy, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, orderBy, arrayUnion, arrayRemove, addDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { firebaseConfig } from "./firebase-config.js";
 
-        // TODO: यहाँ अपनी Firebase Config पेस्ट करें (वही जो write-blog.html में डाली थी)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDCeBjF5RT-VeTuYBKrqIn-ITjBhapYLyo",
-            authDomain: "autiointoarena.firebaseapp.com",
-            projectId: "autiointoarena",
-            storageBucket: "autiointoarena.firebasestorage.app",
-            messagingSenderId: "189047143221",
-            appId: "1:189047143221:web:aa35971cca4dcfa26dea7c",
-            measurementId: "G-5QCHD08LTM"
-        };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -431,6 +481,7 @@
                 userInfo.style.display = 'inline-block';
                 userInfo.textContent = `Hi, ${user.displayName.split(' ')[0]}`;
                 
+                listenForNotifications(user.uid);
                 // Load following list
                 try {
                     const userDoc = await getDoc(doc(db, "users", user.uid));
@@ -740,15 +791,28 @@
             if (!auth.currentUser) { alert("Please login to follow!"); return; }
             const myUid = auth.currentUser.uid;
             const userRef = doc(db, "users", myUid);
+            const targetRef = doc(db, "users", targetUid);
             
             try {
                 if (currentUserFollowing.includes(targetUid)) {
                     // Unfollow
                     await updateDoc(userRef, { following: arrayRemove(targetUid) });
+                    await updateDoc(targetRef, { followers: arrayRemove(myUid) });
                     currentUserFollowing = currentUserFollowing.filter(id => id !== targetUid);
                 } else {
                     // Follow
                     await updateDoc(userRef, { following: arrayUnion(targetUid) });
+                    await updateDoc(targetRef, { followers: arrayUnion(myUid) });
+                    
+                    // Send Notification
+                    await addDoc(collection(db, "notifications"), {
+                        recipientUid: targetUid,
+                        senderUid: myUid,
+                        senderName: auth.currentUser.displayName || "Someone",
+                        type: "follow",
+                        date: new Date().toISOString(),
+                        read: false
+                    });
                     currentUserFollowing.push(targetUid);
                 }
                 renderBlogs(auth.currentUser); // Re-render to update buttons
@@ -981,6 +1045,69 @@
                 }
             }
         };
+
+        // Search Logic
+        const searchInput = document.getElementById('user-search');
+        const searchResults = document.getElementById('search-results');
+
+        searchInput.addEventListener('input', async (e) => {
+            const term = e.target.value.trim();
+            if (term.length < 2) { searchResults.style.display = 'none'; return; }
+
+            const q = query(collection(db, "users"), 
+                where("username", ">=", term), 
+                where("username", "<=", term + "\uf8ff"));
+            
+            const snap = await getDocs(q);
+            searchResults.innerHTML = '';
+            if (snap.empty) {
+                searchResults.innerHTML = '<div style="padding:10px;">No users found</div>';
+            } else {
+                snap.forEach(doc => {
+                    const u = doc.data();
+                    const div = document.createElement('div');
+                    div.className = 'search-result-item';
+                    div.innerHTML = `
+                        <img src="${u.photoURL || 'https://via.placeholder.com/30'}" style="width:30px; height:30px; border-radius:50%;">
+                        <div>
+                            <div style="font-weight:bold; color:white;">${u.name}</div>
+                            <div style="font-size:0.8rem; color:#aaa;">${u.username}</div>
+                        </div>
+                    `;
+                    div.onclick = () => window.location.href = `profile.html?uid=${doc.id}`;
+                    searchResults.appendChild(div);
+                });
+            }
+            searchResults.style.display = 'block';
+        });
+
+        // Notification Logic
+        const notifBtn = document.getElementById('notif-btn');
+        const notifDropdown = document.getElementById('notif-dropdown');
+        const notifBadge = document.getElementById('notif-badge');
+
+        notifBtn.addEventListener('click', () => {
+            notifDropdown.style.display = notifDropdown.style.display === 'block' ? 'none' : 'block';
+        });
+
+        function listenForNotifications(uid) {
+            const q = query(collection(db, "notifications"), where("recipientUid", "==", uid), orderBy("date", "desc"));
+            onSnapshot(q, (snap) => {
+                const notifs = [];
+                snap.forEach(doc => notifs.push(doc.data()));
+                
+                notifBadge.innerText = notifs.length;
+                notifBadge.style.display = notifs.length > 0 ? 'block' : 'none';
+                
+                notifDropdown.innerHTML = notifs.length ? '' : '<p style="padding:10px; text-align:center;">No notifications</p>';
+                notifs.forEach(n => {
+                    const div = document.createElement('div');
+                    div.className = 'notif-item';
+                    div.innerHTML = `<strong>${n.senderName}</strong> started following you. <br><span style="font-size:0.7rem; color:#888;">${new Date(n.date).toLocaleDateString()}</span>`;
+                    notifDropdown.appendChild(div);
+                });
+            });
+        }
     </script>
 
 </body>

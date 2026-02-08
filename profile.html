@@ -21,6 +21,11 @@
         .delete-btn { background-color: #dc3545; color: #fff; }
         /* CropperJS CSS Fix */
         .cropper-container { max-width: 100%; }
+        .follow-profile-btn { width: auto; padding: 8px 20px; margin-top: 10px; background: #0d6efd; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; color: white; transition: background 0.2s; }
+        .follow-profile-btn.following { background: #555; border: 1px solid #777; }
+        @media (max-width: 480px) {
+            .container { width: 90%; padding: 20px; }
+        }
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -31,8 +36,21 @@
     <h2>My Profile</h2>
     <img id="preview" src="https://via.placeholder.com/100" class="profile-pic" onclick="document.getElementById('file-input').click()" title="Click to change photo">
     <input type="file" id="file-input" style="display: none;" accept="image/*">
+    <button id="follow-btn" class="follow-profile-btn" style="display: none;">Follow</button>
     <p id="photo-hint" style="font-size: 0.8rem; opacity: 0.8;">Tap image to change</p>
     
+    <!-- Followers/Following Stats -->
+    <div style="display: flex; gap: 30px; margin: 15px 0; justify-content: center; width: 100%;">
+        <div onclick="window.showUserList('followers')" style="cursor: pointer; text-align: center;">
+            <span id="followers-count" style="font-size: 1.4rem; font-weight: bold; color: gold;">0</span><br>
+            <span style="font-size: 0.85rem; color: #aaa;">Followers</span>
+        </div>
+        <div onclick="window.showUserList('following')" style="cursor: pointer; text-align: center;">
+            <span id="following-count" style="font-size: 1.4rem; font-weight: bold; color: gold;">0</span><br>
+            <span style="font-size: 0.85rem; color: #aaa;">Following</span>
+        </div>
+    </div>
+
     <input type="text" id="username" placeholder="Unique ID (e.g. @cricket_lover)" style="background: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
     <input type="text" id="name" placeholder="Display Name">
     <textarea id="bio" rows="3" placeholder="Bio (e.g. Cricket Lover from Mumbai)"></textarea>
@@ -55,27 +73,31 @@
             <button id="btn-cancel-crop" style="background:#dc3545; color:white; padding:10px 25px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">Cancel</button>
         </div>
     </div>
+
+    <!-- User List Modal (Followers/Following) -->
+    <div id="user-list-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; flex-direction:column; align-items:center; justify-content:center;">
+        <div style="width:90%; max-width:400px; background:#1e1e1e; border: 1px solid #444; border-radius:12px; padding:20px; max-height:70vh; display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 1px solid #333; padding-bottom: 10px;">
+                <h3 id="user-list-title" style="margin:0; color:gold;">Users</h3>
+                <button onclick="document.getElementById('user-list-modal').style.display='none'" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="user-list-content" style="overflow-y:auto; flex:1;">Loading...</div>
+        </div>
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { firebaseConfig } from "./firebase-config.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDCeBjF5RT-VeTuYBKrqIn-ITjBhapYLyo",
-        authDomain: "autiointoarena.firebaseapp.com",
-        projectId: "autiointoarena",
-        storageBucket: "autiointoarena.firebasestorage.app",
-        messagingSenderId: "189047143221",
-        appId: "1:189047143221:web:aa35971cca4dcfa26dea7c",
-        measurementId: "G-5QCHD08LTM"
-    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
     let currentUser = null;
+    let currentProfileData = {}; // Store loaded profile data for lists
 
     // Handle Image Selection
     const fileInput = document.getElementById('file-input');
@@ -143,34 +165,50 @@
     });
 
     onAuthStateChanged(auth, async (user) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const viewUid = urlParams.get('uid');
+
         if (user) {
             currentUser = user;
-            
-            // Check if we are viewing someone else's profile
-            const urlParams = new URLSearchParams(window.location.search);
-            const viewUid = urlParams.get('uid');
-            
-            if (viewUid && viewUid !== user.uid) {
-                // View Mode
-                document.querySelector('h2').innerText = "User Profile";
-                document.getElementById('save-btn').style.display = 'none';
-                document.getElementById('photo-hint').style.display = 'none';
-                document.getElementById('preview').onclick = null;
-                document.getElementById('preview').style.cursor = 'default';
-                document.getElementById('preview').style.border = '3px solid #87ceeb';
-                
-                ['username', 'name', 'bio'].forEach(id => {
-                    const el = document.getElementById(id);
-                    el.readOnly = true;
-                    el.style.border = 'none';
-                    el.style.background = 'transparent';
-                    el.style.textAlign = 'center';
-                });
+        }
 
-                loadProfileData(viewUid);
-                fetchMyBlogs(viewUid, false); // false = not owner
-            } else {
-                // Edit Mode (My Profile)
+        if (viewUid && (!user || viewUid !== user.uid)) {
+            // View Mode (Guest or viewing someone else)
+            document.querySelector('h2').innerText = "User Profile";
+            document.getElementById('save-btn').style.display = 'none';
+            document.getElementById('photo-hint').style.display = 'none';
+            document.getElementById('preview').onclick = null;
+            document.getElementById('preview').style.cursor = 'default';
+            document.getElementById('preview').style.border = '3px solid #87ceeb';
+            
+            ['username', 'name', 'bio'].forEach(id => {
+                const el = document.getElementById(id);
+                el.readOnly = true;
+                el.style.border = 'none';
+                el.style.background = 'transparent';
+                el.style.textAlign = 'center';
+            });
+
+            loadProfileData(viewUid);
+            fetchMyBlogs(viewUid, false); // false = not owner
+            
+            // Setup Follow Button
+            if (user) {
+                const followBtn = document.getElementById('follow-btn');
+                followBtn.style.display = 'inline-block';
+                
+                // Check if already following
+                try {
+                    const myDoc = await getDoc(doc(db, "users", user.uid));
+                    const myData = myDoc.data();
+                    const isFollowing = myData.following && myData.following.includes(viewUid);
+                    updateFollowButton(isFollowing);
+                    
+                    followBtn.onclick = () => toggleFollow(viewUid, isFollowing);
+                } catch(e) { console.error(e); }
+            }
+        } else if (user) {
+            // Edit Mode (My Profile)
             // Load existing profile
                 loadProfileData(user.uid);
                 fetchMyBlogs(user.uid, true); // true = owner
@@ -181,11 +219,55 @@
                     document.getElementById('username').focus();
                     document.querySelector('.back-btn').style.display = 'none'; // Hide back button to enforce creation
                 }
-            }
         } else {
             window.location.href = 'news.html';
         }
     });
+
+    function updateFollowButton(isFollowing) {
+        const btn = document.getElementById('follow-btn');
+        if (isFollowing) {
+            btn.innerText = "Following";
+            btn.classList.add('following');
+        } else {
+            btn.innerText = "Follow";
+            btn.classList.remove('following');
+        }
+    }
+
+    async function toggleFollow(targetUid, isCurrentlyFollowing) {
+        const myUid = currentUser.uid;
+        const userRef = doc(db, "users", myUid);
+        const targetRef = doc(db, "users", targetUid);
+        
+        try {
+            if (isCurrentlyFollowing) {
+                await updateDoc(userRef, { following: arrayRemove(targetUid) });
+                await updateDoc(targetRef, { followers: arrayRemove(myUid) });
+                updateFollowButton(false);
+                // Update click handler state
+                document.getElementById('follow-btn').onclick = () => toggleFollow(targetUid, false);
+            } else {
+                await updateDoc(userRef, { following: arrayUnion(targetUid) });
+                await updateDoc(targetRef, { followers: arrayUnion(myUid) });
+                
+                // Send Notification
+                await addDoc(collection(db, "notifications"), {
+                    recipientUid: targetUid,
+                    senderUid: myUid,
+                    senderName: currentUser.displayName || "Someone",
+                    type: "follow",
+                    date: new Date().toISOString(),
+                    read: false
+                });
+
+                updateFollowButton(true);
+                document.getElementById('follow-btn').onclick = () => toggleFollow(targetUid, true);
+            }
+            // Refresh counts
+            loadProfileData(targetUid);
+        } catch(e) { console.error("Follow error:", e); alert("Error updating follow status"); }
+    }
 
     async function loadProfileData(uid) {
         try {
@@ -194,14 +276,21 @@
             
             if (docSnap.exists()) {
                 const data = docSnap.data();
+                currentProfileData = data; // Store for list access
                 document.getElementById('name').value = data.name || "";
                 document.getElementById('username').value = data.username || "";
                 document.getElementById('bio').value = data.bio || "";
                 if (data.photoURL) {
                     document.getElementById('preview').src = data.photoURL;
-                    if (uid === currentUser.uid) base64Image = data.photoURL;
+                    if (currentUser && uid === currentUser.uid) base64Image = data.photoURL;
                 }
-            } else if (uid === currentUser.uid) {
+                
+                // Update Counts
+                const followers = data.followers || [];
+                const following = data.following || [];
+                document.getElementById('followers-count').innerText = followers.length;
+                document.getElementById('following-count').innerText = following.length;
+            } else if (currentUser && uid === currentUser.uid) {
                 document.getElementById('name').value = currentUser.displayName;
                 if (currentUser.photoURL) document.getElementById('preview').src = currentUser.photoURL;
             }
@@ -264,6 +353,49 @@
         }
     };
 
+    // Function to show Followers/Following list
+    window.showUserList = async (type) => {
+        const modal = document.getElementById('user-list-modal');
+        const title = document.getElementById('user-list-title');
+        const content = document.getElementById('user-list-content');
+        
+        modal.style.display = 'flex';
+        title.innerText = type === 'followers' ? 'Followers' : 'Following';
+        content.innerHTML = '<p style="text-align:center; color:#aaa;">Loading...</p>';
+        
+        const uids = (type === 'followers' ? currentProfileData.followers : currentProfileData.following) || [];
+        
+        if (uids.length === 0) {
+            content.innerHTML = '<p style="text-align:center; color:#aaa;">No users found.</p>';
+            return;
+        }
+
+        try {
+            content.innerHTML = '';
+            // Fetch details for each user
+            const promises = uids.map(uid => getDoc(doc(db, "users", uid)));
+            const snapshots = await Promise.all(promises);
+            
+            snapshots.forEach(snap => {
+                if (snap.exists()) {
+                    const u = snap.data();
+                    const div = document.createElement('div');
+                    div.style.cssText = "display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid rgba(255,255,255,0.1); cursor:pointer;";
+                    div.onclick = () => window.location.href = `profile.html?uid=${snap.id}`;
+                    
+                    div.innerHTML = `
+                        <img src="${u.photoURL || 'https://via.placeholder.com/40'}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid #555;">
+                        <div>
+                            <div style="font-weight:bold; color:#fff;">${u.name || 'User'}</div>
+                            <div style="font-size:0.8rem; color:#aaa;">${u.username || ''}</div>
+                        </div>
+                    `;
+                    content.appendChild(div);
+                }
+            });
+        } catch (e) { console.error(e); content.innerHTML = '<p style="color:red;">Error loading list.</p>'; }
+    };
+
     document.getElementById('save-btn').addEventListener('click', async () => {
         if (!currentUser) return;
         
@@ -274,9 +406,10 @@
 
         try {
             // 1. Update Firebase Auth Profile (for basic display)
+            // Note: We don't update photoURL here because Firebase Auth has a small limit.
+            // The large base64 image is stored in Firestore below.
             await updateProfile(currentUser, {
-                displayName: name,
-                photoURL: photoURL
+                displayName: name
             });
 
             // Check Username Uniqueness
