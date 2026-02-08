@@ -103,22 +103,30 @@
             if (user) {
                 const authorInput = document.getElementById('author');
                 if (authorInput && !authorInput.value) authorInput.value = user.displayName;
+                
+                // Check if we are editing an existing blog
+                const urlParams = new URLSearchParams(window.location.search);
+                const editId = urlParams.get('id');
+                if (editId) loadBlogForEdit(editId, user);
+            } else {
+                alert("You must be logged in to write a blog.");
+                window.location.href = 'news.html';
             }
         });
 
-        // Check if we are editing an existing blog
-        const urlParams = new URLSearchParams(window.location.search);
-        const editId = urlParams.get('id');
-        
-        async function loadBlogForEdit() {
-            if (!editId) return;
-            
+        async function loadBlogForEdit(id, user) {
             try {
-                const docRef = doc(db, "blogs", editId);
+                const docRef = doc(db, "blogs", id);
                 const docSnap = await getDoc(docRef);
                 
                 if (docSnap.exists()) {
                     const blog = docSnap.data();
+                    const isOwner = (blog.authorUid === user.uid) || (!blog.authorUid && blog.author === user.displayName);
+                    if (!isOwner) {
+                        alert("You can only edit your own blogs!");
+                        window.location.href = 'news.html';
+                        return;
+                    }
                 document.querySelector('h1').innerText = "Edit Blog";
                 document.getElementById('title').value = blog.title;
                 document.getElementById('author').value = blog.author;
@@ -129,7 +137,6 @@
                 console.error("Error loading blog:", error);
             }
         }
-        loadBlogForEdit();
 
         document.getElementById('blogForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -141,6 +148,8 @@
             
             if(title && author && content) {
                 const processBlog = async (imageData) => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const editId = urlParams.get('id');
                     try {
                     if (editId) {
                         // Update existing blog
@@ -171,6 +180,7 @@
                             await addDoc(collection(db, "blogs"), {
                             title: title,
                             author: authorName,
+                            authorUid: auth.currentUser ? auth.currentUser.uid : null,
                             authorPhoto: authorPhoto,
                             content: content,
                             date: new Date().toISOString(),
