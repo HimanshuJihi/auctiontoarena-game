@@ -58,6 +58,7 @@
     <textarea id="bio" rows="3" placeholder="Bio (e.g. Cricket Lover from Mumbai)"></textarea>
     
     <button id="save-btn">Save Profile</button>
+    <button id="change-pwd-btn" style="background-color: #198754; margin-top: 10px; width: 100%; padding: 10px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Change Password</button>
     <button class="back-btn" onclick="window.location.href='news.html'">Back to News</button>
     <button id="delete-acc-btn" style="background-color: #dc3545; margin-top: 30px; width: 100%; padding: 10px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Delete Account</button>
 
@@ -87,12 +88,34 @@
             <div id="user-list-content" style="overflow-y:auto; flex:1;">Loading...</div>
         </div>
     </div>
+
+    <!-- Password Modal (For Change Password & Delete Account) -->
+    <div id="password-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:3000; align-items:center; justify-content:center;">
+        <div style="background:#1e1e1e; padding:25px; border-radius:10px; width:90%; max-width:400px; border: 1px solid #444; text-align: center; color: white;">
+            <h3 id="pwd-modal-title" style="color:gold; margin-top:0; margin-bottom: 15px;">Title</h3>
+            <p id="pwd-modal-desc" style="color:#ccc; font-size:0.9rem; margin-bottom: 20px;">Description</p>
+            
+            <div id="pwd-auth-section">
+                <input type="password" id="current-password" placeholder="Current Password" style="width:100%; padding:10px; margin-bottom:15px; background:#333; border:1px solid #555; color:white; border-radius:5px;">
+            </div>
+            
+            <div id="new-password-section" style="display:none;">
+                <input type="password" id="new-password" placeholder="New Password (min 6 chars)" style="width:100%; padding:10px; margin-bottom:10px; background:#333; border:1px solid #555; color:white; border-radius:5px;">
+                <input type="password" id="confirm-password" placeholder="Confirm New Password" style="width:100%; padding:10px; margin-bottom:15px; background:#333; border:1px solid #555; color:white; border-radius:5px;">
+            </div>
+
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button id="pwd-action-btn" style="flex:1; padding:10px; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Confirm</button>
+                <button onclick="document.getElementById('password-modal').style.display='none'" style="flex:1; background:#555; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Cancel</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, updateProfile, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, updateProfile, deleteUser, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { firebaseConfig } from "./firebase-config.js";
 
 
@@ -179,6 +202,8 @@
             // View Mode (Guest or viewing someone else)
             document.querySelector('h2').innerText = "User Profile";
             document.getElementById('save-btn').style.display = 'none';
+            document.getElementById('change-pwd-btn').style.display = 'none';
+            document.getElementById('delete-acc-btn').style.display = 'none';
             document.getElementById('photo-hint').style.display = 'none';
             document.getElementById('preview').onclick = null;
             document.getElementById('preview').style.cursor = 'default';
@@ -413,7 +438,13 @@
         const username = document.getElementById('username').value.trim();
         const bio = document.getElementById('bio').value;
         const photoURL = base64Image || currentUser.photoURL;
-        const isVerified = currentProfileData.isVerified || false;
+        
+        // Verification Criteria: Auto-verify if followers >= 50
+        let isVerified = currentProfileData.isVerified || false;
+        const followersCount = (currentProfileData.followers || []).length;
+        if (followersCount >= 50) {
+            isVerified = true;
+        }
 
         try {
             // 1. Update Firebase Auth Profile (for basic display)
@@ -445,7 +476,8 @@
                 username: username,
                 bio: bio,
                 photoURL: photoURL,
-                email: currentUser.email
+                email: currentUser.email,
+                isVerified: isVerified
             }, { merge: true });
 
             // Update author details in all existing blogs AND comments
@@ -520,28 +552,76 @@
         }
     });
 
-    document.getElementById('delete-acc-btn').addEventListener('click', async () => {
-        if (!currentUser) return;
-        const confirmDelete = confirm("Are you sure you want to delete your account? This action cannot be undone and will delete your profile data.");
-        if (!confirmDelete) return;
+    // Password Modal Logic
+    const pwdModal = document.getElementById('password-modal');
+    const pwdActionBtn = document.getElementById('pwd-action-btn');
+    let currentAction = null; // 'change_pwd' or 'delete_acc'
 
+    document.getElementById('change-pwd-btn').addEventListener('click', () => {
+        // Check if user is using password provider
+        const isPasswordUser = currentUser.providerData.some(p => p.providerId === 'password');
+        if (!isPasswordUser) {
+            alert("You are logged in with a social account (e.g., Google). Please manage your password through that provider.");
+            return;
+        }
+
+        currentAction = 'change_pwd';
+        document.getElementById('pwd-modal-title').innerText = "Change Password";
+        document.getElementById('pwd-modal-desc').innerText = "Please enter your current password to verify identity, then enter your new password.";
+        document.getElementById('new-password-section').style.display = 'block';
+        pwdActionBtn.innerText = "Update Password";
+        pwdActionBtn.style.backgroundColor = "#198754";
+        pwdActionBtn.style.color = "white";
+        
+        document.getElementById('current-password').value = '';
+        document.getElementById('new-password').value = '';
+        document.getElementById('confirm-password').value = '';
+        pwdModal.style.display = 'flex';
+    });
+
+    document.getElementById('delete-acc-btn').addEventListener('click', async () => {
+        currentAction = 'delete_acc';
+        document.getElementById('pwd-modal-title').innerText = "Delete Account";
+        document.getElementById('pwd-modal-desc').innerText = "WARNING: This action is irreversible. Enter your password to confirm deletion.";
+        document.getElementById('new-password-section').style.display = 'none';
+        pwdActionBtn.innerText = "Delete Forever";
+        pwdActionBtn.style.backgroundColor = "#dc3545";
+        pwdActionBtn.style.color = "white";
+        
+        document.getElementById('current-password').value = '';
+        pwdModal.style.display = 'flex';
+    });
+
+    pwdActionBtn.addEventListener('click', async () => {
+        if (!currentUser) return;
+        const currentPwd = document.getElementById('current-password').value;
+        if (!currentPwd) { alert("Please enter your current password."); return; }
+
+        const credential = EmailAuthProvider.credential(currentUser.email, currentPwd);
+        
         try {
-            // 1. Delete User Document from Firestore
-            await deleteDoc(doc(db, "users", currentUser.uid));
-            
-            // 2. Delete User from Firebase Auth
-            await deleteUser(currentUser);
-            
-            alert("Account deleted successfully.");
-            window.location.href = 'news.html';
-        } catch (error) {
-            console.error("Error deleting account:", error);
-            // If login is too old, Firebase requires re-login
-            if (error.code === 'auth/requires-recent-login') {
-                alert("For security, please log out and log in again before deleting your account.");
-            } else {
-                alert("Error deleting account: " + error.message);
+            // 1. Re-authenticate
+            await reauthenticateWithCredential(currentUser, credential);
+
+            if (currentAction === 'delete_acc') {
+                await deleteDoc(doc(db, "users", currentUser.uid));
+                await deleteUser(currentUser);
+                alert("Account deleted successfully.");
+                window.location.href = 'news.html';
+            } else if (currentAction === 'change_pwd') {
+                const newPwd = document.getElementById('new-password').value;
+                const confirmPwd = document.getElementById('confirm-password').value;
+                
+                if (newPwd !== confirmPwd) { alert("New passwords do not match."); return; }
+                if (newPwd.length < 6) { alert("Password must be at least 6 characters."); return; }
+                
+                await updatePassword(currentUser, newPwd);
+                alert("Password updated successfully!");
+                pwdModal.style.display = 'none';
             }
+        } catch (error) {
+            console.error("Action error:", error);
+            alert("Error: " + error.message);
         }
     });
 </script>

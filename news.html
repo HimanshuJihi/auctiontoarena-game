@@ -469,10 +469,47 @@
         <img class="lightbox-content" id="lightbox-img">
     </div>
 
+    <!-- Login Modal -->
+    <div id="login-modal" class="lightbox-modal">
+        <div style="background: #1e1e1e; padding: 20px; border-radius: 8px; max-width: 400px; width: 90%; color: white; position: relative; margin: auto;">
+            <span class="close-lightbox" onclick="document.getElementById('login-modal').style.display='none'" style="top: 10px; right: 15px; font-size: 24px; position: absolute; cursor: pointer;">&times;</span>
+            <h2 style="text-align: center; margin-bottom: 20px; color: gold;">Login / Sign Up</h2>
+            
+            <div style="display: flex; justify-content: space-around; margin-bottom: 20px; border-bottom: 1px solid #444;">
+                <button id="tab-google" class="tab-btn" style="background:none; border:none; color:white; padding: 10px; cursor: pointer; border-bottom: 2px solid gold;">Google</button>
+                <button id="tab-email" class="tab-btn" style="background:none; border:none; color:#aaa; padding: 10px; cursor: pointer;">Email</button>
+                <button id="tab-phone" class="tab-btn" style="background:none; border:none; color:#aaa; padding: 10px; cursor: pointer;">Phone</button>
+            </div>
+
+            <div id="content-google" class="auth-content">
+                <button id="google-login-btn" class="btn" style="width: 100%; background-color: #4285F4;">Sign in with Google</button>
+            </div>
+
+            <div id="content-email" class="auth-content" style="display: none;">
+                <input type="email" id="email-input" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; background: #333; color: white;">
+                <input type="password" id="password-input" placeholder="Password" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; background: #333; color: white;">
+                <div style="text-align: right; margin-bottom: 10px;"><a href="#" id="forgot-pwd-link" style="color: gold; text-decoration: none; font-size: 0.9rem;">Forgot Password?</a></div>
+                <button id="email-login-btn" class="btn" style="width: 100%; margin-bottom: 10px;">Login</button>
+                <button id="email-signup-btn" class="btn" style="width: 100%; background-color: #198754;">Sign Up</button>
+            </div>
+
+            <div id="content-phone" class="auth-content" style="display: none;">
+                <input type="tel" id="phone-input" placeholder="+91 9876543210" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; background: #333; color: white;">
+                <div id="recaptcha-container" style="margin-bottom: 10px;"></div>
+                <button id="phone-send-otp-btn" class="btn" style="width: 100%; margin-bottom: 10px;">Send OTP</button>
+                
+                <div id="otp-section" style="display: none;">
+                    <input type="text" id="otp-input" placeholder="Enter OTP" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; background: #333; color: white;">
+                    <button id="phone-verify-btn" class="btn" style="width: 100%; background-color: #198754;">Verify OTP</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, orderBy, arrayUnion, arrayRemove, addDoc, where, onSnapshot, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPhoneNumber, RecaptchaVerifier, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { firebaseConfig } from "./firebase-config.js";
 
 
@@ -489,15 +526,100 @@
         const logoutBtn = document.getElementById('logout-btn');
         const userInfo = document.getElementById('user-info');
 
+        // Open Login Modal
         loginBtn.addEventListener('click', () => {
+            document.getElementById('login-modal').style.display = 'flex';
+        });
+
+        // Tab Switching Logic
+        const tabs = ['google', 'email', 'phone'];
+        tabs.forEach(tab => {
+            document.getElementById(`tab-${tab}`).addEventListener('click', () => {
+                tabs.forEach(t => {
+                    document.getElementById(`content-${t}`).style.display = 'none';
+                    const btn = document.getElementById(`tab-${t}`);
+                    btn.style.color = '#aaa';
+                    btn.style.borderBottom = 'none';
+                });
+                document.getElementById(`content-${tab}`).style.display = 'block';
+                const activeBtn = document.getElementById(`tab-${tab}`);
+                activeBtn.style.color = 'white';
+                activeBtn.style.borderBottom = '2px solid gold';
+            });
+        });
+
+        // 1. Google Login
+        document.getElementById('google-login-btn').addEventListener('click', () => {
             signInWithPopup(auth, provider)
                 .then((result) => {
                     console.log("User logged in:", result.user);
+                    document.getElementById('login-modal').style.display = 'none';
                 })
                 .catch((error) => {
                     console.error("Login Error:", error);
                     alert(`Login Failed:\n${error.message}\n(Code: ${error.code})`);
                 });
+        });
+
+        // 2. Email/Password Login & Signup
+        document.getElementById('email-login-btn').addEventListener('click', async () => {
+            const email = document.getElementById('email-input').value;
+            const pass = document.getElementById('password-input').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                document.getElementById('login-modal').style.display = 'none';
+            } catch(e) { alert("Error: " + e.message); }
+        });
+
+        document.getElementById('email-signup-btn').addEventListener('click', async () => {
+            const email = document.getElementById('email-input').value;
+            const pass = document.getElementById('password-input').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, pass);
+                document.getElementById('login-modal').style.display = 'none';
+            } catch(e) { alert("Error: " + e.message); }
+        });
+
+        // Forgot Password
+        document.getElementById('forgot-pwd-link').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email-input').value;
+            if (!email) {
+                alert("Please enter your email address in the field above to reset your password.");
+                return;
+            }
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert("Password reset email sent to " + email);
+            } catch(e) { alert("Error: " + e.message); }
+        });
+
+        // 3. Phone Login
+        window.recaptchaVerifier = null;
+        document.getElementById('phone-send-otp-btn').addEventListener('click', async () => {
+            const phoneNumber = document.getElementById('phone-input').value;
+            if(!phoneNumber) { alert("Please enter phone number"); return; }
+            
+            if(!window.recaptchaVerifier) {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'normal'
+                });
+            }
+            
+            try {
+                window.confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+                document.getElementById('otp-section').style.display = 'block';
+                alert("OTP Sent!");
+            } catch(e) { console.error(e); alert("Error sending OTP: " + e.message); }
+        });
+
+        document.getElementById('phone-verify-btn').addEventListener('click', async () => {
+            const code = document.getElementById('otp-input').value;
+            if(!window.confirmationResult) return;
+            try {
+                await window.confirmationResult.confirm(code);
+                document.getElementById('login-modal').style.display = 'none';
+            } catch(e) { alert("Invalid OTP"); }
         });
 
         logoutBtn.addEventListener('click', () => {
@@ -722,7 +844,13 @@
                         `;
                     }
 
-                    let imagesHtml = '';
+                    let mediaHtml = '';
+                    
+                    // Video Display
+                    if (blog.video) {
+                        mediaHtml += `<video src="${blog.video}" controls style="width: 100%; max-height: 300px; border-radius: 8px; margin-bottom: 10px; background: #000;"></video>`;
+                    }
+
                     if (blog.images && blog.images.length > 0) {
                         const imagesList = blog.images.map(img => 
                             `<img src="${img}" alt="Blog Image" onclick="window.openLightbox('${img}')" style="cursor: pointer;">`
@@ -730,12 +858,12 @@
                         const arrows = blog.images.length > 1 ? `
                             <button class="carousel-btn prev" onclick="window.scrollCarousel(this, -1)">&#10094;</button>
                             <button class="carousel-btn next" onclick="window.scrollCarousel(this, 1)">&#10095;</button>` : '';
-                        imagesHtml = `<div class="carousel-container">
+                        mediaHtml += `<div class="carousel-container">
                             ${arrows}
                             <div class="image-carousel">${imagesList}</div>
                         </div>`;
                     } else if (blog.image) {
-                        imagesHtml = `<img src="${blog.image}" class="card-img-top" alt="Blog Image" style="max-height: 300px; object-fit: cover; cursor: pointer;" onclick="window.openLightbox('${blog.image}')">`;
+                        mediaHtml += `<img src="${blog.image}" class="card-img-top" alt="Blog Image" style="max-height: 300px; object-fit: cover; cursor: pointer;" onclick="window.openLightbox('${blog.image}')">`;
                     }
                     
                     // Follow Button Logic
@@ -758,7 +886,7 @@
                     `;
 
                     article.innerHTML = `
-                        ${imagesHtml}
+                        ${mediaHtml}
                         <div class="news-card-content">
                             ${authorHeader}
                             <h2 style="margin-top: 5px;"><a href="#">${blog.title}</a></h2>
@@ -987,11 +1115,13 @@
             
                 const likedIndex = likedPosts.indexOf(id);
                 let newLikes = currentLikes;
+                let isLiking = false;
                 
                 if (likedIndex === -1) {
                     // Like (अगर पहले लाइक नहीं किया)
                     newLikes++;
                     likedPosts.push(id);
+                    isLiking = true;
                 } else {
                     // Unlike (अगर पहले से लाइक है तो हटा दें)
                     newLikes = Math.max(0, newLikes - 1);
@@ -999,6 +1129,29 @@
                 }
 
                 const blogRef = doc(db, "blogs", id);
+                
+                // Send Notification on Like
+                if (isLiking) {
+                    try {
+                        const blogSnap = await getDoc(blogRef);
+                        if (blogSnap.exists()) {
+                            const blogData = blogSnap.data();
+                            if (blogData.authorUid && blogData.authorUid !== auth.currentUser.uid) {
+                                await addDoc(collection(db, "notifications"), {
+                                    recipientUid: blogData.authorUid,
+                                    senderUid: auth.currentUser.uid,
+                                    senderName: auth.currentUser.displayName || "Someone",
+                                    type: "like",
+                                    blogId: id,
+                                    blogTitle: blogData.title,
+                                    date: new Date().toISOString(),
+                                    read: false
+                                });
+                            }
+                        }
+                    } catch(e) { console.error("Notification error:", e); }
+                }
+
                 await updateDoc(blogRef, { likes: newLikes });
 
                 localStorage.setItem('cricket_user_liked_posts', JSON.stringify(likedPosts));
@@ -1086,6 +1239,23 @@
                     isPinned: false,
                     userVerified: isVerified
                 });
+
+                // Send Notification on Comment
+                if (auth.currentUser && blog.authorUid && blog.authorUid !== auth.currentUser.uid) {
+                     try {
+                        await addDoc(collection(db, "notifications"), {
+                            recipientUid: blog.authorUid,
+                            senderUid: auth.currentUser.uid,
+                            senderName: authorName,
+                            type: "comment",
+                            blogId: id,
+                            blogTitle: blog.title,
+                            date: new Date().toISOString(),
+                            read: false
+                        });
+                     } catch(e) { console.error("Notification error:", e); }
+                }
+
                 await updateDoc(blogRef, { comments: comments });
                 location.reload(); 
             }

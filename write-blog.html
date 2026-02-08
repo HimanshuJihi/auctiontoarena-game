@@ -80,6 +80,10 @@
                 <label for="image">तस्वीरें (Images - Max 5, Auto-compressed)</label>
                 <input type="file" id="image" accept="image/*" multiple>
             </div>
+            <div class="form-group">
+                <label for="video">वीडियो (Video - Max 1MB, Optional)</label>
+                <input type="file" id="video" accept="video/*">
+            </div>
             <button type="submit" class="btn">Publish Blog</button>
             <button type="button" id="save-draft-btn" class="btn" style="background-color: #ffc107; color: #000; margin-left: 10px;">Save Draft</button>
             <a href="news.html" class="btn btn-cancel">Cancel</a>
@@ -125,6 +129,16 @@
                 window.location.href = 'news.html';
             }
         });
+
+        // Helper to read file as DataURL (for Video)
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
 
         async function loadBlogForEdit(id, user) {
             try {
@@ -204,6 +218,7 @@
             const author = document.getElementById('author').value;
             const content = document.getElementById('content').value;
             const imageInput = document.getElementById('image');
+            const videoInput = document.getElementById('video');
 
             // Validation for max 5 images
             if (imageInput.files.length > 5) {
@@ -218,9 +233,15 @@
                     return;
                 }
             }
+
+            // Validation for video size (Strict 1MB limit for Firestore)
+            if (videoInput.files.length > 0 && videoInput.files[0].size > 1024 * 1024) {
+                alert("Video file is too large. Max 1MB allowed for Firestore storage.");
+                return;
+            }
             
             if(title && author && content) {
-                const processBlog = async (imagesData) => {
+                const processBlog = async (imagesData, videoData) => {
                     const urlParams = new URLSearchParams(window.location.search);
                     const editId = urlParams.get('id');
                     try {
@@ -236,6 +257,9 @@
                             if (imagesData && imagesData.length > 0) {
                                 updateData.images = imagesData;
                                 updateData.image = imagesData[0]; // Keep primary image for backward compatibility
+                            }
+                            if (videoData) {
+                                updateData.video = videoData;
                             }
                             
                             updateData.status = submissionStatus;
@@ -265,6 +289,7 @@
                             date: new Date().toISOString(),
                             images: imagesData || [],
                             image: (imagesData && imagesData.length > 0) ? imagesData[0] : 'game-logo.png', // Default image
+                            video: videoData || null,
                                 comments: [],
                                 likes: 0,
                                 status: submissionStatus
@@ -279,34 +304,36 @@
                     }
                 };
 
-                if (imageInput.files && imageInput.files.length > 0) {
-                    // Show loading state
-                    const submitBtn = document.querySelector('.btn');
-                    const originalBtnText = submitBtn.innerText;
-                    submitBtn.innerText = "Compressing & Uploading...";
-                    submitBtn.disabled = true;
+                // Show loading state
+                const submitBtn = document.querySelector('.btn');
+                const originalBtnText = submitBtn.innerText;
+                submitBtn.innerText = "Processing...";
+                submitBtn.disabled = true;
 
-                    const promises = Array.from(imageInput.files).map(file => compressImage(file));
-                    
-                    Promise.all(promises).then(images => {
-                        // Check total size (approximate)
-                        let totalSize = JSON.stringify(images).length + content.length + 1000;
-                        if (totalSize > 1000000) {
-                            alert("Total size is too large even after compression. Please use fewer images.");
-                            submitBtn.innerText = originalBtnText;
-                            submitBtn.disabled = false;
-                            return;
-                        }
-                        processBlog(images);
-                    }).catch(err => {
-                        console.error(err);
-                        alert("Error compressing images.");
+                const imagePromises = (imageInput.files && imageInput.files.length > 0) 
+                    ? Array.from(imageInput.files).map(file => compressImage(file)) 
+                    : [];
+                
+                const videoPromise = (videoInput.files.length > 0) 
+                    ? readFile(videoInput.files[0]) 
+                    : Promise.resolve(null);
+
+                Promise.all([Promise.all(imagePromises), videoPromise]).then(([images, video]) => {
+                    // Check total size (approximate)
+                    let totalSize = JSON.stringify(images).length + (video ? video.length : 0) + content.length + 1000;
+                    if (totalSize > 1000000) {
+                        alert("Total data size (Images + Video + Text) is too large for Firestore (Max 1MB). Please reduce video size or image count.");
                         submitBtn.innerText = originalBtnText;
                         submitBtn.disabled = false;
-                    });
-                } else {
-                    processBlog(null);
-                }
+                        return;
+                    }
+                    processBlog(images.length > 0 ? images : null, video);
+                }).catch(err => {
+                    console.error(err);
+                    alert("Error processing files: " + err.message);
+                    submitBtn.innerText = originalBtnText;
+                    submitBtn.disabled = false;
+                });
             }
         });
     </script>
