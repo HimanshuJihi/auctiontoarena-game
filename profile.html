@@ -13,6 +13,12 @@
         .profile-pic { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid white; margin-bottom: 15px; cursor: pointer; }
         .back-btn { background: transparent; border: 1px solid white; margin-top: 10px; }
         .back-btn:hover { background: rgba(255,255,255,0.1); }
+        
+        /* Styles for My Blogs section */
+        .blog-card { background: rgba(255,255,255,0.05); padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: left; }
+        .action-btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; font-size: 0.8rem; }
+        .edit-btn { background-color: #ffc107; color: #000; }
+        .delete-btn { background-color: #dc3545; color: #fff; }
     </style>
 </head>
 <body>
@@ -23,16 +29,22 @@
     <input type="file" id="file-input" style="display: none;" accept="image/*">
     <p style="font-size: 0.8rem; opacity: 0.8;">Tap image to change</p>
     
+    <input type="text" id="username" placeholder="Unique ID (e.g. @cricket_lover)" style="background: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
     <input type="text" id="name" placeholder="Display Name">
     <textarea id="bio" rows="3" placeholder="Bio (e.g. Cricket Lover from Mumbai)"></textarea>
     
     <button id="save-btn">Save Profile</button>
     <button class="back-btn" onclick="window.location.href='news.html'">Back to News</button>
+
+    <div id="my-blogs-section" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; text-align: left;">
+        <h3 style="color: gold; margin-bottom: 15px; text-align: center;">My Blogs</h3>
+        <div id="my-blogs-list">Loading...</div>
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -78,6 +90,7 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     document.getElementById('name').value = data.name || user.displayName;
+                    document.getElementById('username').value = data.username || "";
                     document.getElementById('bio').value = data.bio || "";
                     if (data.photoURL) {
                         preview.src = data.photoURL;
@@ -89,6 +102,9 @@
                     document.getElementById('name').value = user.displayName;
                     if (user.photoURL) preview.src = user.photoURL;
                 }
+                
+                // Fetch User's Blogs
+                fetchMyBlogs(user.uid);
             } catch (e) {
                 console.error("Error loading profile:", e);
             }
@@ -97,10 +113,61 @@
         }
     });
 
+    async function fetchMyBlogs(uid) {
+        const list = document.getElementById('my-blogs-list');
+        list.innerHTML = '<p style="text-align:center; color:#aaa;">Loading...</p>';
+        try {
+            const q = query(collection(db, "blogs"), where("authorUid", "==", uid));
+            const querySnapshot = await getDocs(q);
+            
+            list.innerHTML = '';
+            if (querySnapshot.empty) {
+                list.innerHTML = '<p style="text-align:center; color:#aaa;">No blogs yet.</p>';
+                return;
+            }
+
+            querySnapshot.forEach((doc) => {
+                const blog = doc.data();
+                const div = document.createElement('div');
+                div.className = 'blog-card';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <h4 style="margin:0; color:#fff; font-size: 1rem;">${blog.title}</h4>
+                        <span style="font-size:0.7rem; color:#aaa;">${new Date(blog.date).toLocaleDateString()}</span>
+                    </div>
+                    <p style="color:#ddd; font-size:0.85rem; margin: 5px 0 10px 0;">${blog.content.substring(0, 50)}...</p>
+                    <div>
+                        <button onclick="window.editMyBlog('${doc.id}')" class="action-btn edit-btn">Edit</button>
+                        <button onclick="window.deleteMyBlog('${doc.id}')" class="action-btn delete-btn">Delete</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        } catch (e) {
+            console.error("Error fetching blogs:", e);
+            list.innerHTML = '<p style="color:red;">Error loading blogs.</p>';
+        }
+    }
+
+    // Global functions for buttons
+    window.editMyBlog = (id) => {
+        window.location.href = `write-blog.html?id=${id}`;
+    };
+
+    window.deleteMyBlog = async (id) => {
+        if(confirm("Are you sure you want to delete this blog?")) {
+            try {
+                await deleteDoc(doc(db, "blogs", id));
+                if(currentUser) fetchMyBlogs(currentUser.uid);
+            } catch(e) { alert("Error: " + e.message); }
+        }
+    };
+
     document.getElementById('save-btn').addEventListener('click', async () => {
         if (!currentUser) return;
         
         const name = document.getElementById('name').value;
+        const username = document.getElementById('username').value.trim();
         const bio = document.getElementById('bio').value;
         const photoURL = base64Image || currentUser.photoURL;
 
@@ -111,16 +178,29 @@
                 photoURL: photoURL
             });
 
+            // Check Username Uniqueness
+            if (username) {
+                const q = query(collection(db, "users"), where("username", "==", username));
+                const snap = await getDocs(q);
+                let isTaken = false;
+                snap.forEach(d => { if (d.id !== currentUser.uid) isTaken = true; });
+                
+                if (isTaken) {
+                    alert("Username '" + username + "' is already taken. Please choose another.");
+                    return;
+                }
+            }
+
             // 2. Save detailed profile to Firestore
             await setDoc(doc(db, "users", currentUser.uid), {
                 name: name,
+                username: username,
                 bio: bio,
                 photoURL: photoURL,
                 email: currentUser.email
             }, { merge: true });
 
             alert("Profile Saved Successfully!");
-            window.location.href = 'news.html';
         } catch (error) {
             console.error("Error saving profile:", error);
             alert("Error saving profile: " + error.message);

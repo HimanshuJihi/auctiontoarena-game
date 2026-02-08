@@ -273,6 +273,26 @@
         footer p {
             margin: 0;
         }
+
+        /* Carousel Styles for Multiple Images */
+        .image-carousel {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            gap: 10px;
+            padding-bottom: 10px;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+        .image-carousel img {
+            flex: 0 0 100%; /* Show one image at a time fully */
+            scroll-snap-align: center;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        /* Hide scrollbar for cleaner look */
+        .image-carousel::-webkit-scrollbar { display: none; }
+        .image-carousel { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body>
@@ -494,8 +514,17 @@
                         `;
                     }
 
+                    let imagesHtml = '';
+                    if (blog.images && blog.images.length > 0) {
+                        imagesHtml = `<div class="image-carousel">
+                            ${blog.images.map(img => `<img src="${img}" alt="Blog Image">`).join('')}
+                        </div>`;
+                    } else if (blog.image) {
+                        imagesHtml = `<img src="${blog.image}" class="card-img-top" alt="Blog Image" style="max-height: 300px; object-fit: cover;">`;
+                    }
+
                     article.innerHTML = `
-                        ${blog.image ? `<img src="${blog.image}" class="card-img-top" alt="Blog Image" style="max-height: 300px; object-fit: cover;">` : ''}
+                        ${imagesHtml}
                         <div class="news-card-content">
                             <h2><a href="#">${blog.title}</a></h2>
                             <span class="article-meta">Published: ${new Date(blog.date).toLocaleDateString()} | By: <strong>${blog.author}</strong></span>
