@@ -75,6 +75,7 @@
                 <input type="file" id="image" accept="image/*" multiple>
             </div>
             <button type="submit" class="btn">Publish Blog</button>
+            <button type="button" id="save-draft-btn" class="btn" style="background-color: #ffc107; color: #000; margin-left: 10px;">Save Draft</button>
             <a href="news.html" class="btn btn-cancel">Cancel</a>
         </form>
     </div>
@@ -99,10 +100,22 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const authorInput = document.getElementById('author');
-                if (authorInput && !authorInput.value) authorInput.value = user.displayName;
+                
+                // Fetch Unique ID (Username)
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists() && userDoc.data().username) {
+                    if (authorInput) {
+                        authorInput.value = userDoc.data().username;
+                        authorInput.readOnly = true; // Lock author name to Unique ID
+                    }
+                } else {
+                    alert("Please create a Unique ID (Username) in your profile first.");
+                    window.location.href = "profile.html?requireUsername=true";
+                    return;
+                }
                 
                 // Check if we are editing an existing blog
                 const urlParams = new URLSearchParams(window.location.search);
@@ -177,8 +190,16 @@
             });
         }
 
+        let submissionStatus = 'published';
+        document.getElementById('save-draft-btn').addEventListener('click', () => {
+            submissionStatus = 'draft';
+            document.getElementById('blogForm').requestSubmit();
+        });
+
         document.getElementById('blogForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            // Default to published if triggered by enter key or main button
+            if (e.submitter && e.submitter.type === 'submit') submissionStatus = 'published';
             
             const title = document.getElementById('title').value;
             const author = document.getElementById('author').value;
@@ -217,6 +238,7 @@
                                 updateData.image = imagesData[0]; // Keep primary image for backward compatibility
                             }
                             
+                            updateData.status = submissionStatus;
                             await updateDoc(blogRef, updateData);
                     } else {
                         // Fetch latest user profile for author details
@@ -243,11 +265,12 @@
                             images: imagesData || [],
                             image: (imagesData && imagesData.length > 0) ? imagesData[0] : 'game-logo.png', // Default image
                                 comments: [],
-                                likes: 0
+                                likes: 0,
+                                status: submissionStatus
                             });
                     }
                     
-                        alert(editId ? 'Blog Updated Successfully!' : 'Blog Published Successfully!');
+                        alert(submissionStatus === 'draft' ? 'Draft Saved Successfully!' : (editId ? 'Blog Updated Successfully!' : 'Blog Published Successfully!'));
                         window.location.href = 'news.html';
                     } catch (e) {
                         console.error("Error:", e);

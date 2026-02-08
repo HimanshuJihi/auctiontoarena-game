@@ -19,7 +19,11 @@
         .action-btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; font-size: 0.8rem; }
         .edit-btn { background-color: #ffc107; color: #000; }
         .delete-btn { background-color: #dc3545; color: #fff; }
+        /* CropperJS CSS Fix */
+        .cropper-container { max-width: 100%; }
     </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
 <body>
 
@@ -27,7 +31,7 @@
     <h2>My Profile</h2>
     <img id="preview" src="https://via.placeholder.com/100" class="profile-pic" onclick="document.getElementById('file-input').click()" title="Click to change photo">
     <input type="file" id="file-input" style="display: none;" accept="image/*">
-    <p style="font-size: 0.8rem; opacity: 0.8;">Tap image to change</p>
+    <p id="photo-hint" style="font-size: 0.8rem; opacity: 0.8;">Tap image to change</p>
     
     <input type="text" id="username" placeholder="Unique ID (e.g. @cricket_lover)" style="background: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
     <input type="text" id="name" placeholder="Display Name">
@@ -39,6 +43,17 @@
     <div id="my-blogs-section" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; text-align: left;">
         <h3 style="color: gold; margin-bottom: 15px; text-align: center;">My Blogs</h3>
         <div id="my-blogs-list">Loading...</div>
+    </div>
+
+    <!-- Cropper Modal -->
+    <div id="cropper-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; flex-direction:column; align-items:center; justify-content:center;">
+        <div style="width:90%; max-width:500px; max-height:70vh; background:#000; overflow:hidden; border-radius:8px;">
+            <img id="cropper-image" style="max-width:100%; display:block;">
+        </div>
+        <div style="margin-top:20px; display:flex; gap:15px;">
+            <button id="btn-crop" style="background:#28a745; color:white; padding:10px 25px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">Crop & Save</button>
+            <button id="btn-cancel-crop" style="background:#dc3545; color:white; padding:10px 25px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">Cancel</button>
+        </div>
     </div>
 </div>
 
@@ -67,53 +82,133 @@
     const preview = document.getElementById('preview');
     let base64Image = null;
 
+    // Cropper variables
+    let cropper;
+    const cropperModal = document.getElementById('cropper-modal');
+    const cropperImage = document.getElementById('cropper-image');
+    const btnCrop = document.getElementById('btn-crop');
+    const btnCancelCrop = document.getElementById('btn-cancel-crop');
+
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                preview.src = e.target.result;
-                base64Image = e.target.result;
+                cropperImage.src = e.target.result;
+                cropperModal.style.display = 'flex';
+                if(cropper) cropper.destroy();
+                cropper = new Cropper(cropperImage, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    autoCropArea: 1,
+                    background: false,
+                });
             };
             reader.readAsDataURL(file);
         }
+        fileInput.value = ''; // Allow re-selecting same file
+    });
+
+    btnCancelCrop.addEventListener('click', () => {
+        cropperModal.style.display = 'none';
+        if(cropper) cropper.destroy();
+    });
+
+    btnCrop.addEventListener('click', () => {
+        if(!cropper) return;
+        
+        // Get cropped canvas (limit size to 600x600 for profile pic)
+        const canvas = cropper.getCroppedCanvas({
+            width: 600,
+            height: 600,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
+
+        // Compress to under 1MB
+        let quality = 0.9;
+        let dataURL = canvas.toDataURL('image/jpeg', quality);
+        
+        // 1MB approx 1.33 million base64 chars
+        while (dataURL.length > 1330000 && quality > 0.1) {
+            quality -= 0.1;
+            dataURL = canvas.toDataURL('image/jpeg', quality);
+        }
+
+        preview.src = dataURL;
+        base64Image = dataURL;
+        
+        cropperModal.style.display = 'none';
+        cropper.destroy();
     });
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
+            
+            // Check if we are viewing someone else's profile
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewUid = urlParams.get('uid');
+            
+            if (viewUid && viewUid !== user.uid) {
+                // View Mode
+                document.querySelector('h2').innerText = "User Profile";
+                document.getElementById('save-btn').style.display = 'none';
+                document.getElementById('photo-hint').style.display = 'none';
+                document.getElementById('preview').onclick = null;
+                document.getElementById('preview').style.cursor = 'default';
+                document.getElementById('preview').style.border = '3px solid #87ceeb';
+                
+                ['username', 'name', 'bio'].forEach(id => {
+                    const el = document.getElementById(id);
+                    el.readOnly = true;
+                    el.style.border = 'none';
+                    el.style.background = 'transparent';
+                    el.style.textAlign = 'center';
+                });
+
+                loadProfileData(viewUid);
+                fetchMyBlogs(viewUid, false); // false = not owner
+            } else {
+                // Edit Mode (My Profile)
             // Load existing profile
-            try {
-                const docRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(docRef);
-                
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    document.getElementById('name').value = data.name || user.displayName;
-                    document.getElementById('username').value = data.username || "";
-                    document.getElementById('bio').value = data.bio || "";
-                    if (data.photoURL) {
-                        preview.src = data.photoURL;
-                        base64Image = data.photoURL;
-                    } else if (user.photoURL) {
-                        preview.src = user.photoURL;
-                    }
-                } else {
-                    document.getElementById('name').value = user.displayName;
-                    if (user.photoURL) preview.src = user.photoURL;
+                loadProfileData(user.uid);
+                fetchMyBlogs(user.uid, true); // true = owner
+
+                // Check if username is required
+                if (urlParams.get('requireUsername') === 'true' && !document.getElementById('username').value) {
+                    alert("Please create a Unique ID (Username) to continue.");
+                    document.getElementById('username').focus();
+                    document.querySelector('.back-btn').style.display = 'none'; // Hide back button to enforce creation
                 }
-                
-                // Fetch User's Blogs
-                fetchMyBlogs(user.uid);
-            } catch (e) {
-                console.error("Error loading profile:", e);
             }
         } else {
             window.location.href = 'news.html';
         }
     });
 
-    async function fetchMyBlogs(uid) {
+    async function loadProfileData(uid) {
+        try {
+            const docRef = doc(db, "users", uid);
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('name').value = data.name || "";
+                document.getElementById('username').value = data.username || "";
+                document.getElementById('bio').value = data.bio || "";
+                if (data.photoURL) {
+                    document.getElementById('preview').src = data.photoURL;
+                    if (uid === currentUser.uid) base64Image = data.photoURL;
+                }
+            } else if (uid === currentUser.uid) {
+                document.getElementById('name').value = currentUser.displayName;
+                if (currentUser.photoURL) document.getElementById('preview').src = currentUser.photoURL;
+            }
+        } catch (e) { console.error("Error loading profile:", e); }
+    }
+
+    async function fetchMyBlogs(uid, isOwner) {
         const list = document.getElementById('my-blogs-list');
         list.innerHTML = '<p style="text-align:center; color:#aaa;">Loading...</p>';
         try {
@@ -128,18 +223,24 @@
 
             querySnapshot.forEach((doc) => {
                 const blog = doc.data();
+                
+                // Filter drafts if not owner
+                if (!isOwner && blog.status === 'draft') return;
+
+                const draftBadge = (blog.status === 'draft') ? '<span style="background:orange; color:black; padding:2px 5px; border-radius:4px; font-size:0.7rem; margin-left:5px;">DRAFT</span>' : '';
+
                 const div = document.createElement('div');
                 div.className = 'blog-card';
                 div.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <h4 style="margin:0; color:#fff; font-size: 1rem;">${blog.title}</h4>
+                        <h4 style="margin:0; color:#fff; font-size: 1rem;">${blog.title} ${draftBadge}</h4>
                         <span style="font-size:0.7rem; color:#aaa;">${new Date(blog.date).toLocaleDateString()}</span>
                     </div>
                     <p style="color:#ddd; font-size:0.85rem; margin: 5px 0 10px 0;">${blog.content.substring(0, 50)}...</p>
-                    <div>
+                    ${isOwner ? `<div>
                         <button onclick="window.editMyBlog('${doc.id}')" class="action-btn edit-btn">Edit</button>
                         <button onclick="window.deleteMyBlog('${doc.id}')" class="action-btn delete-btn">Delete</button>
-                    </div>
+                    </div>` : ''}
                 `;
                 list.appendChild(div);
             });
@@ -189,6 +290,9 @@
                     alert("Username '" + username + "' is already taken. Please choose another.");
                     return;
                 }
+            } else {
+                alert("Unique ID (Username) is required!");
+                return;
             }
 
             // 2. Save detailed profile to Firestore
@@ -201,6 +305,12 @@
             }, { merge: true });
 
             alert("Profile Saved Successfully!");
+            
+            // If came from forced redirect, go back to news
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('requireUsername') === 'true') {
+                window.location.href = 'news.html';
+            }
         } catch (error) {
             console.error("Error saving profile:", error);
             alert("Error saving profile: " + error.message);

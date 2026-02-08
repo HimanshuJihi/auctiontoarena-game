@@ -293,6 +293,15 @@
         /* Hide scrollbar for cleaner look */
         .image-carousel::-webkit-scrollbar { display: none; }
         .image-carousel { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Comment Actions */
+        .comment-actions { display: flex; gap: 15px; margin-top: 8px; font-size: 0.85rem; color: #aaa; }
+        .comment-action-btn { background: none; border: none; color: inherit; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 5px; transition: color 0.2s; }
+        .comment-action-btn:hover { color: #fff; }
+        .replies-list { margin-left: 20px; margin-top: 10px; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 10px; }
+        .pinned-badge { background: #ffd700; color: #000; font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; margin-left: 8px; font-weight: bold; vertical-align: middle; }
+        .follow-btn { padding: 2px 8px; font-size: 0.7rem; border-radius: 10px; border: 1px solid #0d6efd; background: transparent; color: #0d6efd; cursor: pointer; margin-left: 10px; transition: all 0.2s; }
+        .follow-btn.following { background: #0d6efd; color: white; }
     </style>
 </head>
 <body>
@@ -374,7 +383,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, orderBy, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         // TODO: यहाँ अपनी Firebase Config पेस्ट करें (वही जो write-blog.html में डाली थी)
@@ -392,6 +401,7 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
+        let currentUserFollowing = [];
 
         // Login/Logout Logic
         const loginBtn = document.getElementById('login-btn');
@@ -413,13 +423,29 @@
             signOut(auth);
         });
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 loginBtn.style.display = 'none';
                 logoutBtn.style.display = 'inline-block';
                 document.getElementById('profile-btn').style.display = 'inline-block';
                 userInfo.style.display = 'inline-block';
                 userInfo.textContent = `Hi, ${user.displayName.split(' ')[0]}`;
+                
+                // Load following list
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists()) currentUserFollowing = userDoc.data().following || [];
+                } catch(e) { console.error("Error loading following:", e); }
+
+                // Check if user has a unique ID (username)
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (!userDoc.exists() || !userDoc.data().username) {
+                    // Redirect to profile to create unique ID
+                    window.location.href = "profile.html?requireUsername=true";
+                    return;
+                }
+
                 renderBlogs(user);
             } else {
                 loginBtn.style.display = 'inline-block';
@@ -452,7 +478,10 @@
                 const querySnapshot = await getDocs(q);
                 fetchedBlogs = [];
                 querySnapshot.forEach((doc) => {
-                    fetchedBlogs.push({ id: doc.id, ...doc.data() });
+                    const data = doc.data();
+                    if (data.status !== 'draft') {
+                        fetchedBlogs.push({ id: doc.id, ...data });
+                    }
                 });
                 renderBlogs(auth.currentUser);
             } catch (e) {
@@ -522,12 +551,30 @@
                     } else if (blog.image) {
                         imagesHtml = `<img src="${blog.image}" class="card-img-top" alt="Blog Image" style="max-height: 300px; object-fit: cover;">`;
                     }
+                    
+                    // Follow Button Logic
+                    let followBtnHtml = '';
+                    if (user && blog.authorUid && blog.authorUid !== user.uid) {
+                        const isFollowing = currentUserFollowing.includes(blog.authorUid);
+                        followBtnHtml = `<button onclick="toggleFollow('${blog.authorUid}')" class="follow-btn ${isFollowing ? 'following' : ''}">${isFollowing ? 'Following' : 'Follow'}</button>`;
+                    }
+
+                    // User Profile & ID Header
+                    const authorHeader = `
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <img src="${blog.authorPhoto || 'https://via.placeholder.com/40'}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #87ceeb; cursor: pointer;" onclick="window.location.href='profile.html?uid=${blog.authorUid}'">
+                            <div>
+                                <div style="display:flex; align-items:center;"><strong style="color: #87ceeb; font-size: 1.1rem;">${blog.author}</strong> ${followBtnHtml}</div>
+                                <span style="font-size: 0.8rem; color: #aaa;">${new Date(blog.date).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                    `;
 
                     article.innerHTML = `
                         ${imagesHtml}
                         <div class="news-card-content">
-                            <h2><a href="#">${blog.title}</a></h2>
-                            <span class="article-meta">Published: ${new Date(blog.date).toLocaleDateString()} | By: <strong>${blog.author}</strong></span>
+                            ${authorHeader}
+                            <h2 style="margin-top: 5px;"><a href="#">${blog.title}</a></h2>
                             <p>${blog.content.replace(/\n/g, '<br>')}</p>
                             
                             <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; display: flex; align-items: center; gap: 15px;">
@@ -538,7 +585,35 @@
                             <div style="margin-top: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
                                 <h3 style="font-size: 1.1rem; margin-top: 0; color: #ddd;">Comments</h3>
                                 <div id="comments-list-${blog.id}" style="margin-bottom: 10px; max-height: 300px; overflow-y: auto; padding-right: 5px;">
-                                    ${(blog.comments || []).map((c, index) => {
+                                    ${(() => {
+                                        // Prepare comments: add original index, sort by pinned then date
+                                        const comments = blog.comments || [];
+                                        const indexedComments = comments.map((c, i) => ({...c, originalIndex: i}));
+                                        
+                                        indexedComments.sort((a, b) => {
+                                            if (a.isPinned && !b.isPinned) return -1;
+                                            if (!a.isPinned && b.isPinned) return 1;
+                                            // Newest first
+                                            return new Date(b.date) - new Date(a.date);
+                                        });
+
+                                        return indexedComments.map(c => {
+                                        const index = c.originalIndex;
+                                        
+                                        // Like Logic
+                                        const likes = c.likes || [];
+                                        const isLiked = user && likes.includes(user.uid);
+                                        const likeColor = isLiked ? '#ff69b4' : 'inherit';
+                                        const likeIcon = isLiked ? '❤️' : '🤍';
+
+                                        // Pin Logic
+                                        const isPinned = c.isPinned || false;
+                                        const pinnedStyle = isPinned ? 'border: 1px solid rgba(255, 215, 0, 0.3); background: rgba(255, 215, 0, 0.05);' : '';
+                                        const pinnedBadge = isPinned ? '<span class="pinned-badge">PINNED</span>' : '';
+                                        const pinBtnText = isPinned ? 'Unpin' : 'Pin';
+                                        const pinBtnColor = isPinned ? '#ffd700' : 'inherit';
+
+                                        // Ownership
                                         const isCommentOwner = user && (c.userUid === user.uid || (!c.userUid && c.author === user.displayName));
                                         const commentActions = isCommentOwner ? `
                                             <div style="display: flex; gap: 15px; justify-content: flex-end;">
@@ -546,22 +621,65 @@
                                                 <button onclick="deleteComment('${blog.id}', ${index})" style="background:none; border:none; color:#aaa; cursor:pointer; font-size: 0.8rem; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='#ff6b6b'" onmouseout="this.style.color='#aaa'">Delete</button>
                                             </div>
                                         ` : '';
+
+                                        // Replies
+                                        const replies = c.replies || [];
+                                        const repliesHtml = replies.map((r, rIndex) => {
+                                            const rLikes = r.likes || [];
+                                            const rIsLiked = user && rLikes.includes(user.uid);
+                                            const rLikeColor = rIsLiked ? '#ff69b4' : 'inherit';
+                                            const rLikeIcon = rIsLiked ? '❤️' : '🤍';
+                                            
+                                            return `
+                                            <div style="margin-top: 10px; display: flex; gap: 10px; align-items: flex-start;">
+                                                <img src="${r.photo || 'https://via.placeholder.com/30'}" style="width: 25px; height: 25px; border-radius: 50%; object-fit: cover;">
+                                                <div style="flex: 1;">
+                                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                        <strong style="color: #87ceeb; font-size: 0.8rem;">${r.author}</strong>
+                                                        <span style="font-size: 0.65rem; color: #888;">${new Date(r.date).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <div style="font-size: 0.9rem; color: #ddd;">${r.text}</div>
+                                                    <div class="comment-actions">
+                                                        <button onclick="toggleLike('${blog.id}', ${index}, ${rIndex})" class="comment-action-btn" style="color: ${rLikeColor}">${rLikeIcon} ${rLikes.length || 0}</button>
+                                                    </div>
+                                                </div>
+                                            </div>`;
+                                        }).join('');
                                         
                                         return `
-                                        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 10px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                                        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 10px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.1); ${pinnedStyle}">
                                             <div style="display: flex; gap: 10px; align-items: flex-start;">
                                                 <img src="${c.photo || 'https://via.placeholder.com/40'}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #555;">
                                                 <div style="flex: 1;">
                                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                                                        <strong style="color: #87ceeb; font-size: 0.9rem;">${c.author}</strong>
+                                                        <div>
+                                                            <strong style="color: #87ceeb; font-size: 0.9rem;">${c.author}</strong>
+                                                            ${pinnedBadge}
+                                                        </div>
                                                         <span style="font-size: 0.75rem; color: #888;">${c.date ? new Date(c.date).toLocaleDateString() : ''}</span>
                                                     </div>
                                                     <div style="font-size: 0.95rem; color: #eee; line-height: 1.4; margin-bottom: 8px;">${c.text}</div>
+                                                    
+                                                    <div class="comment-actions">
+                                                        <button onclick="toggleLike('${blog.id}', ${index})" class="comment-action-btn" style="color: ${likeColor}">${likeIcon} ${likes.length || 0}</button>
+                                                        <button onclick="toggleReplyBox('${blog.id}', ${index})" class="comment-action-btn">💬 Reply</button>
+                                                        ${isBlogOwner ? `<button onclick="togglePin('${blog.id}', ${index})" class="comment-action-btn" style="color: ${pinBtnColor}">📌 ${pinBtnText}</button>` : ''}
+                                                    </div>
+
+                                                    <div id="reply-box-${blog.id}-${index}" style="display: none; margin-top: 10px; gap: 5px;">
+                                                        <input type="text" id="reply-input-${blog.id}-${index}" placeholder="Write a reply..." style="flex: 1; padding: 5px; border-radius: 4px; border: none; font-size: 0.85rem; width: 70%;">
+                                                        <button onclick="submitReply('${blog.id}', ${index})" style="padding: 5px 10px; background: #0d6efd; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Send</button>
+                                                    </div>
+
+                                                    <div class="replies-list">
+                                                        ${repliesHtml}
+                                                    </div>
                                                 </div>
                                             </div>
                                             ${commentActions}
                                         </div>
-                                    `}).join('')}
+                                    `}).join('');
+                                    })()}
                                     ${(!blog.comments || blog.comments.length === 0) ? '<p style="font-size: 0.8rem; color: #ccc;">No comments yet.</p>' : ''}
                                 </div>
                                 <div style="display: flex; gap: 10px;">
@@ -616,6 +734,25 @@
                 await deleteDoc(docRef);
                 location.reload();
             }
+        };
+
+        window.toggleFollow = async function(targetUid) {
+            if (!auth.currentUser) { alert("Please login to follow!"); return; }
+            const myUid = auth.currentUser.uid;
+            const userRef = doc(db, "users", myUid);
+            
+            try {
+                if (currentUserFollowing.includes(targetUid)) {
+                    // Unfollow
+                    await updateDoc(userRef, { following: arrayRemove(targetUid) });
+                    currentUserFollowing = currentUserFollowing.filter(id => id !== targetUid);
+                } else {
+                    // Follow
+                    await updateDoc(userRef, { following: arrayUnion(targetUid) });
+                    currentUserFollowing.push(targetUid);
+                }
+                renderBlogs(auth.currentUser); // Re-render to update buttons
+            } catch(e) { console.error("Follow error:", e); alert("Error updating follow status"); }
         };
 
         window.editUserBlog = function(id) {
@@ -687,14 +824,114 @@
                 const blog = docSnap.data();
                 const comments = blog.comments || [];
                 comments.push({
+                    id: Date.now().toString(),
                     author: authorName,
                     userUid: auth.currentUser ? auth.currentUser.uid : null,
                     photo: authorPhoto,
                     text: text,
-                    date: new Date().toISOString()
+                    date: new Date().toISOString(),
+                    likes: [],
+                    replies: [],
+                    isPinned: false
                 });
                 await updateDoc(blogRef, { comments: comments });
                 location.reload(); 
+            }
+        };
+
+        window.toggleReplyBox = function(blogId, commentIndex) {
+            if (!auth.currentUser) { alert("Please login to reply!"); return; }
+            const box = document.getElementById(`reply-box-${blogId}-${commentIndex}`);
+            box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+        };
+
+        window.submitReply = async function(blogId, commentIndex) {
+            if (!auth.currentUser) return;
+            const input = document.getElementById(`reply-input-${blogId}-${commentIndex}`);
+            const text = input.value.trim();
+            if (!text) return;
+
+            let authorName = auth.currentUser.displayName;
+            let authorPhoto = auth.currentUser.photoURL;
+            
+            // Fetch latest profile
+            try {
+                const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if (userData.name) authorName = userData.name;
+                    if (userData.photoURL) authorPhoto = userData.photoURL;
+                }
+            } catch(e) {}
+
+            const blogRef = doc(db, "blogs", blogId);
+            const docSnap = await getDoc(blogRef);
+            if (docSnap.exists()) {
+                const blog = docSnap.data();
+                const comments = blog.comments || [];
+                if (comments[commentIndex]) {
+                    if (!comments[commentIndex].replies) comments[commentIndex].replies = [];
+                    comments[commentIndex].replies.push({
+                        id: Date.now().toString(),
+                        author: authorName,
+                        userUid: auth.currentUser.uid,
+                        photo: authorPhoto,
+                        text: text,
+                        date: new Date().toISOString(),
+                        likes: []
+                    });
+                    await updateDoc(blogRef, { comments: comments });
+                    location.reload();
+                }
+            }
+        };
+
+        window.toggleLike = async function(blogId, commentIndex, replyIndex = null) {
+            if (!auth.currentUser) { alert("Please login to like!"); return; }
+            const uid = auth.currentUser.uid;
+            const blogRef = doc(db, "blogs", blogId);
+            const docSnap = await getDoc(blogRef);
+            
+            if (docSnap.exists()) {
+                const blog = docSnap.data();
+                const comments = blog.comments || [];
+                
+                if (comments[commentIndex]) {
+                    let target = comments[commentIndex];
+                    if (replyIndex !== null) {
+                        if (target.replies && target.replies[replyIndex]) {
+                            target = target.replies[replyIndex];
+                        } else return;
+                    }
+
+                    if (!target.likes) target.likes = [];
+                    const likeIdx = target.likes.indexOf(uid);
+                    if (likeIdx === -1) target.likes.push(uid);
+                    else target.likes.splice(likeIdx, 1);
+
+                    await updateDoc(blogRef, { comments: comments });
+                    location.reload();
+                }
+            }
+        };
+
+        window.togglePin = async function(blogId, commentIndex) {
+            if (!auth.currentUser) return;
+            const blogRef = doc(db, "blogs", blogId);
+            const docSnap = await getDoc(blogRef);
+            
+            if (docSnap.exists()) {
+                const blog = docSnap.data();
+                // Verify owner
+                const isOwner = (blog.authorUid === auth.currentUser.uid) || (!blog.authorUid && blog.author === auth.currentUser.displayName);
+                if (!isOwner) { alert("Only the author can pin comments."); return; }
+
+                const comments = blog.comments || [];
+                if (comments[commentIndex]) {
+                    comments[commentIndex].isPinned = !comments[commentIndex].isPinned;
+                    await updateDoc(blogRef, { comments: comments });
+                    location.reload();
+                }
             }
         };
 
