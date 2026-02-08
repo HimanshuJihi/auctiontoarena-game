@@ -23,6 +23,7 @@
         .cropper-container { max-width: 100%; }
         .follow-profile-btn { width: auto; padding: 8px 20px; margin-top: 10px; background: #0d6efd; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; color: white; transition: background 0.2s; }
         .follow-profile-btn.following { background: #555; border: 1px solid #777; }
+        .verified-badge { color: #1da1f2; margin-left: 5px; font-size: 1rem; vertical-align: middle; }
         @media (max-width: 480px) {
             .container { width: 90%; padding: 20px; }
         }
@@ -51,12 +52,14 @@
         </div>
     </div>
 
+    <div id="verified-indicator" style="display:none; color:#1da1f2; font-weight:bold; margin: 5px 0;">✔ Verified Account</div>
     <input type="text" id="username" placeholder="Unique ID (e.g. @cricket_lover)" style="background: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
     <input type="text" id="name" placeholder="Display Name">
     <textarea id="bio" rows="3" placeholder="Bio (e.g. Cricket Lover from Mumbai)"></textarea>
     
     <button id="save-btn">Save Profile</button>
     <button class="back-btn" onclick="window.location.href='news.html'">Back to News</button>
+    <button id="delete-acc-btn" style="background-color: #dc3545; margin-top: 30px; width: 100%; padding: 10px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Delete Account</button>
 
     <div id="my-blogs-section" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; text-align: left;">
         <h3 style="color: gold; margin-bottom: 15px; text-align: center;">My Blogs</h3>
@@ -89,7 +92,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, updateProfile, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { firebaseConfig } from "./firebase-config.js";
 
 
@@ -290,6 +293,13 @@
                 const following = data.following || [];
                 document.getElementById('followers-count').innerText = followers.length;
                 document.getElementById('following-count').innerText = following.length;
+
+                // Verified Badge
+                if (data.isVerified) {
+                    document.getElementById('verified-indicator').style.display = 'block';
+                } else {
+                    document.getElementById('verified-indicator').style.display = 'none';
+                }
             } else if (currentUser && uid === currentUser.uid) {
                 document.getElementById('name').value = currentUser.displayName;
                 if (currentUser.photoURL) document.getElementById('preview').src = currentUser.photoURL;
@@ -403,6 +413,7 @@
         const username = document.getElementById('username').value.trim();
         const bio = document.getElementById('bio').value;
         const photoURL = base64Image || currentUser.photoURL;
+        const isVerified = currentProfileData.isVerified || false;
 
         try {
             // 1. Update Firebase Auth Profile (for basic display)
@@ -437,6 +448,65 @@
                 email: currentUser.email
             }, { merge: true });
 
+            // Update author details in all existing blogs AND comments
+            const allBlogsSnapshot = await getDocs(collection(db, "blogs"));
+            
+            const updatePromises = [];
+            
+            allBlogsSnapshot.forEach((blogDoc) => {
+                const blogData = blogDoc.data();
+                const updates = {};
+                let needsUpdate = false;
+
+                // 1. Update Blog Author info if this user is the author
+                if (blogData.authorUid === currentUser.uid) {
+                    updates.author = name;
+                    updates.authorPhoto = photoURL;
+                    updates.authorVerified = isVerified;
+                    needsUpdate = true;
+                }
+
+                // 2. Update Comments info if this user commented
+                if (blogData.comments && Array.isArray(blogData.comments)) {
+                    let commentsChanged = false;
+                    const updatedComments = blogData.comments.map(comment => {
+                        let c = { ...comment };
+                        let cChanged = false;
+
+                        if (c.userUid === currentUser.uid) {
+                            c.author = name;
+                            c.photo = photoURL;
+                            c.userVerified = isVerified;
+                            cChanged = true;
+                        }
+
+                        if (c.replies && Array.isArray(c.replies)) {
+                            const newReplies = c.replies.map(reply => {
+                                if (reply.userUid === currentUser.uid) {
+                                    cChanged = true;
+                                    return { ...reply, author: name, photo: photoURL, userVerified: isVerified };
+                                }
+                                return reply;
+                            });
+                            if (cChanged) c.replies = newReplies;
+                        }
+
+                        if (cChanged) commentsChanged = true;
+                        return c;
+                    });
+
+                    if (commentsChanged) {
+                        updates.comments = updatedComments;
+                        needsUpdate = true;
+                    }
+                }
+
+                if (needsUpdate) {
+                    updatePromises.push(updateDoc(doc(db, "blogs", blogDoc.id), updates));
+                }
+            });
+            await Promise.all(updatePromises);
+
             alert("Profile Saved Successfully!");
             
             // If came from forced redirect, go back to news
@@ -447,6 +517,31 @@
         } catch (error) {
             console.error("Error saving profile:", error);
             alert("Error saving profile: " + error.message);
+        }
+    });
+
+    document.getElementById('delete-acc-btn').addEventListener('click', async () => {
+        if (!currentUser) return;
+        const confirmDelete = confirm("Are you sure you want to delete your account? This action cannot be undone and will delete your profile data.");
+        if (!confirmDelete) return;
+
+        try {
+            // 1. Delete User Document from Firestore
+            await deleteDoc(doc(db, "users", currentUser.uid));
+            
+            // 2. Delete User from Firebase Auth
+            await deleteUser(currentUser);
+            
+            alert("Account deleted successfully.");
+            window.location.href = 'news.html';
+        } catch (error) {
+            console.error("Error deleting account:", error);
+            // If login is too old, Firebase requires re-login
+            if (error.code === 'auth/requires-recent-login') {
+                alert("For security, please log out and log in again before deleting your account.");
+            } else {
+                alert("Error deleting account: " + error.message);
+            }
         }
     });
 </script>

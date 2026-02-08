@@ -96,6 +96,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
+        let isUserVerified = false;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -108,6 +109,7 @@
                         authorInput.value = userDoc.data().username;
                         authorInput.readOnly = true; // Lock author name to Unique ID
                     }
+                    if (userDoc.data().isVerified) isUserVerified = true;
                 } else {
                     alert("Please create a Unique ID (Username) in your profile first.");
                     window.location.href = "profile.html?requireUsername=true";
@@ -230,6 +232,7 @@
                                 author: author,
                                 content: content
                             };
+                            updateData.authorVerified = isUserVerified;
                             if (imagesData && imagesData.length > 0) {
                                 updateData.images = imagesData;
                                 updateData.image = imagesData[0]; // Keep primary image for backward compatibility
@@ -257,6 +260,7 @@
                             author: authorName,
                             authorUid: auth.currentUser ? auth.currentUser.uid : null,
                             authorPhoto: authorPhoto,
+                            authorVerified: isUserVerified,
                             content: content,
                             date: new Date().toISOString(),
                             images: imagesData || [],

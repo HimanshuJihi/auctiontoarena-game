@@ -364,6 +364,7 @@
         .carousel-btn:hover { background: rgba(0,0,0,0.9); }
         .carousel-btn.prev { left: 10px; }
         .carousel-btn.next { right: 10px; }
+        .verified-badge { color: #1da1f2; margin-left: 4px; font-size: 0.9em; vertical-align: middle; display: inline-block; }
     </style>
 </head>
 <body>
@@ -407,10 +408,19 @@
             </ul>
         </div>
 
+        <!-- Trending Section -->
+        <div class="latest-news" id="trending-section" style="display:none; border-left: 4px solid #ffc107;">
+            <h2 style="color: #ffc107;">🔥 Trending Now (Top Liked in 24h)</h2>
+            <div class="news-grid" id="trending-grid"></div>
+        </div>
+
         <!-- User Blogs Section -->
         <div class="latest-news" id="user-blogs-section" style="display:none; border-left: 4px solid #198754;">
             <h2 style="color: #198754;">Community Blogs (User Posts)</h2>
             <div class="news-grid" id="user-blogs-grid"></div>
+            <div id="load-more-container" style="text-align: center; margin-top: 20px; display: none;">
+                <button id="load-more-btn" class="btn" style="background-color: #333; border: 1px solid #555;">Load More</button>
+            </div>
         </div>
         
         <div class="news-grid">
@@ -461,7 +471,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, orderBy, arrayUnion, arrayRemove, addDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, orderBy, arrayUnion, arrayRemove, addDoc, where, onSnapshot, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { firebaseConfig } from "./firebase-config.js";
 
@@ -471,6 +481,8 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
         let currentUserFollowing = [];
+        let lastVisibleBlog = null;
+        const BLOGS_PER_PAGE = 5;
 
         // Login/Logout Logic
         const loginBtn = document.getElementById('login-btn');
@@ -540,23 +552,117 @@
         
         let fetchedBlogs = [];
 
-        // Function to fetch live news
-        async function fetchLiveNews() {
-            // Load User Blogs from Firebase
+        // Load Trending Blogs
+        async function loadTrending() {
+            const trendingSection = document.getElementById('trending-section');
+            const trendingGrid = document.getElementById('trending-grid');
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
             try {
-                const q = query(collection(db, "blogs"), orderBy("date", "desc"));
+                const q = query(collection(db, "blogs"), where("date", ">=", twentyFourHoursAgo));
+                const snapshot = await getDocs(q);
+                
+                let blogs = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.status !== 'draft') {
+                        blogs.push({ id: doc.id, ...data });
+                    }
+                });
+
+                // Sort by likes descending
+                blogs.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+                const topBlogs = blogs.slice(0, 3);
+
+                if (topBlogs.length > 0) {
+                    trendingSection.style.display = 'block';
+                    trendingGrid.innerHTML = '';
+                    topBlogs.forEach(blog => {
+                        const div = document.createElement('div');
+                        div.className = 'news-card';
+                        div.style.cursor = 'pointer';
+                        div.onclick = () => window.location.href = `news.html?blogId=${blog.id}`;
+                        
+                        const img = (blog.images && blog.images.length) ? blog.images[0] : (blog.image || '');
+                        const imgHtml = img ? `<img src="${img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;">` : '';
+
+                        div.innerHTML = `
+                            <div style="display: flex; gap: 15px; padding: 15px; align-items: center;">
+                                ${imgHtml}
+                                <div>
+                                    <h3 style="margin: 0 0 5px 0; font-size: 1.1rem; color: gold;">${blog.title}</h3>
+                                    <div style="font-size: 0.8rem; color: #aaa;">By ${blog.author} • ❤️ ${blog.likes || 0}</div>
+                                </div>
+                            </div>`;
+                        trendingGrid.appendChild(div);
+                    });
+                } else {
+                    trendingSection.style.display = 'none';
+                }
+            } catch (e) { console.error("Trending error:", e); }
+        }
+
+        // Load Blogs with Pagination
+        async function loadBlogs(isLoadMore = false) {
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            const loadMoreContainer = document.getElementById('load-more-container');
+            
+            if (isLoadMore) {
+                loadMoreBtn.innerText = "Loading...";
+                loadMoreBtn.disabled = true;
+            }
+
+            try {
+                let q;
+                const blogsRef = collection(db, "blogs");
+                
+                if (isLoadMore && lastVisibleBlog) {
+                    q = query(blogsRef, orderBy("date", "desc"), startAfter(lastVisibleBlog), limit(BLOGS_PER_PAGE));
+                } else {
+                    q = query(blogsRef, orderBy("date", "desc"), limit(BLOGS_PER_PAGE));
+                }
+
                 const querySnapshot = await getDocs(q);
-                fetchedBlogs = [];
+                
+                if (querySnapshot.docs.length > 0) {
+                    lastVisibleBlog = querySnapshot.docs[querySnapshot.docs.length - 1];
+                    loadMoreContainer.style.display = 'block';
+                    loadMoreBtn.innerText = "Load More";
+                    loadMoreBtn.disabled = false;
+                } else {
+                    loadMoreContainer.style.display = isLoadMore ? 'block' : 'none';
+                    if(isLoadMore) {
+                        loadMoreBtn.innerText = "No more posts";
+                        loadMoreBtn.disabled = true;
+                    }
+                }
+
+                const newBlogs = [];
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     if (data.status !== 'draft') {
-                        fetchedBlogs.push({ id: doc.id, ...data });
+                        newBlogs.push({ id: doc.id, ...data });
                     }
                 });
+
+                if (!isLoadMore) fetchedBlogs = [];
+                fetchedBlogs = [...fetchedBlogs, ...newBlogs];
+                
                 renderBlogs(auth.currentUser);
+
             } catch (e) {
-                console.error("Error fetching blogs:", e);
+                console.error("Error loading blogs:", e);
+                loadMoreBtn.innerText = "Error loading";
             }
+        }
+
+        document.getElementById('load-more-btn').addEventListener('click', () => loadBlogs(true));
+
+        // Function to fetch live news
+        async function fetchLiveNews() {
+            // Load User Blogs from Firebase
+            await loadBlogs(false);
+            loadTrending();
 
             // Using News18 Hindi Cricket RSS Feed for auto updates
             const rssUrl = 'https://hindi.news18.com/rss/sports/cricket.xml';
@@ -597,6 +703,7 @@
                 fetchedBlogs.forEach(blog => {
                     const article = document.createElement('article');
                     article.className = 'news-card';
+                    article.id = `blog-${blog.id}`; // Add ID for scrolling
                     article.style.marginBottom = '20px';
                     
                     const isLiked = likedPosts.includes(blog.id);
@@ -605,6 +712,8 @@
                     const isBlogOwner = user && (blog.authorUid === user.uid || (!blog.authorUid && blog.author === user.displayName));
                     
                     let actionButtons = `<button onclick="likeUserBlog('${blog.id}', ${blog.likes || 0})" style="background:none; border:none; color:#ff69b4; cursor:pointer; font-size: 1rem; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">${likeIcon} ${blog.likes || 0}</button>`;
+                    actionButtons += `<button onclick="shareBlog('${blog.id}', '${blog.title.replace(/'/g, "\\'")}')" style="background:none; border:none; color:#0d6efd; cursor:pointer; font-size: 1rem; margin-left: 10px;">📤 Share</button>`;
+                    actionButtons += `<button onclick="reportBlog('${blog.id}')" style="background:none; border:none; color:#aaa; cursor:pointer; font-size: 1rem; margin-left: 10px;" title="Report">🚩</button>`;
                     
                     if (isBlogOwner) {
                         actionButtons += `
@@ -635,13 +744,14 @@
                         const isFollowing = currentUserFollowing.includes(blog.authorUid);
                         followBtnHtml = `<button onclick="toggleFollow('${blog.authorUid}')" class="follow-btn ${isFollowing ? 'following' : ''}">${isFollowing ? 'Following' : 'Follow'}</button>`;
                     }
+                    const verifiedBadge = blog.authorVerified ? '<span class="verified-badge" title="Verified">✔</span>' : '';
 
                     // User Profile & ID Header
                     const authorHeader = `
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
                             <img src="${blog.authorPhoto || 'https://via.placeholder.com/40'}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #87ceeb; cursor: pointer;" onclick="window.location.href='profile.html?uid=${blog.authorUid}'">
                             <div>
-                                <div style="display:flex; align-items:center;"><strong style="color: #87ceeb; font-size: 1.1rem;">${blog.author}</strong> ${followBtnHtml}</div>
+                                <div style="display:flex; align-items:center;"><strong style="color: #87ceeb; font-size: 1.1rem;">${blog.author}</strong> ${verifiedBadge} ${followBtnHtml}</div>
                                 <span style="font-size: 0.8rem; color: #aaa;">${new Date(blog.date).toLocaleDateString()}</span>
                             </div>
                         </div>
@@ -706,13 +816,14 @@
                                             const rIsLiked = user && rLikes.includes(user.uid);
                                             const rLikeColor = rIsLiked ? '#ff69b4' : 'inherit';
                                             const rLikeIcon = rIsLiked ? '❤️' : '🤍';
+                                            const rVerified = r.userVerified ? '<span class="verified-badge" title="Verified">✔</span>' : '';
                                             
                                             return `
                                             <div style="margin-top: 10px; display: flex; gap: 10px; align-items: flex-start;">
                                                 <img src="${r.photo || 'https://via.placeholder.com/30'}" style="width: 25px; height: 25px; border-radius: 50%; object-fit: cover;">
                                                 <div style="flex: 1;">
                                                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                                                        <strong style="color: #87ceeb; font-size: 0.8rem;">${r.author}</strong>
+                                                        <strong style="color: #87ceeb; font-size: 0.8rem;">${r.author} ${rVerified}</strong>
                                                         <span style="font-size: 0.65rem; color: #888;">${new Date(r.date).toLocaleDateString()}</span>
                                                     </div>
                                                     <div style="font-size: 0.9rem; color: #ddd;">${r.text}</div>
@@ -723,14 +834,15 @@
                                             </div>`;
                                         }).join('');
                                         
+                                        const cVerified = c.userVerified ? '<span class="verified-badge" title="Verified">✔</span>' : '';
                                         return `
                                         <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 10px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.1); ${pinnedStyle}">
                                             <div style="display: flex; gap: 10px; align-items: flex-start;">
-                                                <img src="${c.photo || 'https://via.placeholder.com/40'}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #555;">
+                                                <img src="${c.photo || 'https://via.placeholder.com/40'}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #555; cursor: pointer;" onclick="window.location.href='profile.html?uid=${c.userUid}'">
                                                 <div style="flex: 1;">
                                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                                                         <div>
-                                                            <strong style="color: #87ceeb; font-size: 0.9rem;">${c.author}</strong>
+                                                            <strong style="color: #87ceeb; font-size: 0.9rem; cursor: pointer;" onclick="window.location.href='profile.html?uid=${c.userUid}'">${c.author} ${cVerified}</strong>
                                                             ${pinnedBadge}
                                                         </div>
                                                         <span style="font-size: 0.75rem; color: #888;">${c.date ? new Date(c.date).toLocaleDateString() : ''}</span>
@@ -768,6 +880,19 @@
                     `;
                     grid.appendChild(article);
                 });
+
+                // Scroll to specific blog if URL has ?blogId=...
+                const urlParams = new URLSearchParams(window.location.search);
+                const blogId = urlParams.get('blogId');
+                if (blogId) {
+                    setTimeout(() => {
+                        const el = document.getElementById(`blog-${blogId}`);
+                        if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            el.style.border = "2px solid gold";
+                        }
+                    }, 500);
+                }
             }
         }
         fetchLiveNews();
@@ -880,6 +1005,40 @@
                 location.reload();
         };
 
+        window.shareBlog = async function(id, title) {
+            const url = `${window.location.origin}${window.location.pathname}?blogId=${id}`;
+            const shareData = {
+                title: title,
+                text: `Check out this cricket blog: ${title}`,
+                url: url
+            };
+
+            if (navigator.share) {
+                try { await navigator.share(shareData); } catch (err) { console.log('Share canceled'); }
+            } else {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    alert("Link copied to clipboard!");
+                } catch (err) { alert("Could not copy link."); }
+            }
+        };
+
+        window.reportBlog = async function(id) {
+            if (!auth.currentUser) { alert("Please login to report!"); return; }
+            const reason = prompt("Please provide a reason for reporting this post:");
+            if (reason) {
+                try {
+                    await addDoc(collection(db, "reports"), {
+                        blogId: id,
+                        reporterUid: auth.currentUser.uid,
+                        reason: reason,
+                        date: new Date().toISOString()
+                    });
+                    alert("Report submitted successfully. We will review it.");
+                } catch(e) { console.error(e); alert("Error submitting report."); }
+            }
+        };
+
         window.addComment = async function(id) {
             if (!auth.currentUser) {
                 alert("Please login to comment!");
@@ -891,6 +1050,7 @@
             
             let authorName = "Anonymous";
             let authorPhoto = "https://via.placeholder.com/40";
+            let isVerified = false;
             
             if (auth.currentUser) {
                 authorName = auth.currentUser.displayName;
@@ -902,6 +1062,7 @@
                         const userData = userDoc.data();
                         if (userData.name) authorName = userData.name;
                         if (userData.photoURL) authorPhoto = userData.photoURL;
+                        if (userData.isVerified) isVerified = true;
                     }
                 } catch(e) { console.log("Profile fetch error", e); }
             } else {
@@ -922,7 +1083,8 @@
                     date: new Date().toISOString(),
                     likes: [],
                     replies: [],
-                    isPinned: false
+                    isPinned: false,
+                    userVerified: isVerified
                 });
                 await updateDoc(blogRef, { comments: comments });
                 location.reload(); 
@@ -943,6 +1105,7 @@
 
             let authorName = auth.currentUser.displayName;
             let authorPhoto = auth.currentUser.photoURL;
+            let isVerified = false;
             
             // Fetch latest profile
             try {
@@ -951,6 +1114,7 @@
                     const userData = userDoc.data();
                     if (userData.name) authorName = userData.name;
                     if (userData.photoURL) authorPhoto = userData.photoURL;
+                    if (userData.isVerified) isVerified = true;
                 }
             } catch(e) {}
 
@@ -968,7 +1132,8 @@
                         photo: authorPhoto,
                         text: text,
                         date: new Date().toISOString(),
-                        likes: []
+                        likes: [],
+                        userVerified: isVerified
                     });
                     await updateDoc(blogRef, { comments: comments });
                     location.reload();
