@@ -1046,7 +1046,7 @@
                                         
                                         const cVerified = c.userVerified ? '<span class="verified-badge" title="Verified">✔</span>' : '';
                                         return `
-                                        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 10px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.1); ${pinnedStyle}">
+                                        <div id="comment-${c.id}" style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 10px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.1); ${pinnedStyle}">
                                             <div style="display: flex; gap: 10px; align-items: flex-start;">
                                                 <img src="${c.photo || 'https://via.placeholder.com/40'}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #555; cursor: pointer;" onclick="window.location.href='profile.html?uid=${c.userUid}'">
                                                 <div style="flex: 1;">
@@ -1092,14 +1092,24 @@
                 });
 
                 // Scroll to specific blog if URL has ?blogId=...
+                const hash = window.location.hash;
                 const urlParams = new URLSearchParams(window.location.search);
                 const blogId = urlParams.get('blogId');
                 if (blogId) {
                     setTimeout(() => {
                         const el = document.getElementById(`blog-${blogId}`);
                         if (el) {
-                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            el.style.border = "2px solid gold";
+                            let targetEl = el;
+                            if (hash && hash.startsWith('#comment-')) {
+                                const commentEl = el.querySelector(hash);
+                                if (commentEl) {
+                                    targetEl = commentEl;
+                                    commentEl.style.outline = "2px solid gold";
+                                    commentEl.style.transition = "outline 1s ease-out";
+                                    setTimeout(() => { commentEl.style.outline = 'none'; }, 3000);
+                                }
+                            }
+                            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     }, 500);
                 }
@@ -1290,48 +1300,54 @@
             const text = input.value.trim();
             if (!text) return;
             
-            let authorName = "Anonymous";
+            let authorName = auth.currentUser.displayName || "User";
             let authorPhoto = "https://via.placeholder.com/40";
             let isVerified = false;
             
-            if (auth.currentUser) {
-                authorName = auth.currentUser.displayName;
-                authorPhoto = auth.currentUser.photoURL;
-                // Try to fetch latest profile data
-                try {
-                    const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
-                        if (userData.name) authorName = userData.name;
-                        if (userData.photoURL) authorPhoto = userData.photoURL;
-                        if (userData.isVerified) isVerified = true;
-                    }
-                } catch(e) { console.log("Profile fetch error", e); }
-            } else {
-                authorName = prompt("Enter your name for the comment:", "Fan") || "Anonymous";
-            }
+            try {
+                const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if (userData.name) authorName = userData.name;
+                    if (userData.photoURL) authorPhoto = userData.photoURL;
+                    if (userData.isVerified) isVerified = true;
+                }
+            } catch(e) { console.log("Profile fetch error", e); }
+
+            const newComment = {
+                id: Date.now().toString(),
+                author: authorName,
+                userUid: auth.currentUser.uid,
+                photo: authorPhoto,
+                text: text,
+                date: new Date().toISOString(),
+                likes: [],
+                replies: [],
+                isPinned: false,
+                userVerified: isVerified
+            };
 
             const blogRef = doc(db, "blogs", id);
-            const docSnap = await getDoc(blogRef);
-            if (docSnap.exists()) {
-                const blog = docSnap.data();
-                const comments = blog.comments || [];
-                comments.push({
-                    id: Date.now().toString(),
-                    author: authorName,
-                    userUid: auth.currentUser ? auth.currentUser.uid : null,
-                    photo: authorPhoto,
-                    text: text,
-                    date: new Date().toISOString(),
-                    likes: [],
-                    replies: [],
-                    isPinned: false,
-                    userVerified: isVerified
-                });
 
+            // Optimistic UI update
+            const blogIndex = fetchedBlogs.findIndex(b => b.id === id);
+            if (blogIndex !== -1) {
+                if (!fetchedBlogs[blogIndex].comments) {
+                    fetchedBlogs[blogIndex].comments = [];
+                }
+                fetchedBlogs[blogIndex].comments.push(newComment);
+                renderBlogs(auth.currentUser);
+                input.value = '';
+            }
+
+            try {
+                await updateDoc(blogRef, { comments: arrayUnion(newComment) });
+                
                 // Send Notification on Comment
-                if (auth.currentUser && blog.authorUid && blog.authorUid !== auth.currentUser.uid) {
-                     try {
+                const docSnap = await getDoc(blogRef);
+                if (docSnap.exists()) {
+                    const blog = docSnap.data();
+                    if (blog.authorUid && blog.authorUid !== auth.currentUser.uid) {
                         await addDoc(collection(db, "notifications"), {
                             recipientUid: blog.authorUid,
                             senderUid: auth.currentUser.uid,
@@ -1342,11 +1358,12 @@
                             date: new Date().toISOString(),
                             read: false
                         });
-                     } catch(e) { console.error("Notification error:", e); }
+                    }
                 }
-
-                await updateDoc(blogRef, { comments: comments });
-                location.reload(); 
+            } catch (e) {
+                console.error("Error adding comment:", e);
+                alert("Failed to add comment. Please refresh and try again.");
+                location.reload();
             }
         };
 
@@ -1362,11 +1379,10 @@
             const text = input.value.trim();
             if (!text) return;
 
-            let authorName = auth.currentUser.displayName;
+            let authorName = auth.currentUser.displayName || "User";
             let authorPhoto = auth.currentUser.photoURL;
             let isVerified = false;
             
-            // Fetch latest profile
             try {
                 const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
                 if (userDoc.exists()) {
@@ -1377,75 +1393,148 @@
                 }
             } catch(e) {}
 
-            const blogRef = doc(db, "blogs", blogId);
-            const docSnap = await getDoc(blogRef);
-            if (docSnap.exists()) {
-                const blog = docSnap.data();
-                const comments = blog.comments || [];
-                if (comments[commentIndex]) {
-                    if (!comments[commentIndex].replies) comments[commentIndex].replies = [];
-                    comments[commentIndex].replies.push({
-                        id: Date.now().toString(),
-                        author: authorName,
-                        userUid: auth.currentUser.uid,
-                        photo: authorPhoto,
-                        text: text,
-                        date: new Date().toISOString(),
-                        likes: [],
-                        userVerified: isVerified
-                    });
-                    await updateDoc(blogRef, { comments: comments });
-                    location.reload();
+            const newReply = {
+                id: Date.now().toString(),
+                author: authorName,
+                userUid: auth.currentUser.uid,
+                photo: authorPhoto,
+                text: text,
+                date: new Date().toISOString(),
+                likes: [],
+                userVerified: isVerified
+            };
+
+            // Optimistic UI update
+            const blogIndex = fetchedBlogs.findIndex(b => b.id === blogId);
+            if (blogIndex !== -1) {
+                const blog = fetchedBlogs[blogIndex];
+                if (blog.comments && blog.comments[commentIndex]) {
+                    if (!blog.comments[commentIndex].replies) {
+                        blog.comments[commentIndex].replies = [];
+                    }
+                    blog.comments[commentIndex].replies.push(newReply);
+                    renderBlogs(auth.currentUser);
+                    input.value = '';
+                    document.getElementById(`reply-box-${blogId}-${commentIndex}`).style.display = 'none';
                 }
+            }
+
+            // Update Firestore
+            const blogRef = doc(db, "blogs", blogId);
+            try {
+                const docSnap = await getDoc(blogRef);
+                if (docSnap.exists()) {
+                    const blog = docSnap.data();
+                    const comments = blog.comments || [];
+                    if (comments[commentIndex]) {
+                        if (!comments[commentIndex].replies) comments[commentIndex].replies = [];
+                        comments[commentIndex].replies.push(newReply);
+
+                        // Send Notification on Reply
+                        const parentComment = blog.comments[commentIndex];
+                        if (parentComment.userUid && parentComment.userUid !== auth.currentUser.uid) {
+                            await addDoc(collection(db, "notifications"), {
+                                recipientUid: parentComment.userUid,
+                                senderUid: auth.currentUser.uid,
+                                senderName: authorName,
+                                type: "reply",
+                                blogId: blogId,
+                                blogTitle: blog.title,
+                                commentId: parentComment.id,
+                                date: new Date().toISOString(),
+                                read: false
+                            });
+                        }
+                        await updateDoc(blogRef, { comments: comments });
+                    }
+                }
+            } catch (e) {
+                console.error("Error submitting reply:", e);
+                alert("Failed to submit reply. Please refresh and try again.");
+                location.reload();
             }
         };
 
         window.toggleLike = async function(blogId, commentIndex, replyIndex = null) {
             if (!auth.currentUser) { alert("Please login to like!"); return; }
             const uid = auth.currentUser.uid;
-            const blogRef = doc(db, "blogs", blogId);
-            const docSnap = await getDoc(blogRef);
-            
-            if (docSnap.exists()) {
-                const blog = docSnap.data();
-                const comments = blog.comments || [];
-                
-                if (comments[commentIndex]) {
-                    let target = comments[commentIndex];
-                    if (replyIndex !== null) {
-                        if (target.replies && target.replies[replyIndex]) {
-                            target = target.replies[replyIndex];
-                        } else return;
-                    }
 
+            // Optimistic UI update
+            const blogIndex = fetchedBlogs.findIndex(b => b.id === blogId);
+            if (blogIndex !== -1) {
+                const blog = fetchedBlogs[blogIndex];
+                if (blog.comments && blog.comments[commentIndex]) {
+                    let target = blog.comments[commentIndex];
+                    if (replyIndex !== null) {
+                        if (!target.replies || !target.replies[replyIndex]) return;
+                        target = target.replies[replyIndex];
+                    }
                     if (!target.likes) target.likes = [];
                     const likeIdx = target.likes.indexOf(uid);
                     if (likeIdx === -1) target.likes.push(uid);
                     else target.likes.splice(likeIdx, 1);
-
-                    await updateDoc(blogRef, { comments: comments });
-                    location.reload();
+                    renderBlogs(auth.currentUser);
                 }
+            }
+
+            // Update Firestore in background
+            const blogRef = doc(db, "blogs", blogId);
+            try {
+                const docSnap = await getDoc(blogRef);
+                if (docSnap.exists()) {
+                    const blog = docSnap.data();
+                    const comments = blog.comments || [];
+                    if (comments[commentIndex]) {
+                        let target = comments[commentIndex];
+                        if (replyIndex !== null) {
+                            if (!target.replies || !target.replies[replyIndex]) return;
+                            target = target.replies[replyIndex];
+                        }
+                        if (!target.likes) target.likes = [];
+                        const likeIdx = target.likes.indexOf(uid);
+                        if (likeIdx === -1) target.likes.push(uid);
+                        else target.likes.splice(likeIdx, 1);
+                        await updateDoc(blogRef, { comments: comments });
+                    }
+                }
+            } catch (e) {
+                console.error("Error toggling like:", e);
+                // Consider reverting UI on error
             }
         };
 
         window.togglePin = async function(blogId, commentIndex) {
             if (!auth.currentUser) return;
             const blogRef = doc(db, "blogs", blogId);
-            const docSnap = await getDoc(blogRef);
-            
-            if (docSnap.exists()) {
-                const blog = docSnap.data();
-                // Verify owner
-                const isOwner = (blog.authorUid === auth.currentUser.uid) || (!blog.authorUid && blog.author === auth.currentUser.displayName);
-                if (!isOwner) { alert("Only the author can pin comments."); return; }
 
-                const comments = blog.comments || [];
-                if (comments[commentIndex]) {
-                    comments[commentIndex].isPinned = !comments[commentIndex].isPinned;
-                    await updateDoc(blogRef, { comments: comments });
-                    location.reload();
+            // Optimistic UI update
+            const blogIndex = fetchedBlogs.findIndex(b => b.id === blogId);
+            if (blogIndex !== -1) {
+                const blog = fetchedBlogs[blogIndex];
+                const isOwner = (blog.authorUid === auth.currentUser.uid);
+                if (!isOwner) { alert("Only the author can pin comments."); return; }
+                if (blog.comments && blog.comments[commentIndex]) {
+                    blog.comments[commentIndex].isPinned = !blog.comments[commentIndex].isPinned;
+                    renderBlogs(auth.currentUser);
                 }
+            }
+
+            // Update Firestore
+            try {
+                const docSnap = await getDoc(blogRef);
+                if (docSnap.exists()) {
+                    const blog = docSnap.data();
+                    const isOwner = (blog.authorUid === auth.currentUser.uid);
+                    if (!isOwner) return;
+
+                    const comments = blog.comments || [];
+                    if (comments[commentIndex]) {
+                        comments[commentIndex].isPinned = !comments[commentIndex].isPinned;
+                        await updateDoc(blogRef, { comments: comments });
+                    }
+                }
+            } catch (e) {
+                console.error("Error pinning comment:", e);
             }
         };
 
@@ -1455,25 +1544,32 @@
                 return;
             }
             
-            const blogRef = doc(db, "blogs", blogId);
-            const docSnap = await getDoc(blogRef);
-            
-            if (docSnap.exists()) {
-                const comments = docSnap.data().comments || [];
-                const comment = comments[commentIndex];
-                
-                const isAuthor = (comment.userUid === auth.currentUser.uid) || (!comment.userUid && comment.author === auth.currentUser.displayName);
-                
-                if (!isAuthor) {
-                    alert("You can only delete your own comments!");
-                    return;
-                }
+            // Check ownership locally
+            const blogIndex = fetchedBlogs.findIndex(b => b.id === blogId);
+            if (blogIndex === -1) return;
+            const blog = fetchedBlogs[blogIndex];
+            if (!blog.comments || !blog.comments[commentIndex]) return;
+            const comment = blog.comments[commentIndex];
+            const isAuthor = (comment.userUid === auth.currentUser.uid);
+            if (!isAuthor) {
+                alert("You can only delete your own comments!");
+                return;
+            }
 
-                if(confirm('Delete this comment?')) {
+            if(confirm('Delete this comment?')) {
+                // Optimistic UI update
+                fetchedBlogs[blogIndex].comments.splice(commentIndex, 1);
+                renderBlogs(auth.currentUser);
+
+                // Update Firestore
+                const blogRef = doc(db, "blogs", blogId);
+                try {
+                    const docSnap = await getDoc(blogRef);
+                    if (!docSnap.exists()) return;
+                    const comments = docSnap.data().comments || [];
                     comments.splice(commentIndex, 1);
                     await updateDoc(blogRef, { comments: comments });
-                    location.reload();
-                }
+                } catch (e) { console.error("Error deleting comment:", e); location.reload(); }
             }
         };
 
@@ -1482,17 +1578,26 @@
                 alert("Please login to edit comments!");
                 return;
             }
-            const blogRef = doc(db, "blogs", blogId);
-            const docSnap = await getDoc(blogRef);
-            if (docSnap.exists()) {
-                const comments = docSnap.data().comments || [];
-                const oldText = comments[commentIndex].text;
-                const newText = prompt("Edit your comment:", oldText);
-                if (newText !== null && newText.trim() !== "") {
-                    comments[commentIndex].text = newText.trim();
+            
+            const blogIndex = fetchedBlogs.findIndex(b => b.id === blogId);
+            if (blogIndex === -1) return;
+            const blog = fetchedBlogs[blogIndex];
+            if (!blog.comments || !blog.comments[commentIndex]) return;
+            const oldText = blog.comments[commentIndex].text;
+
+            const newText = prompt("Edit your comment:", oldText);
+            if (newText !== null && newText.trim() !== "" && newText.trim() !== oldText) {
+                fetchedBlogs[blogIndex].comments[commentIndex].text = newText.trim();
+                renderBlogs(auth.currentUser);
+
+                const blogRef = doc(db, "blogs", blogId);
+                try {
+                    const docSnap = await getDoc(blogRef);
+                    if (!docSnap.exists()) return;
+                    const comments = docSnap.data().comments || [];
+                    if (comments[commentIndex]) comments[commentIndex].text = newText.trim();
                     await updateDoc(blogRef, { comments: comments });
-                    location.reload();
-                }
+                } catch (e) { console.error("Error editing comment:", e); location.reload(); }
             }
         };
 
@@ -1553,7 +1658,35 @@
                 notifs.forEach(n => {
                     const div = document.createElement('div');
                     div.className = 'notif-item';
-                    div.innerHTML = `<strong>${n.senderName}</strong> started following you. <br><span style="font-size:0.7rem; color:#888;">${new Date(n.date).toLocaleDateString()}</span>`;
+                    
+                    let notifHtml = '';
+                    const notifDate = `<br><span style="font-size:0.7rem; color:#888;">${new Date(n.date).toLocaleDateString()}</span>`;
+
+                    switch (n.type) {
+                        case 'follow':
+                            notifHtml = `<strong>${n.senderName}</strong> started following you.`;
+                            div.style.cursor = 'pointer';
+                            div.onclick = () => window.location.href = `profile.html?uid=${n.senderUid}`;
+                            break;
+                        case 'like':
+                            notifHtml = `<strong>${n.senderName}</strong> liked your post: <em>${n.blogTitle}</em>.`;
+                            div.style.cursor = 'pointer';
+                            div.onclick = () => window.location.href = `news.html?blogId=${n.blogId}`;
+                            break;
+                        case 'comment':
+                            notifHtml = `<strong>${n.senderName}</strong> commented on your post: <em>${n.blogTitle}</em>.`;
+                            div.style.cursor = 'pointer';
+                            div.onclick = () => window.location.href = `news.html?blogId=${n.blogId}`;
+                            break;
+                        case 'reply':
+                            notifHtml = `<strong>${n.senderName}</strong> replied to your comment on <em>${n.blogTitle}</em>.`;
+                            div.style.cursor = 'pointer';
+                            div.onclick = () => window.location.href = `news.html?blogId=${n.blogId}#comment-${n.commentId}`;
+                            break;
+                        default:
+                            notifHtml = `You have a new notification.`;
+                    }
+                    div.innerHTML = notifHtml + notifDate;
                     notifDropdown.appendChild(div);
                 });
             });
