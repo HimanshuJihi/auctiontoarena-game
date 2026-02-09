@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile</title>
     <style>
-        body { font-family: sans-serif; background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        body { font-family: sans-serif; background: #121212; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; transition: background-color .3s ease, color .3s ease; }
         .container { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; backdrop-filter: blur(10px); width: 100%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
         input, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
         button { width: 100%; padding: 10px; background: #ff9800; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold; margin-top: 10px; }
@@ -26,6 +26,25 @@
         .verified-badge { color: #1da1f2; margin-left: 5px; font-size: 1rem; vertical-align: middle; }
         @media (max-width: 480px) {
             .container { width: 90%; padding: 20px; }
+        }
+
+        /* Light Mode */
+        body.light-mode { background: #f4f7f6; color: #333; }
+        body.light-mode .container { background: #fff; border-color: #ddd; }
+        body.light-mode input, body.light-mode textarea { background: #f0f0f0; color: #333; border: 1px solid #ccc; }
+        body.light-mode #username { background: #e9e9e9; color: #333; }
+        body.light-mode .blog-card { background: #f8f9fa; border-color: #ddd; }
+        body.light-mode .blog-card h4, body.light-mode .blog-card p { color: #333; }
+        body.light-mode #user-list-modal > div { background: #fff; border-color: #ddd; color: #333; }
+        body.light-mode #user-list-title { color: #0d6efd; }
+        body.light-mode #user-list-content > div { border-bottom-color: #eee; }
+        body.light-mode #user-list-content strong { color: #000; }
+        body.light-mode #password-modal > div { background: #fff; border-color: #ddd; color: #333; }
+        body.light-mode #pwd-modal-title { color: #0d6efd; }
+        body.light-mode #pwd-modal-desc { color: #666; }
+        body.light-mode #pwd-auth-section input, body.light-mode #new-password-section input { background: #f0f0f0; border-color: #ccc; color: #333; }
+        .btn {
+            display: inline-block; padding: 10px 20px; font-size: 1rem; font-weight: bold; color: #fff; background-color: #0d6efd; border: none; border-radius: 5px; text-decoration: none; cursor: pointer; transition: background-color 0.2s ease;
         }
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
@@ -58,6 +77,7 @@
     <textarea id="bio" rows="3" placeholder="Bio (e.g. Cricket Lover from Mumbai)"></textarea>
     
     <button id="save-btn">Save Profile</button>
+    <button id="theme-toggle" class="btn" style="background-color: #6c757d; margin-top: 10px;">☀️</button>
     <button id="change-pwd-btn" style="background-color: #198754; margin-top: 10px; width: 100%; padding: 10px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Change Password</button>
     <button class="back-btn" onclick="window.location.href='news.html'">Back to News</button>
     <button id="delete-acc-btn" style="background-color: #dc3545; margin-top: 30px; width: 100%; padding: 10px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Delete Account</button>
@@ -114,7 +134,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, updateProfile, deleteUser, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { firebaseConfig } from "./firebase-config.js";
 
@@ -124,6 +144,34 @@
     const auth = getAuth(app);
     let currentUser = null;
     let currentProfileData = {}; // Store loaded profile data for lists
+
+    // Theme Toggle Logic
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const body = document.body;
+
+    function applyTheme(theme) {
+        if (theme === 'light') {
+            body.classList.add('light-mode');
+            themeToggleBtn.textContent = '🌙';
+        } else {
+            body.classList.remove('light-mode');
+            themeToggleBtn.textContent = '☀️';
+        }
+        localStorage.setItem('theme', theme || 'dark');
+    }
+
+    themeToggleBtn.addEventListener('click', async () => {
+        const newTheme = body.classList.contains('light-mode') ? 'dark' : 'light';
+        applyTheme(newTheme);
+        if (auth.currentUser) {
+            try {
+                const userRef = doc(db, "users", auth.currentUser.uid);
+                await setDoc(userRef, { theme: newTheme }, { merge: true });
+            } catch (e) {
+                console.error("Error saving theme preference:", e);
+            }
+        }
+    });
 
     // Handle Image Selection
     const fileInput = document.getElementById('file-input');
@@ -196,6 +244,25 @@
 
         if (user) {
             currentUser = user;
+            // Load theme preference
+            try {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                let themeToApply = 'dark'; // default
+                if (userDocSnap.exists() && userDocSnap.data().theme) {
+                    themeToApply = userDocSnap.data().theme;
+                } else {
+                    const localTheme = localStorage.getItem('theme');
+                    if (localTheme) {
+                        themeToApply = localTheme;
+                        await setDoc(userDocRef, { theme: themeToApply }, { merge: true });
+                    }
+                }
+                applyTheme(themeToApply);
+            } catch(e) {
+                console.error("Error loading theme preference:", e);
+                applyTheme(localStorage.getItem('theme') || 'dark');
+            }
         }
 
         if (viewUid && (!user || viewUid !== user.uid)) {
@@ -442,7 +509,7 @@
         // Verification Criteria: Auto-verify if followers >= 50
         let isVerified = currentProfileData.isVerified || false;
         const followersCount = (currentProfileData.followers || []).length;
-        if (followersCount >= 50) {
+        if (followersCount >= 9) {
             isVerified = true;
         }
 

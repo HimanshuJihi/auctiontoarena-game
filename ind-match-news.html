@@ -20,8 +20,11 @@
             line-height: 1.8;
             margin: 0;
             padding: 0;
-            background-color: #f0f2f5;
-            color: #1c1e21;
+            background: linear-gradient(135deg, #c8c2c5, #293e47, #cfc4c4);
+            color: #000000;
+            background: #121212;
+            color: #ffffff;
+            transition: background-color .3s ease, color .3s ease;
         }
         .container {
             max-width: 960px;
@@ -39,6 +42,7 @@
         .header h1 {
             font-size: 2.5rem;
             color: #333;
+            color: #fff;
         }
         .btn {
             display: inline-block;
@@ -58,8 +62,10 @@
         }
         .article-container {
             background-color: #fff;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             overflow: hidden;
         }
         .article-header-image {
@@ -75,10 +81,12 @@
             margin-top: 0;
             margin-bottom: 10px;
             color: #212529;
+            color: #fff;
         }
         .article-meta {
             font-size: 0.85rem;
-            color: #6c757d;
+            color: #0f314e;
+            color: #ddd;
             margin-bottom: 25px;
             display: block;
         }
@@ -89,11 +97,14 @@
         }
         .shayari {
             font-style: italic;
-            color: #0d6efd;
+            color: #0b61e2;
+            color: #080707;
             margin: 25px 0;
             padding: 15px;
             border-left: 4px solid #0d6efd;
             background-color: #f8f9fa;
+            border-left: 4px solid #87ceeb;
+            background: rgba(0, 0, 0, 0.15);
             font-size: 1.2rem;
             text-align: center;
         }
@@ -126,6 +137,9 @@
             color: #6c757d;
             border-top: 1px solid #dee2e6;
             box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+            background: rgba(0, 0, 0, 0.2);
+            color: #eee;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
         }
         footer p { margin: 0; }
         .share-section {
@@ -138,6 +152,7 @@
             margin-bottom: 15px;
             font-size: 1.2rem;
             color: #333;
+            color: #fff;
         }
         .share-buttons a {
             display: inline-block;
@@ -154,12 +169,29 @@
         .share-btn-twitter { background-color: #1DA1F2; }
         .share-btn-facebook { background-color: #1877F2; }
         .share-btn-whatsapp { background-color: #25D366; }
+
+        /* Light Mode */
+        body.light-mode { background: #f4f7f6; color: #333; }
+        body.light-mode .header h1 a { color: #333; }
+        body.light-mode .article-container { background: #fff; border-color: #ddd; }
+        body.light-mode .article-content h2 { color: #212529; }
+        body.light-mode .article-content p { color: #495057; }
+        body.light-mode .article-meta { color: #6c757d; }
+        body.light-mode .shayari { color: #0d6efd; background-color: #f8f9fa; }
+        body.light-mode footer { background: #fff; color: #6c757d; border-top-color: #ddd; }
+        body.light-mode .share-section h3 { color: #333; }
+
+        /* Transitions */
+        .header h1, .article-container, .article-content h2, .article-content p, .article-meta, .shayari, footer, .share-section h3 {
+            transition: background-color .3s ease, color .3s ease, border-color .3s ease;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1><a href="news.html" style="text-decoration: none; color: inherit;">क्रिकेट न्यूज़</a></h1>
+            <button id="theme-toggle" class="btn" style="background-color: #6c757d;">☀️</button>
             <a href="index.html" class="btn">← खेल पर वापस जाएं</a>
         </div>
         
@@ -167,6 +199,7 @@
             <img src="u19.jpg" alt="Indian cricket team celebrating" class="article-header-image">
             <div class="article-content">
                 <h2>U19 World Cup 2026: भारत ने इंग्लैंड को रौंदा, छठी बार जीता खिताब!</h2>
+                <h2 style="color: #fff;">U19 World Cup 2026: भारत ने इंग्लैंड को रौंदा, छठी बार जीता खिताब!</h2>
                 <span class="article-meta">Published: February 06, 2026 | By: शायराना क्रिकेट</span>
                 <img src="vbs1.jpg" alt="vibhav">
                 <p class="shayari">
@@ -176,6 +209,7 @@
                     युवा जोश ने दिखा दिया, अपना असली अवतार।
                 </p>
                 <img src="vbs.jpg" alt="vibhav">
+                <img src="vbs.jpg" alt="vibhav" class="img-fluid">
                 <p>आज (6 फरवरी 2026) हरारे, जिम्बाब्वे में हुए ICC Under-19 World Cup 2026 फाइनल में भारत की U19 टीम ने इंग्लैंड U19 को 100 रनों के बड़े अंतर से हराकर इतिहास रच दिया। यह भारत का छठा U19 वर्ल्ड कप खिताब है। फाइनल मैच में भारत ने पहले बल्लेबाजी करते हुए रिकॉर्ड्स की झड़ी लगा दी और इंग्लैंड के सामने 412 रनों का विशाल लक्ष्य रखा।</p>
 
                 <h3>फाइनल मैच का रोमांच (India U19 vs England U19)</h3>
@@ -235,6 +269,32 @@
         if (shareFacebook) shareFacebook.href = `https://www.facebook.com/sharer/sharer.php?u=${pageUrlForSharing}`;
         const shareWhatsapp = document.getElementById('share-whatsapp');
         if (shareWhatsapp) shareWhatsapp.href = `https://api.whatsapp.com/send?text=${pageTitleForSharing}%20${pageUrlForSharing}`;
+
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const body = document.body;
+
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                themeToggleBtn.textContent = '🌙';
+            } else {
+                body.classList.remove('light-mode');
+                themeToggleBtn.textContent = '☀️';
+            }
+        }
+
+        if (localStorage.getItem('theme') === 'light') {
+            applyTheme('light');
+        } else {
+            applyTheme('dark');
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            const newTheme = body.classList.contains('light-mode') ? 'dark' : 'light';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
     </script>
 </body>
 </html>

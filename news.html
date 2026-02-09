@@ -32,8 +32,9 @@
             line-height: 1.6;
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #ff69b4, #62b7d8, #e22bb7);
-            color: #fff; /* Standard dark text for readability */
+            background: #121212; /* Default Dark Mode */
+            color: #fff;
+            transition: background 0.3s, color 0.3s;
         }
         .container {
             max-width: 960px; /* Wider layout for news */
@@ -365,6 +366,33 @@
         .carousel-btn.prev { left: 10px; }
         .carousel-btn.next { right: 10px; }
         .verified-badge { color: #1da1f2; margin-left: 4px; font-size: 0.9em; vertical-align: middle; display: inline-block; }
+
+        /* Light Mode Styles */
+        body.light-mode {
+            background: #f4f7f6;
+            color: #333;
+        }
+        body.light-mode .header h1 { color: #333; }
+        body.light-mode .latest-news, 
+        body.light-mode .news-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        body.light-mode .latest-news h2 { color: #333; border-bottom-color: #ddd; }
+        body.light-mode .latest-news a { color: #0d6efd; }
+        body.light-mode .news-card-content h2 a { color: #333; }
+        body.light-mode .news-card-content p { color: #555; }
+        body.light-mode .article-meta { color: #666; }
+        body.light-mode .shayari-p { color: #444; background: #f8f9fa; }
+        body.light-mode footer { background: #fff; color: #666; border-top-color: #ddd; }
+        body.light-mode .comment-actions { color: #666; }
+        body.light-mode .comment-action-btn:hover { color: #000; }
+        body.light-mode .search-box input { background: #fff; color: #333; border: 1px solid #ccc; }
+        body.light-mode .search-results, 
+        body.light-mode .notif-dropdown { background: #fff; border-color: #ddd; color: #333; }
+        body.light-mode .search-result-item:hover { background: #f0f0f0; }
+        body.light-mode .notif-item { border-bottom-color: #eee; color: #555; }
     </style>
 </head>
 <body>
@@ -384,6 +412,7 @@
             </div>
             <div class="nav-buttons">
                 <span id="user-info" style="font-weight: bold; display: none;"></span>
+                <button id="theme-toggle" class="btn" style="background-color: #6c757d; padding: 8px 12px;">☀️</button>
                 <a href="profile.html" id="profile-btn" class="btn" style="background-color: #6f42c1; display: none; padding: 8px 15px;">👤 Profile</a>
                 <button id="login-btn" class="btn" style="background-color: #4285F4;">Login</button>
                 <button id="logout-btn" class="btn" style="background-color: #dc3545; display: none;">Logout</button>
@@ -508,7 +537,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, orderBy, arrayUnion, arrayRemove, addDoc, where, onSnapshot, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, orderBy, arrayUnion, arrayRemove, addDoc, where, onSnapshot, limit, startAfter, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPhoneNumber, RecaptchaVerifier, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { firebaseConfig } from "./firebase-config.js";
 
@@ -525,6 +554,37 @@
         const loginBtn = document.getElementById('login-btn');
         const logoutBtn = document.getElementById('logout-btn');
         const userInfo = document.getElementById('user-info');
+
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const body = document.body;
+
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                themeToggleBtn.textContent = '🌙';
+            } else {
+                body.classList.remove('light-mode');
+                themeToggleBtn.textContent = '☀️';
+            }
+            // Also update local storage for consistency when logged out
+            localStorage.setItem('theme', theme || 'dark');
+        }
+
+        themeToggleBtn.addEventListener('click', async () => {
+            const newTheme = body.classList.contains('light-mode') ? 'dark' : 'light';
+            applyTheme(newTheme);
+
+            if (auth.currentUser) {
+                try {
+                    const userRef = doc(db, "users", auth.currentUser.uid);
+                    // Using setDoc with merge to create the field if it doesn't exist
+                    await setDoc(userRef, { theme: newTheme }, { merge: true });
+                } catch (e) {
+                    console.error("Error saving theme preference:", e);
+                }
+            }
+        });
 
         // Open Login Modal
         loginBtn.addEventListener('click', () => {
@@ -632,18 +692,38 @@
                 logoutBtn.style.display = 'inline-block';
                 document.getElementById('profile-btn').style.display = 'inline-block';
                 userInfo.style.display = 'inline-block';
-                userInfo.textContent = `Hi, ${user.displayName.split(' ')[0]}`;
+                userInfo.textContent = `Hi, ${user.displayName ? user.displayName.split(' ')[0] : 'User'}`;
                 
                 listenForNotifications(user.uid);
+
+                // Load theme preference
+                try {
+                    const userDocRef = doc(db, "users", user.uid);
+                    const userDocSnap = await getDoc(userDocRef);
+                    let themeToApply = 'dark'; // default
+                    if (userDocSnap.exists() && userDocSnap.data().theme) {
+                        themeToApply = userDocSnap.data().theme;
+                    } else {
+                        const localTheme = localStorage.getItem('theme');
+                        if (localTheme) {
+                            themeToApply = localTheme;
+                            // Sync local theme to firestore for the first time
+                            await setDoc(userDocRef, { theme: themeToApply }, { merge: true });
+                        }
+                    }
+                    applyTheme(themeToApply);
+                } catch(e) {
+                    console.error("Error loading theme preference:", e);
+                    applyTheme(localStorage.getItem('theme') || 'dark');
+                }
+
                 // Load following list
                 try {
                     const userDoc = await getDoc(doc(db, "users", user.uid));
                     if (userDoc.exists()) currentUserFollowing = userDoc.data().following || [];
                 } catch(e) { console.error("Error loading following:", e); }
 
-                // Check if user has a unique ID (username)
-                const userDocRef = doc(db, "users", user.uid);
-                const userDoc = await getDoc(userDocRef);
+                const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (!userDoc.exists() || !userDoc.data().username) {
                     // Redirect to profile to create unique ID
                     window.location.href = "profile.html?requireUsername=true";
@@ -652,6 +732,8 @@
 
                 renderBlogs(user);
             } else {
+                // User is logged out, just use local storage
+                applyTheme(localStorage.getItem('theme') || 'dark');
                 loginBtn.style.display = 'inline-block';
                 logoutBtn.style.display = 'none';
                 document.getElementById('profile-btn').style.display = 'none';
@@ -1152,10 +1234,17 @@
                     } catch(e) { console.error("Notification error:", e); }
                 }
 
-                await updateDoc(blogRef, { likes: newLikes });
-
+                // Update local state immediately for UI
                 localStorage.setItem('cricket_user_liked_posts', JSON.stringify(likedPosts));
-                location.reload();
+                
+                // Update fetchedBlogs to reflect changes in renderBlogs
+                const blogIndex = fetchedBlogs.findIndex(b => b.id === id);
+                if (blogIndex !== -1) {
+                    fetchedBlogs[blogIndex].likes = newLikes;
+                }
+                renderBlogs(auth.currentUser);
+
+                await updateDoc(blogRef, { likes: newLikes });
         };
 
         window.shareBlog = async function(id, title) {
