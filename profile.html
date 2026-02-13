@@ -24,6 +24,32 @@
         .follow-profile-btn { width: auto; padding: 8px 20px; margin-top: 10px; background: #0d6efd; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; color: white; transition: background 0.2s; }
         .follow-profile-btn.following { background: #555; border: 1px solid #777; }
         .verified-badge { color: #1da1f2; margin-left: 5px; font-size: 1rem; vertical-align: middle; }
+        
+        /* Badge Styles */
+        .badge-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: help;
+            transition: all 0.2s ease;
+            margin: 5px;
+        }
+        .badge-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .badge-icon {
+            font-size: 1rem;
+        }
+        .badge-title {
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
         @media (max-width: 480px) {
             .container { width: 90%; padding: 20px; }
         }
@@ -34,6 +60,14 @@
         body.light-mode input, body.light-mode textarea { background: #f0f0f0; color: #333; border: 1px solid #ccc; }
         body.light-mode #username { background: #e9e9e9; color: #333; }
         body.light-mode .blog-card { background: #f8f9fa; border-color: #ddd; }
+        
+        /* Light mode for badges */
+        body.light-mode .badge-item {
+            background: #e9ecef;
+            border-color: #dee2e6;
+        }
+        body.light-mode .badge-title { color: #333; }
+
         body.light-mode .blog-card h4, body.light-mode .blog-card p { color: #333; }
         body.light-mode #user-list-modal > div { background: #fff; border-color: #ddd; color: #333; }
         body.light-mode #user-list-title { color: #0d6efd; }
@@ -69,9 +103,22 @@
             <span id="following-count" style="font-size: 1.4rem; font-weight: bold; color: gold;">0</span><br>
             <span style="font-size: 0.85rem; color: #aaa;">Following</span>
         </div>
+        <div style="text-align: center;">
+            <span id="blogs-count" style="font-size: 1.4rem; font-weight: bold; color: gold;">0</span><br>
+            <span style="font-size: 0.85rem; color: #aaa;">Blogs</span>
+        </div>
+        <div style="text-align: center;">
+            <span id="likes-count" style="font-size: 1.4rem; font-weight: bold; color: gold;">0</span><br>
+            <span style="font-size: 0.85rem; color: #aaa;">Likes</span>
+        </div>
     </div>
 
     <div id="verified-indicator" style="display:none; color:#1da1f2; font-weight:bold; margin: 5px 0;">✔ Verified Account</div>
+    
+    <div id="badges-section" style="margin: 20px 0; text-align: center;">
+        <!-- Badges will be populated by JavaScript -->
+    </div>
+
     <input type="text" id="username" placeholder="Unique ID (e.g. @cricket_lover)" style="background: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
     <input type="text" id="name" placeholder="Display Name">
     <textarea id="bio" rows="3" placeholder="Bio (e.g. Cricket Lover from Mumbai)"></textarea>
@@ -346,6 +393,21 @@
                 await updateDoc(userRef, { following: arrayUnion(targetUid) });
                 await updateDoc(targetRef, { followers: arrayUnion(myUid) });
                 
+                // --- NEW: Check for verification after a new follow ---
+                const targetDocSnap = await getDoc(targetRef);
+                if (targetDocSnap.exists()) {
+                    const targetData = targetDocSnap.data();
+                    const followersCount = (targetData.followers || []).length;
+                    if (followersCount >= 9 && !targetData.isVerified) {
+                        await updateDoc(targetRef, { isVerified: true });
+                        // Send a notification to the newly verified user
+                        await addDoc(collection(db, "notifications"), { 
+                            recipientUid: targetUid, senderName: "Auction To Arena", type: "verification", date: new Date().toISOString(), read: false 
+                        });
+                    }
+                }
+                // --- END NEW LOGIC ---
+
                 // Send Notification
                 await addDoc(collection(db, "notifications"), {
                     recipientUid: targetUid,
@@ -396,7 +458,111 @@
                 document.getElementById('name').value = currentUser.displayName;
                 if (currentUser.photoURL) document.getElementById('preview').src = currentUser.photoURL;
             }
+
+            // Fetch and display blog stats
+            try {
+                const blogsQuery = query(collection(db, "blogs"), where("authorUid", "==", uid));
+                const blogsSnapshot = await getDocs(blogsQuery);
+
+                let totalBlogs = 0;
+                let totalLikes = 0;
+                blogsSnapshot.forEach(blogDoc => {
+                    const blogData = blogDoc.data();
+                    if (blogData.status !== 'draft') {
+                        totalBlogs++;
+                        totalLikes += blogData.likes || 0;
+                    }
+                });
+                document.getElementById('blogs-count').innerText = totalBlogs;
+                document.getElementById('likes-count').innerText = totalLikes;
+            } catch (e) { console.error("Error fetching blog stats:", e); }
+
+            // NEW: Display badges based on stats
+            displayBadges(data, totalBlogs, totalLikes);
+
         } catch (e) { console.error("Error loading profile:", e); }
+    }
+
+    function displayBadges(userData, blogCount, likeCount) {
+        const badgesSection = document.getElementById('badges-section');
+        if (!badgesSection) return;
+        badgesSection.innerHTML = ''; // Clear existing badges
+
+        const badges = [];
+
+        // 1. Verified Badge
+        if (userData.isVerified) {
+            badges.push({
+                icon: '✔',
+                title: 'Verified User',
+                color: '#1da1f2',
+                description: 'A trusted member of the community with 9+ followers.'
+            });
+        }
+
+        // 2. Popular Author Badge
+        if (likeCount >= 500) {
+            badges.push({
+                icon: '🔥',
+                title: 'Popular Author',
+                color: '#ff6b6b',
+                description: 'Received over 500 likes on their blog posts.'
+            });
+        }
+
+        // 3. Community Pillar Badge
+        if (userData.followers && userData.followers.length >= 100) {
+            badges.push({
+                icon: '🏛️',
+                title: 'Community Pillar',
+                color: '#f1c40f', // A golden yellow
+                description: 'Followed by over 100 users.'
+            });
+        }
+        
+        // 4. Prolific Writer Badge
+        if (blogCount >= 25) {
+             badges.push({
+                icon: '✍️',
+                title: 'Prolific Writer',
+                color: '#9b59b6', // A nice purple
+                description: 'Published 25 or more blog posts.'
+            });
+        }
+
+        // 5. First Post Badge
+        if (blogCount > 0) {
+            badges.push({
+                icon: '🎉',
+                title: 'Contributor',
+                color: '#2ecc71', // A friendly green
+                description: 'Published their first blog post.'
+            });
+        }
+
+        if (badges.length > 0) {
+            const header = document.createElement('h3');
+            header.innerText = 'Badges';
+            header.style.color = 'gold';
+            header.style.marginBottom = '10px';
+            header.style.marginTop = '0';
+            badgesSection.appendChild(header);
+
+            const badgeContainer = document.createElement('div');
+            badgeContainer.style.display = 'flex';
+            badgeContainer.style.flexWrap = 'wrap';
+            badgeContainer.style.gap = '10px';
+            badgeContainer.style.justifyContent = 'center';
+
+            badges.forEach(badge => {
+                const badgeEl = document.createElement('div');
+                badgeEl.className = 'badge-item';
+                badgeEl.title = badge.description;
+                badgeEl.innerHTML = `<span class="badge-icon" style="background-color: ${badge.color}; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">${badge.icon}</span><span class="badge-title">${badge.title}</span>`;
+                badgeContainer.appendChild(badgeEl);
+            });
+            badgesSection.appendChild(badgeContainer);
+        }
     }
 
     async function fetchMyBlogs(uid, isOwner) {

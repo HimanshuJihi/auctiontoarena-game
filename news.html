@@ -961,7 +961,7 @@
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
                             <img src="${blog.authorPhoto || 'https://via.placeholder.com/40'}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #87ceeb; cursor: pointer;" onclick="window.location.href='profile.html?uid=${blog.authorUid}'">
                             <div>
-                                <div style="display:flex; align-items:center;"><strong style="color: #87ceeb; font-size: 1.1rem;">${blog.author}</strong> ${verifiedBadge} ${followBtnHtml}</div>
+                                <div style="display:flex; align-items:center;"><strong style="color: #87ceeb; font-size: 1.1rem; cursor: pointer;" onclick="window.location.href='profile.html?uid=${blog.authorUid}'">${blog.author}</strong> ${verifiedBadge} ${followBtnHtml}</div>
                                 <span style="font-size: 0.8rem; color: #aaa;">${new Date(blog.date).toLocaleDateString()}</span>
                             </div>
                         </div>
@@ -973,6 +973,36 @@
                             ${authorHeader}
                             <h2 style="margin-top: 5px;"><a href="#">${blog.title}</a></h2>
                             <p>${blog.content.replace(/\n/g, '<br>')}</p>
+
+                            ${blog.poll ? `
+                                <div class="poll-container" style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                                    <h4 style="margin: 0 0 10px 0; color: #ffc107;">Poll: ${blog.poll.question}</h4>
+                                    <div id="poll-options-${blog.id}">
+                                        ${(() => {
+                                            const userHasVoted = user && blog.poll.options.some(opt => opt.voters && opt.voters.includes(user.uid));
+                                            const totalVotes = blog.poll.totalVotes || blog.poll.options.reduce((acc, opt) => acc + (opt.votes || 0), 0);
+
+                                            return blog.poll.options.map((option, index) => {
+                                                if (userHasVoted || !user) {
+                                                    // Show results
+                                                    const percentage = totalVotes > 0 ? (((option.votes || 0) / totalVotes) * 100).toFixed(0) : 0;
+                                                    return `
+                                                        <div style="margin-bottom: 8px;">
+                                                            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;"><span>${option.text}</span> <span style="color: #ccc;">${percentage}%</span></div>
+                                                            <div style="background: #555; border-radius: 5px; overflow: hidden; height: 10px;">
+                                                                <div style="width: ${percentage}%; background: #0d6efd; height: 100%; border-radius: 5px;"></div>
+                                                            </div>
+                                                        </div>`;
+                                                } else {
+                                                    // Show vote buttons
+                                                    return `<button class="btn" style="width: 100%; margin: 5px 0; text-align: left; background: rgba(255,255,255,0.1);" onclick="window.voteOnPoll('${blog.id}', ${index})">${option.text}</button>`;
+                                                }
+                                            }).join('');
+                                        })()}
+                                    </div>
+                                    <small style="color: #aaa; margin-top: 10px; display: block;">Total Votes: ${blog.poll.totalVotes || blog.poll.options.reduce((acc, opt) => acc + (opt.votes || 0), 0)}</small>
+                                </div>
+                            ` : ''}
                             
                             <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; display: flex; align-items: center; gap: 15px;">
                                 ${actionButtons}
@@ -1288,6 +1318,54 @@
                     });
                     alert("Report submitted successfully. We will review it.");
                 } catch(e) { console.error(e); alert("Error submitting report."); }
+            }
+        };
+
+        window.voteOnPoll = async function(blogId, optionIndex) {
+            if (!auth.currentUser) {
+                alert("Please login to vote!");
+                return;
+            }
+            const uid = auth.currentUser.uid;
+            const blogRef = doc(db, "blogs", blogId);
+
+            try {
+                const docSnap = await getDoc(blogRef);
+                if (!docSnap.exists()) {
+                    alert("Blog not found!");
+                    return;
+                }
+
+                const blog = docSnap.data();
+                const poll = blog.poll;
+
+                // Check if user already voted
+                const hasVoted = poll.options.some(opt => opt.voters && opt.voters.includes(uid));
+                if (hasVoted) {
+                    alert("You have already voted in this poll.");
+                    return;
+                }
+
+                // Update poll data
+                poll.options[optionIndex].votes = (poll.options[optionIndex].votes || 0) + 1;
+                if (!poll.options[optionIndex].voters) {
+                    poll.options[optionIndex].voters = [];
+                }
+                poll.options[optionIndex].voters.push(uid);
+                poll.totalVotes = (poll.totalVotes || 0) + 1;
+
+                // Update Firestore
+                await updateDoc(blogRef, { poll: poll });
+
+                // Optimistic UI update
+                const blogIndex = fetchedBlogs.findIndex(b => b.id === blogId);
+                if (blogIndex !== -1) {
+                    fetchedBlogs[blogIndex].poll = poll;
+                    renderBlogs(auth.currentUser); // Re-render to show results
+                }
+            } catch (e) {
+                console.error("Error voting on poll:", e);
+                alert("An error occurred while casting your vote.");
             }
         };
 
@@ -1682,6 +1760,11 @@
                             notifHtml = `<strong>${n.senderName}</strong> replied to your comment on <em>${n.blogTitle}</em>.`;
                             div.style.cursor = 'pointer';
                             div.onclick = () => window.location.href = `news.html?blogId=${n.blogId}#comment-${n.commentId}`;
+                            break;
+                        case 'verification':
+                            notifHtml = `🎉 Congratulations! You are now a <strong>Verified User</strong>.`;
+                            div.style.cursor = 'pointer';
+                            div.onclick = () => window.location.href = `profile.html`;
                             break;
                         default:
                             notifHtml = `You have a new notification.`;
