@@ -3607,99 +3607,52 @@
             }
 
             confirmBowlerSelection() {
-    if(this.tempSelection.length < 1) { alert("Select a bowler!"); return; }
-    this.currentBowler = this.matchSquad[this.tempSelection[0]];
-    
-    if(this.currentBowler.matchWickets === undefined) this.currentBowler.matchWickets = 0;
-    if(this.currentBowler.matchRunsConceded === undefined) this.currentBowler.matchRunsConceded = 0;
-    if(this.currentBowler.matchBallsBowled === undefined) this.currentBowler.matchBallsBowled = 0;
+                if(this.tempSelection.length < 1) { alert("Select a bowler!"); return; }
+                this.currentBowler = this.matchSquad[this.tempSelection[0]];
+                
+                if(this.currentBowler.matchWickets === undefined) this.currentBowler.matchWickets = 0;
+                if(this.currentBowler.matchRunsConceded === undefined) this.currentBowler.matchRunsConceded = 0;
+                if(this.currentBowler.matchBallsBowled === undefined) this.currentBowler.matchBallsBowled = 0;
 
-    // --- LOGIC FIX: Set bowling type explicitly ---
-    if (this.currentBowler.bowlingStyle) {
-        this.bowlingType = this.currentBowler.bowlingStyle; 
-    } else {
-        this.bowlingType = 'Fast'; // Fallback default
-    }
-    
-    this.showCommentary(`Selected: ${this.currentBowler.name} (${this.bowlingType})`, false);
+                // --- LOGIC FIX: Set bowling type explicitly ---
+                if (this.currentBowler.bowlingStyle) {
+                    this.bowlingType = this.currentBowler.bowlingStyle; 
+                } else {
+                    this.bowlingType = 'Fast'; // Fallback default
+                }
+                
+                this.showCommentary(`Selected: ${this.currentBowler.name} (${this.bowlingType})`, false);
 
-    // --- UI FIX: Immediately show/hide correct controls based on type ---
-    const fastControls = document.getElementById('fast-bowling-controls');
-    const spinControls = document.getElementById('spin-bowling-controls');
-    
-    if (fastControls && spinControls) {
-        if (this.playerRole === 'bowling') {            confirmBowlerSelection(); {
-                        if(this.tempSelection.length < 1) { alert("Select a bowler!"); return; }
-                        this.currentBowler = this.matchSquad[this.tempSelection[0]];
-                        
-                        if(this.currentBowler.matchWickets === undefined) this.currentBowler.matchWickets = 0;
-                        if(this.currentBowler.matchRunsConceded === undefined) this.currentBowler.matchRunsConceded = 0;
-                        if(this.currentBowler.matchBallsBowled === undefined) this.currentBowler.matchBallsBowled = 0;
-        
-                        // --- LOGIC FIX: Set bowling type explicitly ---
-                        if (this.currentBowler.bowlingStyle) {
-                            this.bowlingType = this.currentBowler.bowlingStyle; 
+                // --- UI FIX: Immediately show/hide correct controls based on type ---
+                const fastControls = document.getElementById('fast-bowling-controls');
+                const spinControls = document.getElementById('spin-bowling-controls');
+                
+                if (fastControls && spinControls) {
+                    if (this.playerRole === 'bowling') {
+                        if (this.bowlingType === 'Fast') {
+                            fastControls.style.display = 'flex';
+                            spinControls.style.display = 'none';
+                            this.setBowlingVariation('Normal');
                         } else {
-                            this.bowlingType = 'Fast'; // Fallback default
+                            // Assume Spin if not Fast
+                            fastControls.style.display = 'none';
+                            spinControls.style.display = 'flex';
+                            this.setBowlingVariation('OffSpin'); 
                         }
-                        
-                        this.showCommentary(`Selected: ${this.currentBowler.name} (${this.bowlingType})`, false);
-        
-                        // --- UI FIX: Immediately show/hide correct controls based on type ---
-                        const fastControls = document.getElementById('fast-bowling-controls');
-                        const spinControls = document.getElementById('spin-bowling-controls');
-                        
-                        if (fastControls && spinControls) {
-                            if (this.playerRole === 'bowling') {
-                                if (this.bowlingType === 'Fast') {
-                                    fastControls.style.display = 'flex';
-                                    spinControls.style.display = 'none';
-                                    this.setBowlingVariation('Normal');
-                                } else {
-                                    // Assume Spin if not Fast
-                                    fastControls.style.display = 'none';
-                                    spinControls.style.display = 'flex';
-                                    this.setBowlingVariation('OffSpin'); 
-                                }
-                            } else {
-                                fastControls.style.display = 'none';
-                                spinControls.style.display = 'none';
-                            }
-                        }
-        
-                        if(!this.isGameActive) {
-                            this.initiateMatchSequence();
-                        } else {
-                            this.showScreen('');
-                            document.getElementById('hud').style.display = 'block';
-                            if(this.playerRole === 'bowling') this.showCommentary("Press BOWL to start", false);
-                        }
+                    } else {
+                        fastControls.style.display = 'none';
+                        spinControls.style.display = 'none';
                     }
-        
-            if (this.bowlingType === 'Fast') {
-                fastControls.style.display = 'flex';
-                spinControls.style.display = 'none';
-                this.setBowlingVariation('Normal');
-            } else {
-                // Assume Spin if not Fast
-                fastControls.style.display = 'none';
-                spinControls.style.display = 'flex';
-                this.setBowlingVariation('OffSpin'); 
-            }
-        } else {
-            fastControls.style.display = 'none';
-            spinControls.style.display = 'none';
-        }
-    }
+                }
 
-    if(!this.isGameActive) {
-        this.initiateMatchSequence();
-    } else {
-        this.showScreen('');
-        document.getElementById('hud').style.display = 'block';
-        if(this.playerRole === 'bowling') this.showCommentary("Press Space to Bowl", false);
-    }
-}
+                if(!this.isGameActive) {
+                    this.initiateMatchSequence();
+                } else {
+                    this.showScreen('');
+                    document.getElementById('hud').style.display = 'block';
+                    if(this.playerRole === 'bowling') this.showCommentary("Press Space to Bowl", false);
+                }
+            }
 
             selectNextAIBowler() {
                 let maxOversPerBowler;
@@ -3839,7 +3792,6 @@
         this.currentBatsman = { name: "AI Rohit", power: 80, jerseyNumber: 45 };
         this.currentNonStriker = { name: "AI Virat", power: 80, jerseyNumber: 18 };
         this.showCommentary("Press BOWL to start", false);
-        document.getElementById('bowling-controls').style.display = 'block';
     } else {
         // User Batting Logic
         this.aiBowlingLineup = PLAYERS_2025.filter(p => p.role === 'Bowler' || p.role === 'All-Rounder').slice(0, 5);
@@ -3858,7 +3810,6 @@
         });
 
         if (!this.currentBowler) this.currentBowler = this.aiBowlingLineup[0];
-        document.getElementById('bowling-controls').style.display = 'none';
     }
 
     const userTeamName = TEAMS.find(t=>t.id===this.userTeamId).name;
