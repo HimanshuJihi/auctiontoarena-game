@@ -435,12 +435,16 @@
     }
 
     async function loadProfileData(uid) {
+        let data = {};
+        let totalBlogs = 0;
+        let totalLikes = 0;
+
         try {
             const docRef = doc(db, "users", uid);
             const docSnap = await getDoc(docRef);
             
             if (docSnap.exists()) {
-                const data = docSnap.data();
+                data = docSnap.data();
                 currentProfileData = data; // Store for list access
                 document.getElementById('name').value = data.name || "";
                 document.getElementById('username').value = data.username || "";
@@ -469,18 +473,15 @@
 
             // Fetch and display blog stats
             try {
-                const blogsQuery = query(collection(db, "blogs"), where("authorUid", "==", uid));
+                const blogsQuery = query(collection(db, "blogs"), where("authorUid", "==", uid), where("status", "!=", "draft"));
                 const blogsSnapshot = await getDocs(blogsQuery);
 
-                let totalBlogs = 0;
-                let totalLikes = 0;
+                totalBlogs = blogsSnapshot.size;
                 blogsSnapshot.forEach(blogDoc => {
                     const blogData = blogDoc.data();
-                    if (blogData.status !== 'draft') {
-                        totalBlogs++;
-                        totalLikes += blogData.likes || 0;
-                    }
+                    totalLikes += blogData.likes || 0;
                 });
+
                 document.getElementById('blogs-count').innerText = totalBlogs;
                 document.getElementById('likes-count').innerText = totalLikes;
             } catch (e) { console.error("Error fetching blog stats:", e); }
