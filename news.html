@@ -507,7 +507,6 @@
             <div style="display: flex; justify-content: space-around; margin-bottom: 20px; border-bottom: 1px solid #444;">
                 <button id="tab-google" class="tab-btn" style="background:none; border:none; color:white; padding: 10px; cursor: pointer; border-bottom: 2px solid gold;">Google</button>
                 <button id="tab-email" class="tab-btn" style="background:none; border:none; color:#aaa; padding: 10px; cursor: pointer;">Email</button>
-                <button id="tab-phone" class="tab-btn" style="background:none; border:none; color:#aaa; padding: 10px; cursor: pointer;">Phone</button>
             </div>
 
             <div id="content-google" class="auth-content">
@@ -520,17 +519,6 @@
                 <div style="text-align: right; margin-bottom: 10px;"><a href="#" id="forgot-pwd-link" style="color: gold; text-decoration: none; font-size: 0.9rem;">Forgot Password?</a></div>
                 <button id="email-login-btn" class="btn" style="width: 100%; margin-bottom: 10px;">Login</button>
                 <button id="email-signup-btn" class="btn" style="width: 100%; background-color: #198754;">Sign Up</button>
-            </div>
-
-            <div id="content-phone" class="auth-content" style="display: none;">
-                <input type="tel" id="phone-input" placeholder="+91 9876543210" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; background: #333; color: white;">
-                <div id="recaptcha-container" style="margin-bottom: 10px;"></div>
-                <button id="phone-send-otp-btn" class="btn" style="width: 100%; margin-bottom: 10px;">Send OTP</button>
-                
-                <div id="otp-section" style="display: none;">
-                    <input type="text" id="otp-input" placeholder="Enter OTP" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; background: #333; color: white;">
-                    <button id="phone-verify-btn" class="btn" style="width: 100%; background-color: #198754;">Verify OTP</button>
-                </div>
             </div>
         </div>
     </div>
@@ -604,7 +592,7 @@
         });
 
         // Tab Switching Logic
-        const tabs = ['google', 'email', 'phone'];
+        const tabs = ['google', 'email'];
         tabs.forEach(tab => {
             document.getElementById(`tab-${tab}`).addEventListener('click', () => {
                 tabs.forEach(t => {
@@ -635,21 +623,60 @@
 
         // 2. Email/Password Login & Signup
         document.getElementById('email-login-btn').addEventListener('click', async () => {
-            const email = document.getElementById('email-input').value;
+            const email = document.getElementById('email-input').value.trim();
             const pass = document.getElementById('password-input').value;
+
+            if (!email || !pass) {
+                alert("Please enter both email and password.");
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Please enter a valid email address.");
+                return;
+            }
+
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
                 document.getElementById('login-modal').style.display = 'none';
-            } catch(e) { alert("Error: " + e.message); }
+            } catch(e) {
+                if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+                    alert("Invalid email or password. Please try again.");
+                } else {
+                    alert("Login Error: " + e.message);
+                }
+            }
         });
 
         document.getElementById('email-signup-btn').addEventListener('click', async () => {
-            const email = document.getElementById('email-input').value;
+            const email = document.getElementById('email-input').value.trim();
             const pass = document.getElementById('password-input').value;
+
+            if (!email || !pass) {
+                alert("Please enter both email and password.");
+                return;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Please enter a valid email address.");
+                return;
+            }
+            if (pass.length < 6) {
+                alert("Password must be at least 6 characters long.");
+                return;
+            }
+
             try {
                 await createUserWithEmailAndPassword(auth, email, pass);
                 document.getElementById('login-modal').style.display = 'none';
-            } catch(e) { alert("Error: " + e.message); }
+            } catch(e) {
+                if (e.code === 'auth/email-already-in-use') {
+                    alert("This email address is already in use. Please login or use a different email.");
+                } else {
+                    alert("Signup Error: " + e.message);
+                }
+            }
         });
 
         // Forgot Password
@@ -664,34 +691,6 @@
                 await sendPasswordResetEmail(auth, email);
                 alert("Password reset email sent to " + email);
             } catch(e) { alert("Error: " + e.message); }
-        });
-
-        // 3. Phone Login
-        window.recaptchaVerifier = null;
-        document.getElementById('phone-send-otp-btn').addEventListener('click', async () => {
-            const phoneNumber = document.getElementById('phone-input').value;
-            if(!phoneNumber) { alert("Please enter phone number"); return; }
-            
-            if(!window.recaptchaVerifier) {
-                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                    'size': 'normal'
-                });
-            }
-            
-            try {
-                window.confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
-                document.getElementById('otp-section').style.display = 'block';
-                alert("OTP Sent!");
-            } catch(e) { console.error(e); alert("Error sending OTP: " + e.message); }
-        });
-
-        document.getElementById('phone-verify-btn').addEventListener('click', async () => {
-            const code = document.getElementById('otp-input').value;
-            if(!window.confirmationResult) return;
-            try {
-                await window.confirmationResult.confirm(code);
-                document.getElementById('login-modal').style.display = 'none';
-            } catch(e) { alert("Invalid OTP"); }
         });
 
         logoutBtn.addEventListener('click', () => {
