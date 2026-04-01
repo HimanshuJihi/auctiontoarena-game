@@ -404,6 +404,15 @@
             border-color: #198754;
             color: white;
         }
+        #feed-verified-btn {
+            border-color: #1da1f2;
+            color: #1da1f2;
+        }
+        #feed-verified-btn.active {
+            background-color: #1da1f2;
+            border-color: #1da1f2;
+            color: white;
+        }
         body.light-mode .feed-btn {
             color: #555;
             border-color: #ccc;
@@ -412,6 +421,10 @@
             background-color: #198754;
             border-color: #198754;
             color: white;
+        }
+        body.light-mode #feed-verified-btn {
+            color: #1da1f2;
+            border-color: #1da1f2;
         }
     </style>
 </head>
@@ -473,6 +486,7 @@
             <div id="feed-toggle" style="margin-bottom: 15px; display: none; gap: 10px;">
                 <button id="feed-all-btn" class="btn feed-btn active">All Posts</button>
                 <button id="feed-following-btn" class="btn feed-btn">Following</button>
+                <button id="feed-verified-btn" class="btn feed-btn">✔ Verified</button>
             </div>
             <div class="news-grid" id="user-blogs-grid"></div>
             <div id="load-more-container" style="text-align: center; margin-top: 20px; display: none;">
@@ -809,14 +823,19 @@
         function updateFeedToggleUI() {
             const allBtn = document.getElementById('feed-all-btn');
             const followingBtn = document.getElementById('feed-following-btn');
-            if (!allBtn || !followingBtn) return;
+            const verifiedBtn = document.getElementById('feed-verified-btn');
+            if (!allBtn || !followingBtn || !verifiedBtn) return;
 
-            if (currentFeedMode === 'all') {
-                allBtn.classList.add('active');
-                followingBtn.classList.remove('active');
-            } else {
-                allBtn.classList.remove('active');
+            allBtn.classList.remove('active');
+            followingBtn.classList.remove('active');
+            verifiedBtn.classList.remove('active');
+
+            if (currentFeedMode === 'following') {
                 followingBtn.classList.add('active');
+            } else if (currentFeedMode === 'verified') {
+                verifiedBtn.classList.add('active');
+            } else {
+                allBtn.classList.add('active');
             }
         }
 
@@ -840,6 +859,12 @@
             if (currentFeedMode === 'following') return;
             if (!auth.currentUser) { alert("Please login to see posts from users you follow."); return; }
             currentFeedMode = 'following';
+            resetAndLoadBlogs();
+        });
+
+        document.getElementById('feed-verified-btn').addEventListener('click', () => {
+            if (currentFeedMode === 'verified') return;
+            currentFeedMode = 'verified';
             resetAndLoadBlogs();
         });
 
@@ -932,6 +957,12 @@
                         q = query(blogsRef, where("authorUid", "in", followedUIDs), orderBy("date", "desc"), startAfter(lastVisibleBlog), limit(BLOGS_PER_PAGE));
                     } else {
                         q = query(blogsRef, where("authorUid", "in", followedUIDs), orderBy("date", "desc"), limit(BLOGS_PER_PAGE));
+                    }
+                } else if (currentFeedMode === 'verified') {
+                    if (isLoadMore && lastVisibleBlog) {
+                        q = query(blogsRef, where("authorVerified", "==", true), orderBy("date", "desc"), startAfter(lastVisibleBlog), limit(BLOGS_PER_PAGE));
+                    } else {
+                        q = query(blogsRef, where("authorVerified", "==", true), orderBy("date", "desc"), limit(BLOGS_PER_PAGE));
                     }
                 } else { // 'all' mode
                     if (isLoadMore && lastVisibleBlog) {

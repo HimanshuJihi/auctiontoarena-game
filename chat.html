@@ -295,7 +295,10 @@
             const q = query(messagesRef, orderBy("timestamp", "asc"));
 
             unsubscribe = onSnapshot(q, (snapshot) => {
-                document.getElementById('loading-messages').style.display = 'none';
+                const loadingIndicator = document.getElementById('loading-messages');
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
                 chatMessages.innerHTML = '';
                 snapshot.forEach(doc => {
                     renderMessage(doc.data());
