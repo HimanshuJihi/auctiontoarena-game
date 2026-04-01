@@ -90,7 +90,10 @@
     <h2>My Profile</h2>
     <img id="preview" src="https://via.placeholder.com/100" class="profile-pic" onclick="document.getElementById('file-input').click()" title="Click to change photo">
     <input type="file" id="file-input" style="display: none;" accept="image/*">
-    <button id="follow-btn" class="follow-profile-btn" style="display: none;">Follow</button>
+    <div id="profile-action-buttons" style="margin-top: 10px; display: none;">
+        <button id="follow-btn" class="follow-profile-btn" style="display: none;">Follow</button>
+        <button id="message-profile-btn" class="follow-profile-btn" style="display: none; background-color: #198754; margin-left: 10px;">Message</button>
+    </div>
     <p id="photo-hint" style="font-size: 0.8rem; opacity: 0.8;">Tap image to change</p>
     
     <!-- Followers/Following Stats -->
