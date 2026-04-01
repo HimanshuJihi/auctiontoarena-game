@@ -6,7 +6,7 @@
     <title>Edit Profile</title>
     <style>
         body { font-family: sans-serif; background: #121212; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; transition: background-color .3s ease, color .3s ease; }
-        .container { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; backdrop-filter: blur(10px); width: 100%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
+        .container { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; backdrop-filter: blur(10px); width: 100%; max-width: 800px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
         input, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
         button { width: 100%; padding: 10px; background: #ff9800; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold; margin-top: 10px; }
         button:hover { background: #e68900; }
@@ -317,6 +317,7 @@
             document.querySelector('h2').innerText = "User Profile";
             document.getElementById('save-btn').style.display = 'none';
             document.getElementById('change-pwd-btn').style.display = 'none';
+            document.getElementById('profile-action-buttons').style.display = 'block';
             document.getElementById('delete-acc-btn').style.display = 'none';
             document.getElementById('photo-hint').style.display = 'none';
             document.getElementById('preview').onclick = null;
@@ -335,10 +336,16 @@
             fetchMyBlogs(viewUid, false); // false = not owner
             
             // Setup Follow Button
-            if (user) {
+            if (user) { // Only show follow/message if logged in
                 const followBtn = document.getElementById('follow-btn');
                 followBtn.style.display = 'inline-block';
                 
+                const messageBtn = document.getElementById('message-profile-btn');
+                messageBtn.style.display = 'inline-block';
+                messageBtn.onclick = () => {
+                    window.location.href = `chat.html?uid=${viewUid}`;
+                };
+
                 // Check if already following
                 try {
                     const myDoc = await getDoc(doc(db, "users", user.uid));
@@ -352,6 +359,7 @@
         } else if (user) {
             // Edit Mode (My Profile)
             // Load existing profile
+                document.getElementById('profile-action-buttons').style.display = 'none';
                 loadProfileData(user.uid);
                 fetchMyBlogs(user.uid, true); // true = owner
 
@@ -857,57 +865,6 @@
             alert("Error: " + error.message);
         }
     });
-</script>
-<script>
-(function(jdrdd){
-var d = document,
-    s = d.createElement('script'),
-    l = d.scripts[d.scripts.length - 1];
-s.settings = jdrdd || {};
-s.src = "\/\/webbedtrash.com\/bOX.VQswdXGPlo0xYjWvcb\/Fepm\/9vuTZYU\/lvk_PAT\/Yt5-M\/TIcW1MN\/TgMwtPNmjvkyxqNLz\/U\/1pNUwu";
-s.async = true;
-s.referrerPolicy = 'no-referrer-when-downgrade';
-l.parentNode.insertBefore(s, l);
-})({})
-</script>
-<!--2nd Ad Script-->
-<script>
-(function(hwqbv){
-var d = document,
-    s = d.createElement('script'),
-    l = d.scripts[d.scripts.length - 1];
-s.settings = hwqbv || {};
-s.src = "\/\/webbedtrash.com\/b.XCV\/syd-GhlF0HYAWNcX\/NePmv9Au\/ZnUMlIkJPQTXYO5vMsT_cx1mNfjbkGt\/NrjJksxpNZz\/UB3\/MzwX";
-s.async = true;
-s.referrerPolicy = 'no-referrer-when-downgrade';
-l.parentNode.insertBefore(s, l);
-})({})
-</script>
-<!--3rd Ad Script-->
-<script>
-(function(nro){
-var d = document,
-    s = d.createElement('script'),
-    l = d.scripts[d.scripts.length - 1];
-s.settings = nro || {};
-s.src = "\/\/webbedtrash.com\/bwX.VUsddxGllL0lYBWAcV\/aeOmk9\/uNZ\/Uildk\/PrT\/Yu5dM_TXc\/1\/O\/T\/cdtYN\/jTkGx\/N\/zDY\/w-MyQO";
-s.async = true;
-s.referrerPolicy = 'no-referrer-when-downgrade';
-l.parentNode.insertBefore(s, l);
-})({})
-</script>
-<!--5th Ad Script-->
-<script>
-(function(jcno){
-var d = document,
-    s = d.createElement('script'),
-    l = d.scripts[d.scripts.length - 1];
-s.settings = jcno || {};
-s.src = "\/\/webbedtrash.com\/b.X\/VEs\/dKGElG0BYLWacF\/feQmf9ou\/ZrUllVk\/PDTyYn5kMbTrcV2VMKjnEvtFNqjfk-xSN-z\/YVyhNIQJ";
-s.async = true;
-s.referrerPolicy = 'no-referrer-when-downgrade';
-l.parentNode.insertBefore(s, l);
-})({})
 </script>
 </body>
 </html>

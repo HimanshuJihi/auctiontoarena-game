@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Messages - Cricket News & Chat</title>
+    <link rel="icon" href="game-logo.png" type="image/png">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #121212; /* Default Dark Mode */
+            color: #fff;
+            transition: background 0.3s, color 0.3s;
+        }
+        .container {
+            max-width: 800px; /* Optimized for chat list */
+            margin: 20px auto;
+            padding: 20px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2rem;
+            color: #fff;
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #fff;
+            background-color: #0d6efd;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+        .btn:hover {
+            background-color: #0b5ed7;
+        }
+        .conversation-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .conversation-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .conversation-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        .conversation-item:last-child {
+            border-bottom: none;
+        }
+        .profile-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #87ceeb;
+        }
+        .conversation-info {
+            flex-grow: 1;
+        }
+        .conversation-info h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #87ceeb;
+        }
+        .conversation-info p {
+            margin: 5px 0 0;
+            font-size: 0.9rem;
+            color: #ccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .last-message-time {
+            font-size: 0.75rem;
+            color: #aaa;
+        }
+        /* Light Mode */
+        body.light-mode { background: #f4f7f6; color: #333; }
+        body.light-mode .container { background: #fff; border-color: #ddd; }
+        body.light-mode .header h1 { color: #333; }
+        body.light-mode .conversation-item { border-bottom-color: #eee; }
+        body.light-mode .conversation-item:hover { background-color: #f0f0f0; }
+        body.light-mode .conversation-info h3 { color: #0d6efd; }
+        body.light-mode .conversation-info p { color: #555; }
+        body.light-mode .last-message-time { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>My Messages</h1>
+            <a href="news.html" class="btn">← Back to News</a>
+        </div>
+
+        <div id="loading-indicator" style="text-align: center; padding: 20px; color: #aaa;">Loading conversations...</div>
+        <ul class="conversation-list" id="conversation-list">
+            <!-- Conversation items will be dynamically loaded here by JavaScript -->
+        </ul>
+        <div id="no-conversations" style="text-align: center; padding: 20px; color: #aaa; display: none;">No conversations yet.</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, orderBy, onSnapshot, getDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { firebaseConfig } from "./firebase-config.js";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const conversationList = document.getElementById('conversation-list');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const noConversationsMessage = document.getElementById('no-conversations');
+
+        // Theme Toggle Logic
+        const body = document.body;
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+            } else {
+                body.classList.remove('light-mode');
+            }
+            localStorage.setItem('theme', theme || 'dark');
+        }
+        applyTheme(localStorage.getItem('theme') || 'dark');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                window.currentUser = user;
+                loadingIndicator.style.display = 'block';
+                conversationList.innerHTML = '';
+                noConversationsMessage.style.display = 'none';
+                
+                // Load user's theme preference
+                try {
+                    const userDocRef = doc(db, "users", user.uid);
+                    const userDocSnap = await getDoc(userDocRef);
+                    if (userDocSnap.exists() && userDocSnap.data().theme) {
+                        applyTheme(userDocSnap.data().theme);
+                    }
+                } catch(e) {
+                    console.error("Error loading theme preference:", e);
+                }
+
+                listenForConversations();
+            } else {
+                alert("Please login to view your messages.");
+                window.location.href = 'news.html';
+            }
+        });
+
+        function listenForConversations() {
+            const q = query(
+                collection(db, "conversations"),
+                where("participants", "array-contains", window.currentUser.uid),
+                orderBy("lastMessage.timestamp", "desc")
+            );
+
+            onSnapshot(q, (snapshot) => {
+                loadingIndicator.style.display = 'none';
+                if (snapshot.empty) {
+                    noConversationsMessage.style.display = 'block';
+                    conversationList.innerHTML = '';
+                    return;
+                }
+                noConversationsMessage.style.display = 'none';
+                
+                snapshot.docChanges().forEach((change) => {
+                    const conversation = change.doc.data();
+                    const conversationId = change.doc.id;
+                    const otherParticipantUid = conversation.participants.find(uid => uid !== window.currentUser.uid);
+
+                    if (!otherParticipantUid) return;
+
+                    const otherUser = conversation.participantDetails[otherParticipantUid];
+                    const lastMessage = conversation.lastMessage;
+                    const isUnread = lastMessage && lastMessage.isRead === false && lastMessage.senderUid !== window.currentUser.uid;
+
+                    let lastMessageText = "No messages yet.";
+                    if (lastMessage) {
+                        const senderName = lastMessage.senderUid === window.currentUser.uid ? "You" : (otherUser.name || 'User').split(' ')[0];
+                        lastMessageText = `${senderName}: ${lastMessage.text}`;
+                    }
+
+                    const existingLi = document.getElementById(`conv-${conversationId}`);
+                    if (existingLi) existingLi.remove();
+
+                    const li = document.createElement('li');
+                    li.id = `conv-${conversationId}`;
+                    li.className = 'conversation-item';
+                    li.style.fontWeight = isUnread ? 'bold' : 'normal';
+                    if (isUnread) li.style.backgroundColor = 'rgba(13, 110, 253, 0.1)';
+
+                    li.innerHTML = `
+                        <img src="${otherUser.photoURL || 'https://via.placeholder.com/50'}" class="profile-pic">
+                        <div class="conversation-info">
+                            <h3>${otherUser.name || 'Unknown User'}</h3>
+                            <p style="color: ${isUnread ? '#fff' : '#ccc'};">${lastMessageText}</p>
+                        </div>
+                        <span class="last-message-time">${lastMessage && lastMessage.timestamp ? new Date(lastMessage.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                    `;
+                    li.onclick = () => {
+                        window.location.href = `chat.html?uid=${otherParticipantUid}`;
+                    };
+
+                    conversationList.prepend(li);
+                });
+            }, (error) => {
+                console.error("Error listening for conversations: ", error);
+                loadingIndicator.style.display = 'none';
+                noConversationsMessage.innerText = "Error loading conversations.";
+                noConversationsMessage.style.display = 'block';
+            });
+        }
+    </script>
+</body>
+</html>

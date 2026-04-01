@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with User - Cricket News & Chat</title>
+    <link rel="icon" href="game-logo.png" type="image/png">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #121212; /* Default Dark Mode */
+            color: #fff;
+            transition: background 0.3s, color 0.3s;
+        }
+        .container {
+            max-width: 600px; /* Optimized for chat screen */
+            margin: 20px auto;
+            padding: 20px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            height: calc(100vh - 40px); /* Full viewport height minus margin */
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 15px;
+        }
+        .chat-header .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #87ceeb;
+        }
+        .chat-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #87ceeb;
+            flex-grow: 1;
+        }
+        .chat-header .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 10px; /* For scrollbar space */
+            margin-bottom: 15px;
+        }
+        .message-item {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .message-text {
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+            font-size: 0.95rem;
+        }
+        .message-text img {
+            max-width: 100%;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .message-text .youtube-embed {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            background: #000;
+            border-radius: 10px;
+        }
+        .message-text .youtube-embed iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .message-sent {
+            justify-content: flex-end;
+        }
+        .message-sent .message-text {
+            background-color: #0d6efd; /* Blue for sent messages */
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+        .message-received {
+            justify-content: flex-start;
+        }
+        .message-received .message-text {
+            background-color: rgba(255, 255, 255, 0.15); /* Lighter grey for received */
+            color: white;
+            border-bottom-left-radius: 2px;
+        }
+        .message-input-area {
+            display: flex;
+            gap: 10px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .message-input-area #attach-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .message-input-area input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 20px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1rem;
+        }
+        .message-input-area button {
+            padding: 10px 20px;
+            border-radius: 20px;
+            background-color: #198754; /* Green send button */
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .message-input-area button:hover {
+            background-color: #157347;
+        }
+        /* Light Mode */
+        body.light-mode { background: #f4f7f6; color: #333; }
+        body.light-mode .container { background: #fff; border-color: #ddd; }
+        body.light-mode .chat-header h2 { color: #0d6efd; }
+        body.light-mode .chat-header .back-btn { color: #333; }
+        body.light-mode .chat-messages { border-color: #eee; }
+        body.light-mode .message-received .message-text { background-color: #e9ecef; color: #333; }
+        body.light-mode .message-input-area input { background: #f0f0f0; color: #333; border: 1px solid #ccc; }
+        body.light-mode .message-input-area #attach-btn { color: #555; }
+
+        /* Lightbox styles copied from news.html */
+        .lightbox-modal { display: none; position: fixed; z-index: 2000; padding-top: 50px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+        .lightbox-content { margin: auto; display: block; max-width: 90%; max-height: 90vh; object-fit: contain; }
+        .close-lightbox { position: absolute; top: 20px; right: 30px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; z-index: 2001; }
+        .close-lightbox:hover { color: #bbb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chat-header">
+            <button class="back-btn" onclick="window.history.back()">&#8592;</button>
+            <img id="chat-partner-pic" src="https://via.placeholder.com/40" class="profile-pic">
+            <h2 id="chat-partner-name">Loading User...</h2>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages will be dynamically loaded here by JavaScript -->
+            <div id="loading-messages" style="text-align: center; padding: 20px; color: #aaa;">Loading messages...</div>
+        </div>
+
+        <div id="typing-indicator" style="height: 20px; color: #aaa; font-style: italic; padding-left: 10px; display: none; transition: opacity 0.3s;"></div>
+
+        <div class="message-input-area">
+            <button id="attach-btn" title="Send Image">📎</button>
+            <input type="file" id="image-input-chat" style="display: none;" accept="image/*">
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button id="send-message-btn">Send</button>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal for images -->
+    <div id="lightbox-modal" class="lightbox-modal" onclick="if(event.target === this) window.closeLightbox()">
+        <span class="close-lightbox" onclick="window.closeLightbox()">&times;</span>
+        <img class="lightbox-content" id="lightbox-img">
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { firebaseConfig } from "./firebase-config.js";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentUser = null;
+        let partnerUid = null;
+        let conversationId = null;
+        let unsubscribe = null; // To stop listening to messages on page leave
+        let unsubscribeConv = null; // To stop listening to conversation doc
+        let typingTimeout = null;
+        const TYPING_TIMEOUT_DURATION = 2000; // 2 seconds
+
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-message-btn');
+        const attachBtn = document.getElementById('attach-btn');
+        const imageInput = document.getElementById('image-input-chat');
+
+        // Theme Logic
+        const body = document.body;
+        function applyTheme(theme) {
+            if (theme === 'light') body.classList.add('light-mode');
+            else body.classList.remove('light-mode');
+            localStorage.setItem('theme', theme || 'dark');
+        }
+        applyTheme(localStorage.getItem('theme') || 'dark');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                const urlParams = new URLSearchParams(window.location.search);
+                partnerUid = urlParams.get('uid');
+
+                if (!partnerUid) {
+                    alert("No user specified to chat with.");
+                    window.location.href = 'messages.html';
+                    return;
+                }
+
+                conversationId = getConversationId(currentUser.uid, partnerUid);
+                
+                try {
+                    const userDocSnap = await getDoc(doc(db, "users", user.uid));
+                    if (userDocSnap.exists() && userDocSnap.data().theme) {
+                        applyTheme(userDocSnap.data().theme);
+                    }
+                } catch(e) { console.error("Error loading theme:", e); }
+
+                loadPartnerProfile();
+                listenForConversationUpdates();
+                listenForMessages();
+                setupTypingListener();
+            } else {
+                alert("Please login to chat.");
+                window.location.href = 'news.html';
+            }
+        });
+
+        function getConversationId(uid1, uid2) {
+            return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+        }
+
+        async function loadPartnerProfile() {
+            const userDoc = await getDoc(doc(db, "users", partnerUid));
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                document.getElementById('chat-partner-name').innerText = userData.name || "User";
+                document.getElementById('chat-partner-pic').src = userData.photoURL || 'https://via.placeholder.com/40';
+            }
+        }
+
+        function listenForConversationUpdates() {
+            const convRef = doc(db, "conversations", conversationId);
+            unsubscribeConv = onSnapshot(convRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const convData = docSnap.data();
+                    // Typing indicator logic
+                    const partnerIsTyping = convData.typingStatus && convData.typingStatus[partnerUid];
+                    const typingIndicator = document.getElementById('typing-indicator');
+                    if (partnerIsTyping) {
+                        const partnerName = (document.getElementById('chat-partner-name').innerText || 'User').split(' ')[0];
+                        typingIndicator.innerText = `${partnerName} is typing...`;
+                        typingIndicator.style.display = 'block';
+                    } else {
+                        typingIndicator.style.display = 'none';
+                    }
+
+                    // Mark as read logic
+                    markAsRead(convData);
+                }
+            });
+        }
+
+        function listenForMessages() {
+            const messagesRef = collection(db, "conversations", conversationId, "messages");
+            const q = query(messagesRef, orderBy("timestamp", "asc"));
+
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                document.getElementById('loading-messages').style.display = 'none';
+                chatMessages.innerHTML = '';
+                snapshot.forEach(doc => {
+                    renderMessage(doc.data());
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+        }
+
+        function renderMessage(data) {
+            const isSent = data.senderUid === currentUser.uid;
+            const messageClass = isSent ? 'message-sent' : 'message-received';
+            let messageContent = '';
+
+            switch(data.type) {
+                case 'image':
+                    messageContent = `<img src="${data.content}" alt="Image" onclick="window.openLightbox('${data.content}')">`;
+                    break;
+                case 'youtube':
+                    messageContent = `
+                        <div class="youtube-embed">
+                            <iframe 
+                                src="https://www.youtube.com/embed/${data.content}" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>`;
+                    break;
+                case 'text':
+                default:
+                    // Sanitize text content to prevent HTML injection
+                    const tempDiv = document.createElement('div');
+                    tempDiv.textContent = data.content;
+                    messageContent = tempDiv.innerHTML.replace(/\n/g, '<br>');
+                    break;
+            }
+
+            const div = document.createElement('div');
+            div.className = `message-item ${messageClass}`;
+            div.innerHTML = `<div class="message-text">${messageContent}</div>`;
+            chatMessages.appendChild(div);
+        }
+
+        function getYoutubeVideoId(url) {
+            const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+            const match = url.match(regex);
+            return match ? match[1] : null;
+        }
+
+        async function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            // Stop typing indicator immediately on send
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+                typingTimeout = null;
+            }
+            // No need to await this, can happen in the background
+            updateTypingStatus(false);
+
+            const videoId = getYoutubeVideoId(text);
+            let messagePayload;
+            let lastMessageText;
+
+            if (videoId) {
+                messagePayload = { type: 'youtube', content: videoId };
+                lastMessageText = '[Video]';
+            } else {
+                messagePayload = { type: 'text', content: text };
+                lastMessageText = text;
+            }
+
+            // Common properties
+            messagePayload.senderUid = currentUser.uid;
+            messagePayload.timestamp = serverTimestamp();
+
+            messageInput.value = '';
+            const timestamp = serverTimestamp();
+
+            const convRef = doc(db, "conversations", conversationId);
+            const convSnap = await getDoc(convRef);
+            if (!convSnap.exists()) {
+                const myProfile = await getDoc(doc(db, "users", currentUser.uid));
+                const partnerProfile = await getDoc(doc(db, "users", partnerUid));
+                await setDoc(convRef, {
+                    participants: [currentUser.uid, partnerUid],
+                    participantDetails: {
+                        [currentUser.uid]: { name: myProfile.data().name, photoURL: myProfile.data().photoURL },
+                        [partnerUid]: { name: partnerProfile.data().name, photoURL: partnerProfile.data().photoURL }
+                    }
+                }, { merge: true });
+            }
+
+            const messagesRef = collection(db, "conversations", conversationId, "messages");
+            await addDoc(messagesRef, messagePayload);
+
+            await updateDoc(convRef, {
+                lastMessage: { text: lastMessageText, senderUid: currentUser.uid, timestamp: serverTimestamp(), isRead: false }
+            });
+        }
+
+        async function markAsRead(convData) {
+            if (convData && convData.lastMessage && convData.lastMessage.senderUid !== currentUser.uid && !convData.lastMessage.isRead) {
+                const convRef = doc(db, "conversations", conversationId);
+                await updateDoc(convRef, { "lastMessage.isRead": true });
+            }
+        }
+
+        function setupTypingListener() {
+            messageInput.addEventListener('input', () => {
+                if (typingTimeout) {
+                    clearTimeout(typingTimeout);
+                } else {
+                    // Only send "true" if we weren't already marked as typing
+                    updateTypingStatus(true);
+                }
+
+                typingTimeout = setTimeout(() => {
+                    updateTypingStatus(false);
+                    typingTimeout = null;
+                }, TYPING_TIMEOUT_DURATION);
+            });
+        }
+
+        async function updateTypingStatus(isTyping) {
+            const convRef = doc(db, "conversations", conversationId);
+            try {
+                // Using setDoc with merge is safer as it creates the doc if it doesn't exist
+                await setDoc(convRef, {
+                    typingStatus: {
+                        [currentUser.uid]: isTyping
+                    }
+                }, { merge: true });
+            } catch (e) {
+                console.error("Error updating typing status:", e);
+            }
+        }
+
+        // Image sending logic
+        attachBtn.addEventListener('click', () => imageInput.click());
+
+        imageInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Show a temporary indicator
+            sendBtn.disabled = true;
+            sendBtn.innerText = 'Sending...';
+
+            try {
+                const compressedDataUrl = await compressImage(file);
+                
+                const messagePayload = {
+                    type: 'image',
+                    content: compressedDataUrl,
+                    senderUid: currentUser.uid,
+                    timestamp: serverTimestamp()
+                };
+
+                const convRef = doc(db, "conversations", conversationId);
+                const messagesRef = collection(db, "conversations", conversationId, "messages");
+                
+                await addDoc(messagesRef, messagePayload);
+                await updateDoc(convRef, {
+                    lastMessage: { text: '[Image]', senderUid: currentUser.uid, timestamp: serverTimestamp(), isRead: false }
+                });
+
+            } catch (err) {
+                console.error("Error sending image:", err);
+                alert("Failed to send image.");
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerText = 'Send';
+                imageInput.value = ''; // Reset file input
+            }
+        });
+
+        // Image compression function from write-blog.html
+        function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const maxWidth = 800;
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = event => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.8)); // 80% quality
+                    };
+                    img.onerror = reject;
+                };
+                reader.onerror = reject;
+            });
+        }
+
+        // Lightbox functions from news.html
+        window.openLightbox = function(src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox-modal').style.display = "flex";
+        };
+        window.closeLightbox = function() {
+            document.getElementById('lightbox-modal').style.display = "none";
+        };
+
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+        window.addEventListener('beforeunload', () => {
+            if (unsubscribe) unsubscribe();
+            if (unsubscribeConv) unsubscribeConv();
+        });
+    </script>
+</body>
+</html>
