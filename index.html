@@ -4852,8 +4852,8 @@
                     if(dist < 1.5) {
                         // HIT!
                         this.shotPlayed = true;
-                        this.soundManager.playBatHit();
                         this.game3D.createExplosion(ball.position); // Visual feedback
+                        this.soundManager.playBatHit();
 
                         if(!this.isNoBall && !this.isWide) this.currentBatsman.matchBalls++;
 

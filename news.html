@@ -999,7 +999,15 @@
 
             } catch (e) {
                 console.error("Error loading blogs:", e);
-                if(scrollTrigger) scrollTrigger.innerText = "Error loading posts.";
+                if(grid) {
+                    let errorMsg = "पोस्ट लोड करते समय एक त्रुटि हुई।";
+                    if (e.code === 'failed-precondition') {
+                        errorMsg = "त्रुटि: एक आवश्यक डेटाबेस इंडेक्स गायब है। इसे बनाने के लिए लिंक हेतु कृपया ब्राउज़र के डेवलपर कंसोल (F12) की जाँच करें।";
+                        console.error("This error usually means you need to create a composite index in Firestore for the 'verified' feed. The error message from Firebase should contain a direct link to create it.");
+                    }
+                    grid.innerHTML = `<p style="text-align: center; color: #ff6b6b; padding: 20px;">${errorMsg}</p>`;
+                }
+                if(loadMoreContainer) loadMoreContainer.style.display = 'none';
             }
         }
 
@@ -1225,8 +1233,8 @@
                                         const isCommentOwner = user && (c.userUid === user.uid || (!c.userUid && c.author === user.displayName));
                                         const commentActions = isCommentOwner ? `
                                             <div style="display: flex; gap: 15px; justify-content: flex-end;">
-                                                <button onclick="editComment('${blog.id}', ${index})" style="background:none; border:none; color:#aaa; cursor:pointer; font-size: 0.8rem; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='#ffc107'" onmouseout="this.style.color='#aaa'">Edit</button>
-                                                <button onclick="deleteComment('${blog.id}', ${index})" style="background:none; border:none; color:#aaa; cursor:pointer; font-size: 0.8rem; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='#ff6b6b'" onmouseout="this.style.color='#aaa'">Delete</button>
+                                                <button onclick="editComment('${blog.id}', '${c.id}')" style="background:none; border:none; color:#aaa; cursor:pointer; font-size: 0.8rem; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='#ffc107'" onmouseout="this.style.color='#aaa'">Edit</button>
+                                                <button onclick="deleteComment('${blog.id}', '${c.id}')" style="background:none; border:none; color:#aaa; cursor:pointer; font-size: 0.8rem; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='#ff6b6b'" onmouseout="this.style.color='#aaa'">Delete</button>
                                             </div>
                                         ` : '';
 
@@ -1249,7 +1257,7 @@
                                                     </div>
                                                     <div style="font-size: 0.9rem; color: #ddd;">${r.text}</div>
                                                     <div class="comment-actions">
-                                                        <button onclick="toggleLike('${blog.id}', ${index}, ${rIndex})" class="comment-action-btn" style="color: ${rLikeColor}">${rLikeIcon} ${rLikes.length || 0}</button>
+                                                        <button onclick="toggleLike('${blog.id}', '${c.id}', '${r.id}')" class="comment-action-btn" style="color: ${rLikeColor}">${rLikeIcon} ${rLikes.length || 0}</button>
                                                     </div>
                                                 </div>
                                             </div>`;
@@ -1271,14 +1279,14 @@
                                                     <div style="font-size: 0.95rem; color: #eee; line-height: 1.4; margin-bottom: 8px;">${c.text}</div>
                                                     
                                                     <div class="comment-actions">
-                                                        <button onclick="toggleLike('${blog.id}', ${index})" class="comment-action-btn" style="color: ${likeColor}">${likeIcon} ${likes.length || 0}</button>
-                                                        <button onclick="toggleReplyBox('${blog.id}', ${index})" class="comment-action-btn">💬 Reply</button>
-                                                        ${isBlogOwner ? `<button onclick="togglePin('${blog.id}', ${index})" class="comment-action-btn" style="color: ${pinBtnColor}">📌 ${pinBtnText}</button>` : ''}
+                                                        <button onclick="toggleLike('${blog.id}', '${c.id}')" class="comment-action-btn" style="color: ${likeColor}">${likeIcon} ${likes.length || 0}</button>
+                                                        <button onclick="toggleReplyBox('${blog.id}', '${c.id}')" class="comment-action-btn">💬 Reply</button>
+                                                        ${isBlogOwner ? `<button onclick="togglePin('${blog.id}', '${c.id}')" class="comment-action-btn" style="color: ${pinBtnColor}">📌 ${pinBtnText}</button>` : ''}
                                                     </div>
 
-                                                    <div id="reply-box-${blog.id}-${index}" style="display: none; margin-top: 10px; gap: 5px;">
-                                                        <input type="text" id="reply-input-${blog.id}-${index}" placeholder="Write a reply..." style="flex: 1; padding: 5px; border-radius: 4px; border: none; font-size: 0.85rem; width: 70%;">
-                                                        <button onclick="submitReply('${blog.id}', ${index})" style="padding: 5px 10px; background: #0d6efd; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Send</button>
+                                                    <div id="reply-box-${c.id}" style="display: none; margin-top: 10px; gap: 5px;">
+                                                        <input type="text" id="reply-input-${c.id}" placeholder="Write a reply..." style="flex: 1; padding: 5px; border-radius: 4px; border: none; font-size: 0.85rem; width: 70%;">
+                                                        <button onclick="submitReply('${blog.id}', '${c.id}')" style="padding: 5px 10px; background: #0d6efd; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Send</button>
                                                     </div>
 
                                                     <div class="replies-list">
@@ -1293,7 +1301,7 @@
                                     ${(!blog.comments || blog.comments.length === 0) ? '<p style="font-size: 0.8rem; color: #ccc;">No comments yet.</p>' : ''}
                                 </div>
                                 <div style="display: flex; gap: 10px;">
-                                    <input type="text" id="comment-input-${blog.id}" placeholder="Add a comment..." style="flex: 1; padding: 8px; border-radius: 4px; border: none;">
+                                    <input type="text" id="comment-input-${blog.id}" placeholder="Add a comment..." style="flex: 1; padding: 8px; border-radius: 4px; border: none;" onkeypress="if(event.key === 'Enter') addComment('${blog.id}')">
                                     <button onclick="addComment('${blog.id}')" style="padding: 8px 15px; background: #0d6efd; color: white; border: none; border-radius: 4px; cursor: pointer;">Post</button>
                                 </div>
                             </div>
@@ -1661,13 +1669,13 @@
             }
         };
 
-        window.toggleReplyBox = function(blogId, commentIndex) {
+        window.toggleReplyBox = function(blogId, commentId) {
             if (!auth.currentUser) { alert("Please login to reply!"); return; }
-            const box = document.getElementById(`reply-box-${blogId}-${commentIndex}`);
+            const box = document.getElementById(`reply-box-${commentId}`);
             box.style.display = box.style.display === 'none' ? 'flex' : 'none';
         };
 
-        window.submitReply = async function(blogId, commentIndex) {
+        window.submitReply = async function(blogId, commentId) {
             if (!auth.currentUser) return;
             const input = document.getElementById(`reply-input-${blogId}-${commentIndex}`);
             const text = input.value.trim();
@@ -1702,13 +1710,14 @@
             const blogIndex = fetchedBlogs.findIndex(b => b.id === blogId);
             if (blogIndex !== -1) {
                 const blog = fetchedBlogs[blogIndex];
-                if (blog.comments && blog.comments[commentIndex]) {
-                    if (!blog.comments[commentIndex].replies) {
-                        blog.comments[commentIndex].replies = [];
+                const comment = blog.comments.find(c => c.id === commentId);
+                if (comment) {
+                    if (!comment.replies) {
+                        comment.replies = [];
                     }
-                    blog.comments[commentIndex].replies.push(newReply);
+                    comment.replies.push(newReply);
                     renderBlogs(auth.currentUser);
-                    input.value = '';
+                    if(input) input.value = '';
                     document.getElementById(`reply-box-${blogId}-${commentIndex}`).style.display = 'none';
                 }
             }
@@ -1720,13 +1729,14 @@
                 if (docSnap.exists()) {
                     const blog = docSnap.data();
                     const comments = blog.comments || [];
-                    if (comments[commentIndex]) {
-                        if (!comments[commentIndex].replies) comments[commentIndex].replies = [];
-                        comments[commentIndex].replies.push(newReply);
+                    const comment = comments.find(c => c.id === commentId);
+                    if (comment) {
+                        if (!comment.replies) comment.replies = [];
+                        comment.replies.push(newReply);
 
                         // Send Notification on Reply
-                        const parentComment = blog.comments[commentIndex];
-                        if (parentComment.userUid && parentComment.userUid !== auth.currentUser.uid) {
+                        const parentComment = comment;
+                        if (parentComment && parentComment.userUid && parentComment.userUid !== auth.currentUser.uid) {
                             await addDoc(collection(db, "notifications"), {
                                 recipientUid: parentComment.userUid,
                                 senderUid: auth.currentUser.uid,
@@ -1749,7 +1759,7 @@
             }
         };
 
-        window.toggleLike = async function(blogId, commentIndex, replyIndex = null) {
+        window.toggleLike = async function(blogId, targetId, replyId = null) {
             if (!auth.currentUser) { alert("Please login to like!"); return; }
             const uid = auth.currentUser.uid;
 
@@ -1757,12 +1767,13 @@
             const blogIndex = fetchedBlogs.findIndex(b => b.id === blogId);
             if (blogIndex !== -1) {
                 const blog = fetchedBlogs[blogIndex];
-                if (blog.comments && blog.comments[commentIndex]) {
-                    let target = blog.comments[commentIndex];
-                    if (replyIndex !== null) {
-                        if (!target.replies || !target.replies[replyIndex]) return;
-                        target = target.replies[replyIndex];
+                const comment = blog.comments.find(c => c.id === targetId);
+                if (comment) {
+                    let target = comment;
+                    if (replyId !== null) {
+                        target = comment.replies.find(r => r.id === replyId);
                     }
+                    if (!target) return;
                     if (!target.likes) target.likes = [];
                     const likeIdx = target.likes.indexOf(uid);
                     if (likeIdx === -1) target.likes.push(uid);
@@ -1778,12 +1789,13 @@
                 if (docSnap.exists()) {
                     const blog = docSnap.data();
                     const comments = blog.comments || [];
-                    if (comments[commentIndex]) {
-                        let target = comments[commentIndex];
-                        if (replyIndex !== null) {
-                            if (!target.replies || !target.replies[replyIndex]) return;
-                            target = target.replies[replyIndex];
+                    const comment = comments.find(c => c.id === targetId);
+                    if (comment) {
+                        let target = comment;
+                        if (replyId !== null) {
+                            target = comment.replies.find(r => r.id === replyId);
                         }
+                        if (!target) return;
                         if (!target.likes) target.likes = [];
                         const likeIdx = target.likes.indexOf(uid);
                         if (likeIdx === -1) target.likes.push(uid);
@@ -1797,7 +1809,7 @@
             }
         };
 
-        window.togglePin = async function(blogId, commentIndex) {
+        window.togglePin = async function(blogId, commentId) {
             if (!auth.currentUser) return;
             const blogRef = doc(db, "blogs", blogId);
 
@@ -1807,8 +1819,9 @@
                 const blog = fetchedBlogs[blogIndex];
                 const isOwner = (blog.authorUid === auth.currentUser.uid);
                 if (!isOwner) { alert("Only the author can pin comments."); return; }
-                if (blog.comments && blog.comments[commentIndex]) {
-                    blog.comments[commentIndex].isPinned = !blog.comments[commentIndex].isPinned;
+                const comment = blog.comments.find(c => c.id === commentId);
+                if (comment) {
+                    comment.isPinned = !comment.isPinned;
                     renderBlogs(auth.currentUser);
                 }
             }
@@ -1822,8 +1835,9 @@
                     if (!isOwner) return;
 
                     const comments = blog.comments || [];
-                    if (comments[commentIndex]) {
-                        comments[commentIndex].isPinned = !comments[commentIndex].isPinned;
+                    const comment = comments.find(c => c.id === commentId);
+                    if (comment) {
+                        comment.isPinned = !comment.isPinned;
                         await updateDoc(blogRef, { comments: comments });
                     }
                 }
@@ -1832,7 +1846,7 @@
             }
         };
 
-        window.deleteComment = async function(blogId, commentIndex) {
+        window.deleteComment = async function(blogId, commentId) {
             if (!auth.currentUser) {
                 alert("Please login to delete comments!");
                 return;
@@ -1841,9 +1855,9 @@
             // Check ownership locally
             const blogIndex = fetchedBlogs.findIndex(b => b.id === blogId);
             if (blogIndex === -1) return;
-            const blog = fetchedBlogs[blogIndex];
-            if (!blog.comments || !blog.comments[commentIndex]) return;
-            const comment = blog.comments[commentIndex];
+            const blogData = fetchedBlogs[blogIndex];
+            const comment = blogData.comments.find(c => c.id === commentId);
+            if (!comment) return;
             const isAuthor = (comment.userUid === auth.currentUser.uid);
             if (!isAuthor) {
                 alert("You can only delete your own comments!");
@@ -1852,22 +1866,22 @@
 
             if(confirm('Delete this comment?')) {
                 // Optimistic UI update
-                fetchedBlogs[blogIndex].comments.splice(commentIndex, 1);
+                fetchedBlogs[blogIndex].comments = fetchedBlogs[blogIndex].comments.filter(c => c.id !== commentId);
                 renderBlogs(auth.currentUser);
 
                 // Update Firestore
                 const blogRef = doc(db, "blogs", blogId);
                 try {
                     const docSnap = await getDoc(blogRef);
-                    if (!docSnap.exists()) return;
-                    const comments = docSnap.data().comments || [];
-                    comments.splice(commentIndex, 1);
-                    await updateDoc(blogRef, { comments: comments });
+                    if (docSnap.exists()) {
+                        const updatedComments = (docSnap.data().comments || []).filter(c => c.id !== commentId);
+                        await updateDoc(blogRef, { comments: updatedComments });
+                    }
                 } catch (e) { console.error("Error deleting comment:", e); location.reload(); }
             }
         };
 
-        window.editComment = async function(blogId, commentIndex) {
+        window.editComment = async function(blogId, commentId) {
             if (!auth.currentUser) {
                 alert("Please login to edit comments!");
                 return;
@@ -1875,22 +1889,25 @@
             
             const blogIndex = fetchedBlogs.findIndex(b => b.id === blogId);
             if (blogIndex === -1) return;
-            const blog = fetchedBlogs[blogIndex];
-            if (!blog.comments || !blog.comments[commentIndex]) return;
-            const oldText = blog.comments[commentIndex].text;
+            const blogData = fetchedBlogs[blogIndex];
+            const comment = blogData.comments.find(c => c.id === commentId);
+            if (!comment) return;
+            const oldText = comment.text;
 
             const newText = prompt("Edit your comment:", oldText);
             if (newText !== null && newText.trim() !== "" && newText.trim() !== oldText) {
-                fetchedBlogs[blogIndex].comments[commentIndex].text = newText.trim();
+                comment.text = newText.trim();
                 renderBlogs(auth.currentUser);
 
                 const blogRef = doc(db, "blogs", blogId);
                 try {
                     const docSnap = await getDoc(blogRef);
-                    if (!docSnap.exists()) return;
-                    const comments = docSnap.data().comments || [];
-                    if (comments[commentIndex]) comments[commentIndex].text = newText.trim();
-                    await updateDoc(blogRef, { comments: comments });
+                    if (docSnap.exists()) {
+                        const updatedComments = (docSnap.data().comments || []).map(c => 
+                            c.id === commentId ? { ...c, text: newText.trim() } : c
+                        );
+                        await updateDoc(blogRef, { comments: updatedComments });
+                    }
                 } catch (e) { console.error("Error editing comment:", e); location.reload(); }
             }
         };

@@ -233,10 +233,15 @@
                     conversationList.prepend(li);
                 });
             }, (error) => {
-                console.error("Error listening for conversations: ", error);
                 loadingIndicator.style.display = 'none';
-                noConversationsMessage.innerText = "Error loading conversations.";
+                conversationList.innerHTML = ''; // Clear any stale items
+                // Provide a more helpful error for developers
+                noConversationsMessage.innerText = "Error loading conversations. Please check the browser console for details.";
                 noConversationsMessage.style.display = 'block';
+                console.error("Error fetching conversations:", error);
+                if (error.code === 'failed-precondition') {
+                    console.error("This error often means you are missing a composite index in Firestore. Please check the error message from Firebase in the console. It might contain a link to create the required index.");
+                }
             });
         }
     </script>
