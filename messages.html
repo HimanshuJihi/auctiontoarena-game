@@ -199,6 +199,12 @@
 
                     if (!otherParticipantUid) return;
 
+                    // Safety check for corrupted conversation documents
+                    if (!conversation.participantDetails || !conversation.participantDetails[otherParticipantUid]) {
+                        console.warn(`Conversation document ${conversationId} is missing details for participant ${otherParticipantUid}. Skipping.`);
+                        return;
+                    }
+
                     const otherUser = conversation.participantDetails[otherParticipantUid];
                     const lastMessage = conversation.lastMessage;
                     const isUnread = lastMessage && lastMessage.isRead === false && lastMessage.senderUid !== window.currentUser.uid;

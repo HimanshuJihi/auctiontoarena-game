@@ -382,13 +382,22 @@
             const convRef = doc(db, "conversations", conversationId);
             const convSnap = await getDoc(convRef);
             if (!convSnap.exists()) {
-                const myProfile = await getDoc(doc(db, "users", currentUser.uid));
-                const partnerProfile = await getDoc(doc(db, "users", partnerUid));
+                const myProfileSnap = await getDoc(doc(db, "users", currentUser.uid));
+                const partnerProfileSnap = await getDoc(doc(db, "users", partnerUid));
+
+                if (!myProfileSnap.exists() || !partnerProfileSnap.exists()) {
+                    console.error("Could not find profile for one of the users. Aborting conversation creation.");
+                    alert("Error: Could not find user profile to start conversation.");
+                    return; // Stop the function
+                }
+                const myProfile = myProfileSnap.data();
+                const partnerProfile = partnerProfileSnap.data();
+
                 await setDoc(convRef, {
                     participants: [currentUser.uid, partnerUid],
                     participantDetails: {
-                        [currentUser.uid]: { name: myProfile.data().name, photoURL: myProfile.data().photoURL },
-                        [partnerUid]: { name: partnerProfile.data().name, photoURL: partnerProfile.data().photoURL }
+                        [currentUser.uid]: { name: myProfile.name || "User", photoURL: myProfile.photoURL || null },
+                        [partnerUid]: { name: partnerProfile.name || "User", photoURL: partnerProfile.photoURL || null }
                     }
                 }, { merge: true });
             }

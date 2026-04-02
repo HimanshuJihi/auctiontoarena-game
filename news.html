@@ -2035,21 +2035,30 @@
         function listenForUnreadMessages(uid) {
             const badge = document.getElementById('unread-messages-badge');
             if (!badge) return;
-
+ 
             const q = query(
                 collection(db, "conversations"),
                 where("participants", "array-contains", uid),
-                where("lastMessage.isRead", "==", false),
-                where("lastMessage.senderUid", "!=", uid)
+                where("lastMessage.isRead", "==", false)
             );
-
+ 
             onSnapshot(q, (snapshot) => {
-                const unreadCount = snapshot.size;
+                let unreadCount = 0;
+                snapshot.forEach(doc => {
+                    const conv = doc.data();
+                    // Client-side check: count only if the last message was NOT sent by the current user
+                    if (conv.lastMessage && conv.lastMessage.senderUid !== uid) {
+                        unreadCount++;
+                    }
+                });
+
                 badge.innerText = unreadCount;
                 badge.style.display = unreadCount > 0 ? 'block' : 'none';
             }, (error) => {
                 console.error("Error listening for unread messages:", error);
-                // In case of error, just hide the badge
+                if (error.code === 'failed-precondition') {
+                    console.error("This error likely means you are missing a composite index in Firestore for unread messages. The error from Firebase should contain a link to create it. It will likely be on 'participants' (array) and 'lastMessage.isRead' (ascending).");
+                }
                 badge.style.display = 'none';
             });
         }
