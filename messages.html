@@ -37,6 +37,10 @@
             font-size: 2rem;
             color: #fff;
         }
+        .header .header-actions {
+            display: flex;
+            gap: 10px;
+        }
         .btn {
             display: inline-block;
             padding: 8px 15px;
@@ -109,13 +113,21 @@
         body.light-mode .conversation-info h3 { color: #0d6efd; }
         body.light-mode .conversation-info p { color: #555; }
         body.light-mode .last-message-time { color: #666; }
+        /* New styles for modal in light mode */
+        body.light-mode #user-list-modal > div { background: #fff; border-color: #ddd; color: #333; }
+        body.light-mode #user-list-title { color: #0d6efd; }
+        body.light-mode #user-list-content > div { border-bottom-color: #eee; }
+        body.light-mode #user-list-content strong { color: #000; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>My Messages</h1>
-            <a href="news.html" class="btn">← Back to News</a>
+            <div class="header-actions">
+                <button id="new-message-btn" class="btn" style="background-color: #198754;">New Message</button>
+                <a href="news.html" class="btn">← Back to News</a>
+            </div>
         </div>
 
         <div id="loading-indicator" style="text-align: center; padding: 20px; color: #aaa;">Loading conversations...</div>
@@ -123,6 +135,17 @@
             <!-- Conversation items will be dynamically loaded here by JavaScript -->
         </ul>
         <div id="no-conversations" style="text-align: center; padding: 20px; color: #aaa; display: none;">No conversations yet.</div>
+    </div>
+
+    <!-- User List Modal (for new message) -->
+    <div id="user-list-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; flex-direction:column; align-items:center; justify-content:center;">
+        <div style="width:90%; max-width:400px; background:#1e1e1e; border: 1px solid #444; border-radius:12px; padding:20px; max-height:70vh; display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 1px solid #333; padding-bottom: 10px;">
+                <h3 id="user-list-title" style="margin:0; color:gold;">Start a new chat</h3>
+                <button onclick="document.getElementById('user-list-modal').style.display='none'" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="user-list-content" style="overflow-y:auto; flex:1;">Loading...</div>
+        </div>
     </div>
 
     <script type="module">
@@ -138,6 +161,7 @@
         const conversationList = document.getElementById('conversation-list');
         const loadingIndicator = document.getElementById('loading-indicator');
         const noConversationsMessage = document.getElementById('no-conversations');
+        const newMessageBtn = document.getElementById('new-message-btn');
 
         // Theme Toggle Logic
         const body = document.body;
@@ -170,11 +194,66 @@
                 }
 
                 listenForConversations();
+                setupNewMessageButton();
             } else {
                 alert("Please login to view your messages.");
                 window.location.href = 'news.html';
             }
         });
+
+        function setupNewMessageButton() {
+            newMessageBtn.addEventListener('click', async () => {
+                const modal = document.getElementById('user-list-modal');
+                const content = document.getElementById('user-list-content');
+                modal.style.display = 'flex';
+                content.innerHTML = '<p style="text-align:center; color:#aaa;">Loading following list...</p>';
+
+                try {
+                    const myDocRef = doc(db, "users", window.currentUser.uid);
+                    const myDocSnap = await getDoc(myDocRef);
+                    if (!myDocSnap.exists()) {
+                        content.innerHTML = '<p style="color:red;">Could not find your user profile.</p>';
+                        return;
+                    }
+
+                    const myData = myDocSnap.data();
+                    const followingUIDs = myData.following || [];
+
+                    if (followingUIDs.length === 0) {
+                        content.innerHTML = '<p style="text-align:center; color:#aaa;">You are not following anyone. Follow users from their profiles to message them.</p>';
+                        return;
+                    }
+
+                    content.innerHTML = ''; // Clear loading text
+                    const promises = followingUIDs.map(uid => getDoc(doc(db, "users", uid)));
+                    const snapshots = await Promise.all(promises);
+
+                    snapshots.forEach(snap => {
+                        if (snap.exists()) {
+                            const u = snap.data();
+                            const div = document.createElement('div');
+                            div.style.cssText = "display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid rgba(255,255,255,0.1); cursor:pointer;";
+                            div.onclick = () => {
+                                window.location.href = `chat.html?uid=${snap.id}`;
+                            };
+                            
+                            div.innerHTML = `
+                                <img src="${u.photoURL || 'https://via.placeholder.com/40'}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid #555;">
+                                <div>
+                                    <strong>${u.name || 'User'}</strong>
+                                    <div style="font-size:0.8rem; color:#aaa;">${u.username || ''}</div>
+                                </div>
+                            `;
+                            content.appendChild(div);
+                        }
+                    });
+
+                } catch (e) {
+                    console.error("Error loading following list:", e);
+                    content.innerHTML = '<p style="color:red;">Error loading user list.</p>';
+                }
+            });
+        }
 
         function listenForConversations() {
             const q = query(

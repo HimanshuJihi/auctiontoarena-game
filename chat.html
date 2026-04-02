@@ -66,6 +66,7 @@
         .message-item {
             display: flex;
             margin-bottom: 10px;
+            align-items: center; /* Align button and message bubble */
         }
         .message-text {
             padding: 10px 15px;
@@ -111,6 +112,25 @@
             color: white;
             border-bottom-left-radius: 2px;
         }
+        .edit-msg-btn {
+            background: none; border: none; color: #aaa; font-size: 0.9rem; cursor: pointer; padding: 0 8px; opacity: 0; transition: opacity 0.2s;
+        }
+        .message-sent:hover .edit-msg-btn {
+            opacity: 1;
+        }
+        .delete-msg-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 8px;
+            opacity: 0; /* Hide by default */
+            transition: opacity 0.2s;
+        }
+        .message-sent:hover .delete-msg-btn {
+            opacity: 1; /* Show on hover */
+        }
         .message-input-area {
             display: flex;
             gap: 10px;
@@ -154,12 +174,22 @@
         body.light-mode .message-received .message-text { background-color: #e9ecef; color: #333; }
         body.light-mode .message-input-area input { background: #f0f0f0; color: #333; border: 1px solid #ccc; }
         body.light-mode .message-input-area #attach-btn { color: #555; }
+        body.light-mode .edit-msg-btn {
+            color: #888;
+        }
+        body.light-mode .delete-msg-btn {
+            color: #888;
+        }
 
         /* Lightbox styles copied from news.html */
         .lightbox-modal { display: none; position: fixed; z-index: 2000; padding-top: 50px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
         .lightbox-content { margin: auto; display: block; max-width: 90%; max-height: 90vh; object-fit: contain; }
         .close-lightbox { position: absolute; top: 20px; right: 30px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; z-index: 2001; }
         .close-lightbox:hover { color: #bbb; }
+        .edited-indicator {
+            font-size: 0.7rem;
+            color: #bbb;
+        }
     </style>
 </head>
 <body>
@@ -193,7 +223,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, getDoc, setDoc, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, deleteDoc, getDocs, limit, deleteField } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { firebaseConfig } from "./firebase-config.js";
 
@@ -301,15 +331,19 @@
                 }
                 chatMessages.innerHTML = '';
                 snapshot.forEach(doc => {
-                    renderMessage(doc.data());
+                    renderMessage(doc.id, doc.data());
                 });
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             });
         }
 
-        function renderMessage(data) {
+        function renderMessage(messageId, data) {
             const isSent = data.senderUid === currentUser.uid;
             const messageClass = isSent ? 'message-sent' : 'message-received';
+            const fifteenMinutes = 15 * 60 * 1000;
+            const messageTime = data.timestamp ? data.timestamp.toMillis() : 0;
+            const canEdit = isSent && data.type === 'text' && (Date.now() - messageTime < fifteenMinutes);
+
             let messageContent = '';
 
             switch(data.type) {
@@ -333,12 +367,28 @@
                     const tempDiv = document.createElement('div');
                     tempDiv.textContent = data.content;
                     messageContent = tempDiv.innerHTML.replace(/\n/g, '<br>');
+                    if (data.edited) {
+                        messageContent += ' <span class="edited-indicator">(edited)</span>';
+                    }
                     break;
             }
 
             const div = document.createElement('div');
             div.className = `message-item ${messageClass}`;
-            div.innerHTML = `<div class="message-text">${messageContent}</div>`;
+            div.id = `msg-${messageId}`;
+            
+            let actionButtons = '';
+            if (isSent) {
+                let editButton = '';
+                if (canEdit) {
+                    const rawContent = JSON.stringify(data.content);
+                    editButton = `<button class="edit-msg-btn" onclick='window.showEditUI("${messageId}", ${rawContent})' title="Edit Message">✏️</button>`;
+                }
+                const deleteButton = `<button class="delete-msg-btn" onclick="window.confirmDeleteMessage('${messageId}')" title="Delete Message">&times;</button>`;
+                actionButtons = editButton + deleteButton;
+            }
+            
+            div.innerHTML = `<div class="message-text">${messageContent}</div>${actionButtons}`;
             chatMessages.appendChild(div);
         }
 
@@ -377,18 +427,22 @@
             messagePayload.timestamp = serverTimestamp();
 
             messageInput.value = '';
-            const timestamp = serverTimestamp();
 
             const convRef = doc(db, "conversations", conversationId);
-            const convSnap = await getDoc(convRef);
-            if (!convSnap.exists()) {
+            const messagesRef = collection(db, "conversations", conversationId, "messages");
+
+            // Add the message first
+            await addDoc(messagesRef, messagePayload);
+
+            // Then, update the conversation document. This is more robust.
+            // It will create the document if it doesn't exist, or update it if it does.
+            // It also ensures participant details are always present.
+            try {
                 const myProfileSnap = await getDoc(doc(db, "users", currentUser.uid));
                 const partnerProfileSnap = await getDoc(doc(db, "users", partnerUid));
 
                 if (!myProfileSnap.exists() || !partnerProfileSnap.exists()) {
-                    console.error("Could not find profile for one of the users. Aborting conversation creation.");
-                    alert("Error: Could not find user profile to start conversation.");
-                    return; // Stop the function
+                    throw new Error("Could not find user profile to update conversation.");
                 }
                 const myProfile = myProfileSnap.data();
                 const partnerProfile = partnerProfileSnap.data();
@@ -398,16 +452,20 @@
                     participantDetails: {
                         [currentUser.uid]: { name: myProfile.name || "User", photoURL: myProfile.photoURL || null },
                         [partnerUid]: { name: partnerProfile.name || "User", photoURL: partnerProfile.photoURL || null }
+                    },
+                    lastMessage: {
+                        text: lastMessageText,
+                        senderUid: currentUser.uid,
+                        timestamp: serverTimestamp(),
+                        isRead: false
                     }
                 }, { merge: true });
+
+            } catch (e) {
+                console.error("Error updating conversation document:", e);
+                // The message was sent, but the conversation preview might not update.
+                // This is a graceful degradation.
             }
-
-            const messagesRef = collection(db, "conversations", conversationId, "messages");
-            await addDoc(messagesRef, messagePayload);
-
-            await updateDoc(convRef, {
-                lastMessage: { text: lastMessageText, senderUid: currentUser.uid, timestamp: serverTimestamp(), isRead: false }
-            });
         }
 
         async function markAsRead(convData) {
@@ -523,6 +581,117 @@
         window.closeLightbox = function() {
             document.getElementById('lightbox-modal').style.display = "none";
         };
+
+        window.confirmDeleteMessage = function(messageId) {
+            if (confirm("Are you sure you want to delete this message? This cannot be undone.")) {
+                deleteMessage(messageId);
+            }
+        }
+
+        async function deleteMessage(messageId) {
+            if (!currentUser || !conversationId || !messageId) return;
+
+            try {
+                const msgRef = doc(db, "conversations", conversationId, "messages", messageId);
+                await deleteDoc(msgRef);
+
+                // After deleting, we must update the `lastMessage` in the parent conversation document
+                // to reflect the new latest message.
+                const messagesRef = collection(db, "conversations", conversationId, "messages");
+                const q = query(messagesRef, orderBy("timestamp", "desc"), limit(1));
+                const snapshot = await getDocs(q);
+
+                const convRef = doc(db, "conversations", conversationId);
+                if (snapshot.empty) {
+                    // No messages left, remove the lastMessage field
+                    await updateDoc(convRef, {
+                        lastMessage: deleteField()
+                    });
+                } else {
+                    // Update lastMessage to the new latest message
+                    const lastMsgDoc = snapshot.docs[0];
+                    const lastMsgData = lastMsgDoc.data();
+                    
+                    let lastMessageText = '[Message]'; // Default/fallback text
+                    if (lastMsgData.type === 'text') lastMessageText = lastMsgData.content;
+                    else if (lastMsgData.type === 'image') lastMessageText = '[Image]';
+                    else if (lastMsgData.type === 'youtube') lastMessageText = '[Video]';
+
+                    await updateDoc(convRef, {
+                        lastMessage: {
+                            text: lastMessageText,
+                            senderUid: lastMsgData.senderUid,
+                            timestamp: lastMsgData.timestamp,
+                            isRead: false // Reset read status for simplicity
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Error deleting message:", e);
+                alert("Failed to delete message.");
+            }
+        }
+
+        window.showEditUI = function(messageId, oldText) {
+            const textDiv = document.querySelector(`#msg-${messageId} .message-text`);
+            if (!textDiv || textDiv.querySelector('input')) return; // Already in edit mode
+
+            textDiv.dataset.original = textDiv.innerHTML;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = `edit-input-${messageId}`;
+            input.value = oldText;
+            input.style.cssText = "width: calc(100% - 120px); background: #555; color: white; border: 1px solid #888; border-radius: 4px; padding: 5px;";
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') saveEdit(messageId);
+                if (e.key === 'Escape') cancelEdit(messageId);
+            };
+
+            const saveBtn = document.createElement('button');
+            saveBtn.innerText = 'Save';
+            saveBtn.style.cssText = "margin-left: 5px; padding: 5px 8px; font-size: 0.8rem; background: #198754; border: none; border-radius: 4px; color: white; cursor: pointer;";
+            saveBtn.onclick = () => saveEdit(messageId);
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.innerText = 'Cancel';
+            cancelBtn.style.cssText = "margin-left: 5px; padding: 5px 8px; font-size: 0.8rem; background: #6c757d; border: none; border-radius: 4px; color: white; cursor: pointer;";
+            cancelBtn.onclick = () => cancelEdit(messageId);
+
+            textDiv.innerHTML = '';
+            textDiv.appendChild(input);
+            textDiv.appendChild(saveBtn);
+            textDiv.appendChild(cancelBtn);
+            input.focus();
+            input.select();
+        }
+
+        window.cancelEdit = function(messageId) {
+            const textDiv = document.querySelector(`#msg-${messageId} .message-text`);
+            if (textDiv && textDiv.dataset.original) {
+                textDiv.innerHTML = textDiv.dataset.original;
+                delete textDiv.dataset.original;
+            }
+        }
+
+        window.saveEdit = async function(messageId) {
+            const input = document.getElementById(`edit-input-${messageId}`);
+            if (!input) return;
+            const newText = input.value.trim();
+            if (!newText) return;
+
+            const msgRef = doc(db, "conversations", conversationId, "messages", messageId);
+            await updateDoc(msgRef, { content: newText, edited: true });
+
+            // Check if it's the last message and update conversation preview
+            const messagesRef = collection(db, "conversations", conversationId, "messages");
+            const q = query(messagesRef, orderBy("timestamp", "desc"), limit(1));
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty && snapshot.docs[0].id === messageId) {
+                await updateDoc(doc(db, "conversations", conversationId), { "lastMessage.text": newText });
+            }
+            // No need to manually update UI, onSnapshot will handle it.
+        }
 
         sendBtn.addEventListener('click', sendMessage);
         messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
