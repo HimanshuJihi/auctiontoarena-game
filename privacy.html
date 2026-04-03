@@ -63,11 +63,31 @@
         <p>We respect your privacy. This policy explains what information we collect when you play Auction to Arena: IPL 2026 and use our community features.</p>
 
         <h2>Data Collection</h2>
-        <p><strong>Game Progress:</strong> Your game career data is stored locally in your browser's LocalStorage.</p>
-        <p><strong>Account Data:</strong> If you choose to login via Google, we store your basic profile information (Name, Email, Photo) securely using Firebase Authentication and Firestore to enable features like User Profiles, Blogs, and Comments.</p>
+        <p><strong>Game Progress:</strong> Your game career data (squad, tournament progress) is stored locally in your browser's LocalStorage. This data is not sent to our servers.</p>
+        <p><strong>Account Data:</strong> When you create an account (via Google or Email), we store your authentication information (like email address) using Firebase Authentication. We also create a user profile in our Firestore database where we store:</p>
+        <ul>
+            <li>Your display name, unique username (@id), bio, and profile picture.</li>
+            <li>Your email address (not publicly visible).</li>
+            <li>Social graph information, such as who you follow, who follows you, and users you have blocked.</li>
+            <li>Your preferences, such as the selected theme (light/dark mode).</li>
+        </ul>
+
+        <h2>User-Generated Content</h2>
+        <p>To provide a rich community experience, we store content you generate on our platform:</p>
+        <ul>
+            <li><strong>Blogs & Comments:</strong> Any blogs you write, including text, images, and polls, are stored. Your comments and replies on other blogs are also stored and linked to your profile.</li>
+            <li><strong>Stories:</strong> Your stories, which may include text and images, are stored for 24 hours and are visible to other users.</li>
+            <li><strong>Likes & Interactions:</strong> When you like a post or a comment, this interaction is recorded. The author of the post can see who has liked their content.</li>
+            <li><strong>Private Messages:</strong> Your one-to-one chats are stored securely to deliver them to the recipient. These messages are private between you and the other user.</li>
+            <li><strong>Notifications:</strong> We store notification data to inform you about activities related to your account, such as new followers, likes, or comments.</li>
+        </ul>
 
         <h2>Cookies & Advertising</h2>
         <p>Our website uses third-party tools like Google AdSense which use cookies to serve ads based on your prior visits to our website or other websites.</p>
+
+        <h2>Data Usage and Control</h2>
+        <p>We use this data solely to operate and improve the features of Auction to Arena. Your public profile information and content (blogs, public comments) are visible to other users. Private messages are not visible to others.</p>
+        <p>You have control over your data. You can edit your profile information at any time. You can also delete your own blogs and comments. If you wish to delete your entire account, you can do so from your profile page, which will permanently remove your profile and associated content from our active databases.</p>
 
         <h2>User Consent</h2>
         <p>By playing this game and using our services, you consent to our Privacy Policy.</p>

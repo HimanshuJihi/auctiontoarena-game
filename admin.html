@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Cricket News</title>
+    <link rel="icon" href="game-logo.png" type="image/png">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #fff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: gold;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .report-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .report-card h3 {
+            margin-top: 0;
+            color: #87ceeb;
+        }
+        .report-card p {
+            margin: 5px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #fff;
+            background-color: #0d6efd;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-right: 10px;
+            transition: background-color 0.2s ease;
+        }
+        .btn-danger { background-color: #dc3545; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn:hover { opacity: 0.8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Panel</h1>
+        <a href="news.html" class="btn btn-secondary" style="margin-bottom: 20px;">← Back to News</a>
+
+        <div id="admin-content" style="display: none;">
+            <h2>Reported Blogs <span style="float: right; background: #dc3545; color: #fff; padding: 2px 12px; border-radius: 20px; font-size: 1rem;">Total: <span id="report-count">0</span></span></h2>
+            <div id="reports-list">
+                <p>Loading reports...</p>
+            </div>
+        </div>
+
+        <div id="auth-message">
+            <p>Authenticating...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { firebaseConfig } from "./firebase-config.js";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const adminContent = document.getElementById('admin-content');
+        const authMessage = document.getElementById('auth-message');
+        const reportsList = document.getElementById('reports-list');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const adminEmails = ["nshuhima246@gmail.com", "manahoo09@zohomail.in"];
+                let isAdmin = false;
+                
+                // Check if the logged in user's email matches our admin list
+                if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+                    isAdmin = true;
+                } else {
+                    // Check if the user is an admin in Firestore as fallback
+                    const userDocRef = doc(db, "users", user.uid);
+                    const userDocSnap = await getDoc(userDocRef);
+                    isAdmin = userDocSnap.exists() && userDocSnap.data().isAdmin === true;
+                }
+
+                if (isAdmin) {
+                    authMessage.style.display = 'none';
+                    adminContent.style.display = 'block';
+                    loadReports();
+                } else {
+                    authMessage.innerHTML = '<p style="color: red;">Access Denied. You are not an admin.</p>';
+                    setTimeout(() => window.location.href = 'news.html', 2000);
+                }
+            } else {
+                authMessage.innerHTML = '<p>Please login to access the admin panel.</p>';
+                setTimeout(() => window.location.href = 'news.html', 2000);
+            }
+        });
+
+        async function loadReports() {
+            reportsList.innerHTML = '<p>Loading reports...</p>';
+            try {
+                const reportsSnapshot = await getDocs(collection(db, "reports"));
+            const countEl = document.getElementById('report-count');
+            if (countEl) countEl.innerText = reportsSnapshot.size;
+
+                if (reportsSnapshot.empty) {
+                    reportsList.innerHTML = '<p>No active reports.</p>';
+                    return;
+                }
+
+                reportsList.innerHTML = ''; // Clear loading message
+
+                for (const reportDoc of reportsSnapshot.docs) {
+                    const report = reportDoc.data();
+
+                    // Prevent crash if a report is missing a blogId
+                    if (!report.blogId) {
+                        console.warn("Skipping invalid report (missing blogId):", reportDoc.id);
+                        continue;
+                    }
+
+                    const blogDoc = await getDoc(doc(db, "blogs", report.blogId));
+
+                    const card = document.createElement('div');
+                    card.className = 'report-card';
+                    card.id = `report-${reportDoc.id}`;
+
+                    if (blogDoc.exists()) {
+                        const blog = blogDoc.data();
+                        const safeAuthor = blog.author ? blog.author.replace(/'/g, "\\'") : 'Unknown';
+                        card.innerHTML = `
+                            <h3>${blog.title}</h3>
+                            <p><strong>Author:</strong> ${blog.author}</p>
+                            <p><strong>Report Reason:</strong> ${report.reason}</p>
+                            <p><strong>Reported by UID:</strong> ${report.reporterUid}</p>
+                            <p><strong>Date:</strong> ${new Date(report.date).toLocaleString()}</p>
+                            <div>
+                                <a href="news.html?blogId=${report.blogId}" target="_blank" class="btn">View Blog</a>
+                                <button class="btn btn-danger" onclick="window.deleteBlog('${report.blogId}', '${reportDoc.id}')">Delete Blog & Report</button>
+                                <button class="btn btn-secondary" onclick="window.dismissReport('${reportDoc.id}')">Dismiss Report</button>
+                                <button class="btn btn-danger" style="background-color: #8b0000; margin-top: 10px;" onclick="window.banUser('${blog.authorUid || ''}', '${safeAuthor}')">Ban User</button>
+                                <button class="btn btn-secondary" style="background-color: #198754; margin-top: 10px;" onclick="window.unbanUser('${blog.authorUid || ''}', '${safeAuthor}')">Unban User</button>
+                            </div>
+                        `;
+                    } else {
+                        card.innerHTML = `
+                            <h3>Blog not found (ID: ${report.blogId})</h3>
+                            <p>It might have been already deleted.</p>
+                            <p><strong>Report Reason:</strong> ${report.reason}</p>
+                             <div>
+                                <button class="btn btn-secondary" onclick="window.dismissReport('${reportDoc.id}')">Dismiss Report</button>
+                            </div>
+                        `;
+                    }
+                    reportsList.appendChild(card);
+                }
+            } catch (e) {
+                console.error("Error loading reports:", e);
+                reportsList.innerHTML = `<p style="color: red;">Failed to load reports: ${e.message}</p>`;
+            }
+        }
+
+        window.dismissReport = async (reportId) => {
+            if (!confirm("Are you sure you want to dismiss this report?")) return;
+            try {
+                await deleteDoc(doc(db, "reports", reportId));
+                document.getElementById(`report-${reportId}`).remove();
+            
+            const countEl = document.getElementById('report-count');
+            if (countEl) countEl.innerText = Math.max(0, parseInt(countEl.innerText) - 1);
+            
+                alert("Report dismissed.");
+            } catch (e) {
+                console.error("Error dismissing report:", e);
+                alert("Failed to dismiss report.");
+            }
+        };
+
+        window.deleteBlog = async (blogId, reportId) => {
+            if (!confirm("Are you sure you want to DELETE this blog permanently? This action cannot be undone.")) return;
+            try {
+                // Delete the blog
+                await deleteDoc(doc(db, "blogs", blogId));
+                
+                // Delete the associated report
+                await deleteDoc(doc(db, "reports", reportId));
+
+                document.getElementById(`report-${reportId}`).remove();
+                alert("Blog and report have been deleted.");
+            } catch (e) {
+                console.error("Error deleting blog:", e);
+                alert("Failed to delete blog.");
+            }
+        };
+
+        window.banUser = async (uid, username) => {
+            if (!confirm(`Are you sure you want to BAN the user "${username}"? They will not be able to log in.`)) return;
+            try {
+                const userRef = doc(db, "users", uid);
+                await updateDoc(userRef, { isBanned: true });
+                alert(`User ${username} has been banned.`);
+            } catch (e) {
+                console.error("Error banning user:", e);
+                alert("Failed to ban user.");
+            }
+        };
+
+        window.unbanUser = async (uid, username) => {
+            if (!confirm(`Are you sure you want to UNBAN the user "${username}"? They will be able to use the app normally.`)) return;
+            try {
+                const userRef = doc(db, "users", uid);
+                await updateDoc(userRef, { isBanned: false });
+                alert(`User ${username} has been unbanned.`);
+            } catch (e) {
+                console.error("Error unbanning user:", e);
+                alert("Failed to unban user.");
+            }
+        };
+
+    </script>
+</body>
+</html>

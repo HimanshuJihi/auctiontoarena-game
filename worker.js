@@ -62,7 +62,9 @@ self.addEventListener('fetch', event => {
 
             return response;
           }
-        );
+        ).catch(error => {
+          console.error('Fetch failed (offline or blocked URL):', error);
+        });
       })
     );
 });

@@ -303,8 +303,7 @@
 
         document.getElementById('blogForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            // Default to published if triggered by enter key or main button
-            if (e.submitter && e.submitter.type === 'submit') submissionStatus = 'published';
+            if (e.submitter && e.submitter.id !== 'save-draft-btn') submissionStatus = 'published';
             
             const title = document.getElementById('title').value;
             const author = document.getElementById('author').value;
@@ -348,6 +347,7 @@
                 const processBlog = async (imagesData, youtubeUrl, pollData) => {
                     const urlParams = new URLSearchParams(window.location.search);
                     const editId = urlParams.get('id');
+
                     try {
                     if (editId) {
                         // Update existing blog
@@ -394,7 +394,7 @@
                             youtubeUrl: youtubeUrl || null,
                             poll: pollData,
                                 comments: [],
-                                likes: 0,
+                                likes: [],
                                 status: submissionStatus
                             });
                     }

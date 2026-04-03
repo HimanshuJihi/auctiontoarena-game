@@ -181,6 +181,7 @@
                 loadingIndicator.style.display = 'block';
                 conversationList.innerHTML = '';
                 noConversationsMessage.style.display = 'none';
+                let blockedUsers = [];
                 
                 // Load user's theme preference
                 try {
@@ -189,11 +190,13 @@
                     if (userDocSnap.exists() && userDocSnap.data().theme) {
                         applyTheme(userDocSnap.data().theme);
                     }
+                    if (userDocSnap.exists() && userDocSnap.data().blockedUsers) {
+                        blockedUsers = userDocSnap.data().blockedUsers;
+                    }
                 } catch(e) {
                     console.error("Error loading theme preference:", e);
                 }
-
-                listenForConversations();
+                listenForConversations(blockedUsers);
                 setupNewMessageButton();
             } else {
                 alert("Please login to view your messages.");
@@ -255,7 +258,7 @@
             });
         }
 
-        function listenForConversations() {
+        function listenForConversations(blockedUsers = []) {
             const q = query(
                 collection(db, "conversations"),
                 where("participants", "array-contains", window.currentUser.uid),
@@ -276,6 +279,13 @@
                     const conversationId = change.doc.id;
                     const otherParticipantUid = conversation.participants.find(uid => uid !== window.currentUser.uid);
 
+                    // --- Block Check ---
+                    if (blockedUsers.includes(otherParticipantUid)) {
+                        const existingLi = document.getElementById(`conv-${conversationId}`);
+                        if (existingLi) existingLi.remove(); // Remove if it exists
+                        return; // Skip rendering this conversation
+                    }
+
                     if (!otherParticipantUid) return;
 
                     // Safety check for corrupted conversation documents
@@ -291,7 +301,16 @@
                     let lastMessageText = "No messages yet.";
                     if (lastMessage) {
                         const senderName = lastMessage.senderUid === window.currentUser.uid ? "You" : (otherUser.name || 'User').split(' ')[0];
-                        lastMessageText = `${senderName}: ${lastMessage.text}`;
+                        let decodedText = lastMessage.text;
+                        try {
+                            // Attempt to decode. If it fails, it's probably not base64.
+                            if (decodedText && !decodedText.startsWith('[')) { // Don't decode placeholders like [Image]
+                                decodedText = atob(decodedText);
+                            }
+                        } catch (e) {
+                            // Not a valid base64 string, show original text.
+                        }
+                        lastMessageText = `${senderName}: ${decodedText}`;
                     }
 
                     const existingLi = document.getElementById(`conv-${conversationId}`);

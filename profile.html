@@ -12,13 +12,7 @@
         button:hover { background: #e68900; }
         .profile-pic { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid white; margin-bottom: 15px; cursor: pointer; }
         .back-btn { background: transparent; border: 1px solid white; margin-top: 10px; }
-        .back-btn:hover { background: rgba(255,255,255,0.1); }
-        
-        /* Styles for My Blogs section */
-        .blog-card { background: rgba(255,255,255,0.05); padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: left; }
-        .action-btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; font-size: 0.8rem; }
-        .edit-btn { background-color: #ffc107; color: #000; }
-        .delete-btn { background-color: #dc3545; color: #fff; }
+        .back-btn:hover { background: rgba(255,255,255,0.1); }        
         /* CropperJS CSS Fix */
         .cropper-container { max-width: 100%; }
         .follow-profile-btn { width: auto; padding: 8px 20px; margin-top: 10px; background: #0d6efd; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; color: white; transition: background 0.2s; }
@@ -58,8 +52,6 @@
         body.light-mode { background: #f4f7f6; color: #333; }
         body.light-mode .container { background: #fff; border-color: #ddd; }
         body.light-mode input, body.light-mode textarea { background: #f0f0f0; color: #333; border: 1px solid #ccc; }
-        body.light-mode #username { background: #e9e9e9; color: #333; }
-        body.light-mode .blog-card { background: #f8f9fa; border-color: #ddd; }
         
         /* Light mode for badges */
         body.light-mode .badge-item {
@@ -68,7 +60,6 @@
         }
         body.light-mode .badge-title { color: #333; }
 
-        body.light-mode .blog-card h4, body.light-mode .blog-card p { color: #333; }
         body.light-mode #user-list-modal > div { background: #fff; border-color: #ddd; color: #333; }
         body.light-mode #user-list-title { color: #0d6efd; }
         body.light-mode #user-list-content > div { border-bottom-color: #eee; }
@@ -80,6 +71,67 @@
         .btn {
             display: inline-block; padding: 10px 20px; font-size: 1rem; font-weight: bold; color: #fff; background-color: #0d6efd; border: none; border-radius: 5px; text-decoration: none; cursor: pointer; transition: background-color 0.2s ease;
         }
+
+        /* Styles from news.html for blog cards */
+        .news-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 20px;
+        }
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+        .news-card img.card-img-top {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            max-height: 400px;
+        }
+        .news-card-content { padding: 25px; }
+        .news-card-content h2 { font-size: 1.75rem; margin-top: 0; margin-bottom: 10px; }
+        .news-card-content h2 a { color: #fff; text-decoration: none; transition: color 0.2s ease; }
+        .news-card-content h2 a:hover { color: #ddd; text-decoration: underline; }
+        .article-meta { font-size: 0.85rem; color: #ddd; margin-bottom: 15px; display: block; }
+        .news-card-content p { font-size: 1.05rem; color: #eee; margin-bottom: 1em; }
+        .carousel-container { position: relative; }
+        .image-carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
+        .image-carousel img { flex: 0 0 100%; scroll-snap-align: center; max-height: 300px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+        .image-carousel::-webkit-scrollbar { display: none; }
+        .image-carousel { -ms-overflow-style: none; scrollbar-width: none; }
+        .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; cursor: pointer; z-index: 5; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: background 0.3s; }
+        .carousel-btn:hover { background: rgba(0,0,0,0.9); }
+        .carousel-btn.prev { left: 10px; }
+        .carousel-btn.next { right: 10px; }
+        .comment-actions { display: flex; gap: 15px; margin-top: 8px; font-size: 0.85rem; color: #aaa; }
+        .comment-action-btn { background: none; border: none; color: inherit; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 5px; transition: color 0.2s; }
+        .comment-action-btn:hover { color: #fff; }
+        .replies-list { margin-left: 20px; margin-top: 10px; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 10px; }
+        .pinned-badge { background: #ffd700; color: #000; font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; margin-left: 8px; font-weight: bold; vertical-align: middle; }
+        .follow-btn.in-card { padding: 2px 8px; font-size: 0.7rem; border-radius: 10px; border: 1px solid #0d6efd; background: transparent; color: #0d6efd; cursor: pointer; margin-left: 10px; transition: all 0.2s; }
+        .follow-btn.in-card.following { background: #0d6efd; color: white; }
+
+        /* Light mode for blog cards */
+        body.light-mode .news-card { background: #fff; border-color: #ddd; }
+        body.light-mode .news-card-content h2 a { color: #333; }
+        body.light-mode .news-card-content p { color: #555; }
+        body.light-mode .article-meta { color: #666; }
+        body.light-mode .comment-actions { color: #666; }
+        body.light-mode .comment-action-btn:hover { color: #000; }
+        body.light-mode .replies-list { border-left-color: #eee; }
+
+        /* Lightbox styles */
+        .lightbox-modal { display: none; position: fixed; z-index: 2000; padding-top: 50px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+        .lightbox-content { margin: auto; display: block; max-width: 90%; max-height: 90vh; object-fit: contain; }
+        .close-lightbox { position: absolute; top: 20px; right: 30px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; z-index: 2001; }
+        .close-lightbox:hover { color: #bbb; }
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -93,9 +145,11 @@
     <div id="profile-action-buttons" style="margin-top: 10px; display: none;">
         <button id="follow-btn" class="follow-profile-btn" style="display: none;">Follow</button>
         <button id="message-profile-btn" class="follow-profile-btn" style="display: none; background-color: #198754; margin-left: 10px;">Message</button>
+        <button id="block-btn" class="follow-profile-btn" style="display: none; background-color: #dc3545; margin-left: 10px;">Block</button>
     </div>
     <p id="photo-hint" style="font-size: 0.8rem; opacity: 0.8;">Tap image to change</p>
     
+    <!-- Status display removed from profile, will be handled by stories on news page -->
     <!-- Followers/Following Stats -->
     <div style="display: flex; gap: 30px; margin: 15px 0; justify-content: center; width: 100%;">
         <div onclick="window.showUserList('followers')" style="cursor: pointer; text-align: center;">
@@ -126,6 +180,19 @@
     <input type="text" id="name" placeholder="Display Name">
     <textarea id="bio" rows="3" placeholder="Bio (e.g. Cricket Lover from Mumbai)"></textarea>
     
+    <!-- Story Creator Section -->
+    <div id="story-creator-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); display: none;">
+        <h3 style="color: gold;">Post a Story (lasts 24h)</h3>
+        <input type="text" id="status-message" placeholder="What's happening?" maxlength="80" style="background: rgba(0,0,0,0.2); color: #ffc107; border: 1px solid rgba(255,255,255,0.3); text-align:center; font-style:italic;">
+        <div id="status-image-controls" style="margin: 10px 0;">
+            <img id="status-image-preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-bottom: 10px; display: none;">
+            <input type="file" id="status-image-input" style="display: none;" accept="image/*">
+            <button type="button" id="status-image-upload-btn" class="btn" style="background-color: #17a2b8; width: auto; padding: 5px 10px; font-size: 0.8rem;">Add Image</button>
+            <button type="button" id="status-image-remove-btn" class="btn" style="background-color: #dc3545; width: auto; padding: 5px 10px; font-size: 0.8rem; display: none;">Remove Image</button>
+        </div>
+        <button id="post-story-btn" class="btn" style="background-color: #198754; width: 100%; margin-top: 10px;">Post Story</button>
+    </div>
+    
     <button id="save-btn">Save Profile</button>
     <button id="theme-toggle" class="btn" style="background-color: #6c757d; margin-top: 10px;">☀️</button>
     <button id="change-pwd-btn" style="background-color: #198754; margin-top: 10px; width: 100%; padding: 10px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Change Password</button>
@@ -146,6 +213,12 @@
             <button id="btn-crop" style="background:#28a745; color:white; padding:10px 25px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">Crop & Save</button>
             <button id="btn-cancel-crop" style="background:#dc3545; color:white; padding:10px 25px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">Cancel</button>
         </div>
+    </div>
+
+    <!-- Lightbox Modal for blog images -->
+    <div id="lightbox-modal" class="lightbox-modal" onclick="if(event.target === this) window.closeLightbox()">
+        <span class="close-lightbox" onclick="window.closeLightbox()">&times;</span>
+        <img class="lightbox-content" id="lightbox-img">
     </div>
 
     <!-- User List Modal (Followers/Following) -->
@@ -184,7 +257,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, deleteField, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, updateProfile, deleteUser, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { firebaseConfig } from "./firebase-config.js";
 
@@ -194,6 +267,10 @@
     const auth = getAuth(app);
     let currentUser = null;
     let currentProfileData = {}; // Store loaded profile data for lists
+    let profilePageBlogs = [];
+    let isUserVerified = false; // Flag to check if current user (owner) is verified
+    let isViewerAdmin = false;
+    let isProfileOwner = false;
 
     // Theme Toggle Logic
     const themeToggleBtn = document.getElementById('theme-toggle');
@@ -227,6 +304,37 @@
     const fileInput = document.getElementById('file-input');
     const preview = document.getElementById('preview');
     let base64Image = null;
+    let base64StatusImage = null;
+
+    // Image Compression Function
+    function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                    } else {
+                        if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = error => reject(error);
+            };
+            reader.onerror = error => reject(error);
+        });
+    }
 
     // Cropper variables
     let cropper;
@@ -292,8 +400,14 @@
         const urlParams = new URLSearchParams(window.location.search);
         const viewUid = urlParams.get('uid');
 
+        let currentUserFollowing = []; // Keep track of who the current user follows
         if (user) {
             currentUser = user;
+            // Check if the person viewing the page is an admin
+            const viewerDoc = await getDoc(doc(db, "users", user.uid));
+            if (viewerDoc.exists() && viewerDoc.data().isAdmin) {
+                isViewerAdmin = true;
+            }
             // Load theme preference
             try {
                 const userDocRef = doc(db, "users", user.uid);
@@ -319,15 +433,15 @@
             // View Mode (Guest or viewing someone else)
             document.querySelector('h2').innerText = "User Profile";
             document.getElementById('save-btn').style.display = 'none';
+            document.getElementById('theme-toggle').style.display = 'none'; // Hide theme toggle in view mode
             document.getElementById('change-pwd-btn').style.display = 'none';
             document.getElementById('profile-action-buttons').style.display = 'block';
             document.getElementById('delete-acc-btn').style.display = 'none';
-            document.getElementById('photo-hint').style.display = 'none';
             document.getElementById('preview').onclick = null;
             document.getElementById('preview').style.cursor = 'default';
             document.getElementById('preview').style.border = '3px solid #87ceeb';
             
-            ['username', 'name', 'bio'].forEach(id => {
+            ['username', 'name', 'bio', 'status-message'].forEach(id => {
                 const el = document.getElementById(id);
                 el.readOnly = true;
                 el.style.border = 'none';
@@ -335,8 +449,19 @@
                 el.style.textAlign = 'center';
             });
 
-            loadProfileData(viewUid);
-            fetchMyBlogs(viewUid, false); // false = not owner
+            // Load my data first to check for blocks
+            if (user) {
+                const myDocSnap = await getDoc(doc(db, "users", user.uid));
+                if (myDocSnap.exists() && myDocSnap.data().blockedBy && myDocSnap.data().blockedBy.includes(viewUid)) {
+                    handleBlockedProfile("This user has blocked you.");
+                    return;
+                }
+            }
+            document.getElementById('photo-hint').style.display = 'none'; // Hide hint in view mode
+
+            isProfileOwner = false;
+            loadProfileData(viewUid, user);
+            renderUserBlogs(viewUid, false);
             
             // Setup Follow Button
             if (user) { // Only show follow/message if logged in
@@ -352,19 +477,65 @@
                 // Check if already following
                 try {
                     const myDoc = await getDoc(doc(db, "users", user.uid));
-                    const myData = myDoc.data();
-                    const isFollowing = myData.following && myData.following.includes(viewUid);
-                    updateFollowButton(isFollowing);
-                    
-                    followBtn.onclick = () => toggleFollow(viewUid, isFollowing);
+                    if (myDoc.exists()) {
+                        const myData = myDoc.data();
+                        const isFollowing = myData.following && myData.following.includes(viewUid);
+                        updateFollowButton(isFollowing);
+                        followBtn.onclick = () => toggleFollow(viewUid, isFollowing);
+
+                        const isBlocked = myData.blockedUsers && myData.blockedUsers.includes(viewUid);
+                        setupBlockButton(viewUid, isBlocked);
+                    }
+                    // Fetch current user's following list to manage follow button state
+                    const myDocSnap = await getDoc(doc(db, "users", user.uid));
+                    if (myDocSnap.exists()) {
+                        currentUserFollowing = myDocSnap.data().following || [];
+                        updateFollowButton(currentUserFollowing.includes(viewUid));
+                    }
+                    if (isViewerAdmin) {
+                        setupAdminActions(viewUid, document.getElementById('username').value);
+                    }
                 } catch(e) { console.error(e); }
             }
         } else if (user) {
             // Edit Mode (My Profile)
             // Load existing profile
+                document.getElementById('story-creator-section').style.display = 'block';
                 document.getElementById('profile-action-buttons').style.display = 'none';
-                loadProfileData(user.uid);
-                fetchMyBlogs(user.uid, true); // true = owner
+
+                isProfileOwner = true;
+                // Setup status image controls only in edit mode
+                document.getElementById('status-image-upload-btn').onclick = () => document.getElementById('status-image-input').click();
+    
+                document.getElementById('status-image-remove-btn').addEventListener('click', () => {
+                    base64StatusImage = 'DELETE'; // Special flag to signal deletion
+                    document.getElementById('status-image-preview').style.display = 'none';
+
+                    document.getElementById('status-image-preview').src = ''; // Clear src
+                    document.getElementById('status-image-input').value = ''; // Clear file input
+                    document.getElementById('status-image-remove-btn').style.display = 'none';
+                });
+            
+            // Also load my following list if I am viewing my own profile (for my blogs)
+            if (user) {
+                const myDocSnap = await getDoc(doc(db, "users", user.uid));
+                if (myDocSnap.exists()) currentUserFollowing = myDocSnap.data().following || [];
+            }
+
+                document.getElementById('status-image-input').addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    try {
+                        const compressedDataUrl = await compressImage(file, 600, 600, 0.8);
+                        base64StatusImage = compressedDataUrl;
+                        document.getElementById('status-image-preview').src = compressedDataUrl;
+                        document.getElementById('status-image-preview').style.display = 'block';
+                        document.getElementById('status-image-remove-btn').style.display = 'inline-block';
+                    } catch (err) { alert('Failed to process image.'); console.error(err); }
+                });
+
+                loadProfileData(user.uid, user);
+                renderUserBlogs(user.uid, true);
 
                 // Check if username is required
                 if (urlParams.get('requireUsername') === 'true' && !document.getElementById('username').value) {
@@ -377,6 +548,21 @@
         }
     });
 
+    function handleBlockedProfile(message) {
+        document.querySelector('.container').innerHTML = `
+            <h2 style="color: #ff6b6b;">Access Denied</h2>
+            <p style="color: #ccc;">${message}</p>
+            <button class="back-btn" onclick="window.location.href='news.html'">Back to News</button>
+        `;
+    }
+
+    function setupBlockButton(targetUid, isBlocked) {
+        const blockBtn = document.getElementById('block-btn');
+        blockBtn.style.display = 'inline-block';
+        updateBlockButton(isBlocked);
+        blockBtn.onclick = () => toggleBlock(targetUid, isBlocked);
+    }
+
     function updateFollowButton(isFollowing) {
         const btn = document.getElementById('follow-btn');
         if (isFollowing) {
@@ -388,18 +574,27 @@
         }
     }
 
+    function updateBlockButton(isBlocked) {
+        const btn = document.getElementById('block-btn');
+        const followBtn = document.getElementById('follow-btn');
+        const messageBtn = document.getElementById('message-profile-btn');
+
+        btn.innerText = isBlocked ? "Unblock" : "Block";
+        btn.classList.toggle('following', isBlocked); // Use same style for visual cue
+        followBtn.style.display = isBlocked ? 'none' : 'inline-block';
+        messageBtn.style.display = isBlocked ? 'none' : 'inline-block';
+    }
+
     async function toggleFollow(targetUid, isCurrentlyFollowing) {
         const myUid = currentUser.uid;
-        const userRef = doc(db, "users", myUid);
-        const targetRef = doc(db, "users", targetUid);
+        const userRef = doc(db, 'users', myUid);
+        const targetRef = doc(db, 'users', targetUid);
         
         try {
             if (isCurrentlyFollowing) {
                 await updateDoc(userRef, { following: arrayRemove(targetUid) });
                 await updateDoc(targetRef, { followers: arrayRemove(myUid) });
                 updateFollowButton(false);
-                // Update click handler state
-                document.getElementById('follow-btn').onclick = () => toggleFollow(targetUid, false);
             } else {
                 await updateDoc(userRef, { following: arrayUnion(targetUid) });
                 await updateDoc(targetRef, { followers: arrayUnion(myUid) });
@@ -437,7 +632,30 @@
         } catch(e) { console.error("Follow error:", e); alert("Error updating follow status"); }
     }
 
-    async function loadProfileData(uid) {
+    async function toggleBlock(targetUid, isCurrentlyBlocked) {
+        if (!currentUser) return;
+        const myUid = currentUser.uid;
+        const userRef = doc(db, "users", myUid);
+        const targetRef = doc(db, "users", targetUid);
+
+        try {
+            if (isCurrentlyBlocked) {
+                await updateDoc(userRef, { blockedUsers: arrayRemove(targetUid) });
+                await updateDoc(targetRef, { blockedBy: arrayRemove(myUid) });
+                updateBlockButton(false);
+                document.getElementById('block-btn').onclick = () => toggleBlock(targetUid, false);
+            } else {
+                if (confirm(`Are you sure you want to block this user? You won't see their posts, and they won't be able to message you.`)) {
+                    await updateDoc(userRef, { blockedUsers: arrayUnion(targetUid), following: arrayRemove(targetUid) }); // Also unfollow
+                    await updateDoc(targetRef, { blockedBy: arrayUnion(myUid), followers: arrayRemove(myUid) }); // Also remove from their followers
+                    updateBlockButton(true);
+                    document.getElementById('block-btn').onclick = () => toggleBlock(targetUid, true);
+                }
+            }
+        } catch (e) { console.error("Block error:", e); alert("Error updating block status."); }
+    }
+
+    async function loadProfileData(uid, viewerUser) {
         let data = {};
         let totalBlogs = 0;
         let totalLikes = 0;
@@ -448,6 +666,16 @@
             
             if (docSnap.exists()) {
                 data = docSnap.data();
+
+                // If viewing someone else's profile, check if they have blocked you.
+                if (viewerUser && viewerUser.uid !== uid) {
+                    if (data.blockedUsers && data.blockedUsers.includes(viewerUser.uid)) {
+                        handleBlockedProfile("You have been blocked by this user.");
+                        return;
+                    }
+                }
+
+                const statusMessageInput = document.getElementById('status-message');
                 currentProfileData = data; // Store for list access
                 document.getElementById('name').value = data.name || "";
                 document.getElementById('username').value = data.username || "";
@@ -455,6 +683,7 @@
                 if (data.photoURL) {
                     document.getElementById('preview').src = data.photoURL;
                     if (currentUser && uid === currentUser.uid) base64Image = data.photoURL;
+                    if (currentUser && uid === currentUser.uid) base64Image = data.photoURL; // For my profile
                 }
                 
                 // Update Counts
@@ -469,6 +698,7 @@
                 } else {
                     document.getElementById('verified-indicator').style.display = 'none';
                 }
+
             } else if (currentUser && uid === currentUser.uid) {
                 document.getElementById('name').value = currentUser.displayName;
                 if (currentUser.photoURL) document.getElementById('preview').src = currentUser.photoURL;
@@ -482,7 +712,7 @@
                 totalBlogs = blogsSnapshot.size;
                 blogsSnapshot.forEach(blogDoc => {
                     const blogData = blogDoc.data();
-                    totalLikes += blogData.likes || 0;
+                    totalLikes += Array.isArray(blogData.likes) ? blogData.likes.length : (typeof blogData.likes === 'number' ? blogData.likes : 0);
                 });
 
                 document.getElementById('blogs-count').innerText = totalBlogs;
@@ -494,6 +724,8 @@
 
         } catch (e) { console.error("Error loading profile:", e); }
     }
+
+    // --- Blog Rendering Logic ---
 
     function displayBadges(userData, blogCount, likeCount) {
         const badgesSection = document.getElementById('badges-section');
@@ -577,47 +809,440 @@
         }
     }
 
-    async function fetchMyBlogs(uid, isOwner) {
+    // --- Blog Rendering Logic ---
+
+    window.openLightbox = function(src) {
+        document.getElementById('lightbox-img').src = src;
+        document.getElementById('lightbox-modal').style.display = "flex";
+    };
+    window.closeLightbox = function() {
+        document.getElementById('lightbox-modal').style.display = "none";
+    };
+
+    function getYoutubeVideoId(url) {
+        if (!url) return null;
+        const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+        const match = url.match(regex);
+        return match ? match[1] : null;
+    }
+
+    window.scrollCarousel = function(btn, direction) {
+        const container = btn.parentElement.querySelector('.image-carousel');
+        const scrollAmount = container.clientWidth;
+        container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+    };
+
+    async function renderUserBlogs(uid, isOwner) {
         const list = document.getElementById('my-blogs-list');
         list.innerHTML = '<p style="text-align:center; color:#aaa;">Loading...</p>';
         try {
-            const q = query(collection(db, "blogs"), where("authorUid", "==", uid));
-            const querySnapshot = await getDocs(q);
+            const constraints = [where("authorUid", "==", uid)];
+            if (!isOwner) {
+                constraints.push(where("status", "==", "published"));
+            }
+            constraints.push(orderBy("date", "desc"));
             
+            const q = query(collection(db, "blogs"), ...constraints);
+            const querySnapshot = await getDocs(q);
+
             list.innerHTML = '';
             if (querySnapshot.empty) {
                 list.innerHTML = '<p style="text-align:center; color:#aaa;">No blogs yet.</p>';
                 return;
             }
 
-            querySnapshot.forEach((doc) => {
-                const blog = doc.data();
-                
-                // Filter drafts if not owner
-                if (!isOwner && blog.status === 'draft') return;
-
-                const draftBadge = (blog.status === 'draft') ? '<span style="background:orange; color:black; padding:2px 5px; border-radius:4px; font-size:0.7rem; margin-left:5px;">DRAFT</span>' : '';
-
-                const div = document.createElement('div');
-                div.className = 'blog-card';
-                div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <h4 style="margin:0; color:#fff; font-size: 1rem;">${blog.title} ${draftBadge}</h4>
-                        <span style="font-size:0.7rem; color:#aaa;">${new Date(blog.date).toLocaleDateString()}</span>
-                    </div>
-                    <p style="color:#ddd; font-size:0.85rem; margin: 5px 0 10px 0;">${blog.content.substring(0, 50)}...</p>
-                    ${isOwner ? `<div>
-                        <button onclick="window.editMyBlog('${doc.id}')" class="action-btn edit-btn">Edit</button>
-                        <button onclick="window.deleteMyBlog('${doc.id}')" class="action-btn delete-btn">Delete</button>
-                    </div>` : ''}
-                `;
-                list.appendChild(div);
+            profilePageBlogs = [];
+            querySnapshot.forEach(doc => {
+                profilePageBlogs.push({ id: doc.id, ...doc.data() });
             });
+
+            renderBlogsOnProfile(isOwner);
         } catch (e) {
             console.error("Error fetching blogs:", e);
             list.innerHTML = '<p style="color:red;">Error loading blogs.</p>';
         }
     }
+
+    function renderBlogsOnProfile(isOwner) {
+        const grid = document.getElementById('my-blogs-list');
+        grid.innerHTML = '';
+        const user = auth.currentUser;
+
+        profilePageBlogs.forEach(blog => {
+            const article = document.createElement('article');
+            article.className = 'news-card';
+            article.id = `blog-${blog.id}`;
+
+            let likeCount = 0;
+            let isLiked = false;
+            
+            if (Array.isArray(blog.likes)) {
+                likeCount = blog.likes.length;
+                isLiked = user && blog.likes.includes(user.uid);
+            } else {
+                likeCount = typeof blog.likes === 'number' ? blog.likes : 0;
+                let likedPosts = JSON.parse(localStorage.getItem('cricket_user_liked_posts') || '[]');
+                isLiked = likedPosts.includes(blog.id);
+            }
+            let likeIcon = isLiked ? '❤️' : '🤍';
+            
+            let actionButtons = `
+                <button onclick="window.likeUserBlog('${blog.id}')" style="background:none; border:none; color:#ff69b4; cursor:pointer; font-size: 1rem; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">${likeIcon} ${likeCount}</button>
+                <button onclick="window.shareBlog('${blog.id}', '${blog.title.replace(/'/g, "\\'")}')" style="background:none; border:none; color:#0d6efd; cursor:pointer; font-size: 1rem; margin-left: 10px;">📤 Share</button>
+            `;
+
+            if (isOwner) {
+                actionButtons += `<button onclick="window.editMyBlog('${blog.id}')" style="background:none; border:none; color:#ffc107; cursor:pointer; text-decoration:underline; font-size: 0.9rem;">✏️ Edit</button>`;
+                actionButtons += `<button onclick="window.deleteMyBlog('${blog.id}')" style="background:none; border:none; color:#ff6b6b; cursor:pointer; text-decoration:underline; font-size: 0.9rem;">🗑️ Delete</button>`;
+            }
+
+            let mediaHtml = '';
+            if (blog.youtubeUrl) {
+                const videoId = getYoutubeVideoId(blog.youtubeUrl);
+                if (videoId) {
+                    mediaHtml += `<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 8px; margin-bottom: 10px;"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>`;
+                }
+            }
+
+            if (blog.images && blog.images.length > 0) {
+                const imagesList = blog.images.map(img => `<img src="${img}" alt="Blog Image" onclick="window.openLightbox('${img}')">`).join('');
+                const arrows = blog.images.length > 1 ? `<button class="carousel-btn prev" onclick="window.scrollCarousel(this, -1)">&#10094;</button><button class="carousel-btn next" onclick="window.scrollCarousel(this, 1)">&#10095;</button>` : '';
+                mediaHtml += `<div class="carousel-container">${arrows}<div class="image-carousel">${imagesList}</div></div>`;
+            } else if (blog.image) {
+                mediaHtml += `<img src="${blog.image}" class="card-img-top" alt="Blog Image" onclick="window.openLightbox('${blog.image}')">`;
+            }
+
+            const draftBadge = (blog.status === 'draft' && isOwner) ? '<span style="background:orange; color:black; padding:2px 5px; border-radius:4px; font-size:0.7rem; margin-left:5px;">DRAFT</span>' : '';
+            
+            const authorHeader = `
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <img src="${blog.authorPhoto || 'game-logo.png'}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #87ceeb; cursor: pointer;" onclick="window.location.href='profile.html?uid=${blog.authorUid}'">
+                    <div style="flex: 1;">
+                        <strong style="color: #87ceeb; font-size: 1.1rem; cursor: pointer;" onclick="window.location.href='profile.html?uid=${blog.authorUid}'">${blog.author}</strong>
+                        <span style="font-size: 0.8rem; color: #aaa; margin-top: 4px; display: block;">${new Date(blog.date).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            `;
+
+            article.innerHTML = `
+                ${mediaHtml}
+                <div class="news-card-content">
+                    ${authorHeader}
+                    <h2 style="margin-top: 5px;">${blog.title} ${draftBadge}</h2>
+                    <p>${blog.content.replace(/\n/g, '<br>')}</p>
+                    
+                    <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; display: flex; align-items: center; gap: 15px;">
+                        ${actionButtons}
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div style="margin-top: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                        <h3 style="font-size: 1.1rem; margin-top: 0; color: #ddd;">Comments</h3>
+                        <div id="comments-list-${blog.id}" style="margin-bottom: 10px; max-height: 300px; overflow-y: auto; padding-right: 5px;">
+                            ${(blog.comments || []).map((c, index) => {
+                                const commentLikes = c.likes || [];
+                                const isCommentLiked = user && commentLikes.includes(user.uid);
+                                const commentLikeIcon = isCommentLiked ? '❤️' : '🤍';
+                                const isCommentOwner = user && (c.userUid === user.uid || (!c.userUid && c.author === user.displayName));
+                                const editDelBtns = isCommentOwner ? `
+                                    <button onclick="window.editProfileComment('${blog.id}', ${index})" style="background:none; border:none; color:#ffc107; cursor:pointer; font-size: 0.8rem; margin-left: 10px;">Edit</button>
+                                    <button onclick="window.deleteProfileComment('${blog.id}', ${index})" style="background:none; border:none; color:#ff6b6b; cursor:pointer; font-size: 0.8rem; margin-left: 10px;">Delete</button>
+                                ` : '';
+                                return `
+                                <div id="comment-${blog.id}-${index}" style="background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+                                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                        <img src="${c.photo || 'game-logo.png'}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">
+                                        <div style="flex: 1;">
+                                            <strong style="color: #87ceeb; font-size: 0.9rem;">${c.author}</strong>
+                                            <p style="font-size: 0.95rem; color: #eee; margin: 5px 0;">${c.text}</p>
+                                            <div class="comment-actions" id="comment-actions-${blog.id}-${index}">
+                                                <button onclick="window.toggleCommentLike('${blog.id}', ${index})" class="comment-action-btn">${commentLikeIcon} ${commentLikes.length}</button>
+                                                ${editDelBtns}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `}).join('')}
+                            ${(!blog.comments || blog.comments.length === 0) ? '<p style="font-size: 0.8rem; color: #ccc;">No comments yet.</p>' : ''}
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="comment-input-${blog.id}" placeholder="Add a comment..." style="flex: 1; width: 250px; padding: 12px 15px; font-size: 1rem; border-radius: 6px; border: none; outline: none;">
+                            <button onclick="window.addBlogComment('${blog.id}')" style="width: 70px; padding: 6px 12px; font-size: 0.85rem; background: #0d6efd; color: white; border: none; border-radius: 4px; cursor: pointer; height: fit-content;">Post</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(article);
+        });
+    }
+
+    window.showLikers = async function(blogId) {
+        const modal = document.getElementById('user-list-modal');
+        const title = document.getElementById('user-list-title');
+        const content = document.getElementById('user-list-content');
+        
+        modal.style.display = 'flex';
+        title.innerText = 'Likers';
+        content.innerHTML = '<p style="text-align:center; color:#aaa;">Loading...</p>';
+
+        // Check if the blog exists in profilePageBlogs
+        const blogIndex = profilePageBlogs.findIndex(b => b.id === blogId);
+        if (blogIndex === -1) {
+            content.innerHTML = '<p style="color:red;">Blog not found in current view.</p>';
+            return;
+        }
+
+        const blog = profilePageBlogs[blogIndex];
+        const likerUids = blog.likes || [];
+        if (likerUids.length === 0) {
+            content.innerHTML = '<p style="text-align:center; color:#aaa;">No one has liked this post yet.</p>';
+            return;
+        }
+
+        try {
+            const blogRef = doc(db, "blogs", blogId);
+            const blogSnap = await getDoc(blogRef);
+            if (!blogSnap.exists()) {
+                content.innerHTML = '<p style="color:red;">Blog not found.</p>';
+                return;
+            }
+
+            if (likerUids.length === 0) {
+                content.innerHTML = '<p style="text-align:center; color:#aaa;">No one has liked this post yet.</p>';
+                return;
+            }
+
+            content.innerHTML = '';
+            const userPromises = likerUids.map(uid => getDoc(doc(db, "users", uid)));
+            const userSnaps = await Promise.all(userPromises);
+
+            userSnaps.forEach(userSnap => {
+                if (userSnap.exists()) {
+                    const userData = userSnap.data();
+                    const div = document.createElement('div');
+                    div.style.cssText = "display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid rgba(255,255,255,0.1); cursor:pointer;" ;
+                    div.onclick = () => window.location.href = `profile.html?uid=${userSnap.id}`;
+                    
+                    div.innerHTML = `
+                        <img src="${userData.photoURL || 'https://via.placeholder.com/40'}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid #555;">
+                        <div>
+                            <div style="font-size:0.8rem; color:#aaa;">${userData.username || ''}</div>
+                        </div>
+                    `;
+                    content.appendChild(div);
+                }
+            });
+        } catch (e) {
+            console.error("Error loading likers list:", e);
+            content.innerHTML = '<p style="color:red;">Error loading list.</p>';
+        }
+    };
+
+    window.likeUserBlog = async function(id) {
+        if (!auth.currentUser) { alert("Please login to like posts!"); return; }
+        
+        const blogIndex = profilePageBlogs.findIndex(b => b.id === id);
+        if (blogIndex === -1) return;
+
+        const blogRef = doc(db, "blogs", id);
+        const blog = profilePageBlogs[blogIndex];
+        
+        const uid = auth.currentUser.uid;
+        let isLiking = false;
+
+        if (Array.isArray(blog.likes)) {
+            const likedIndex = blog.likes.indexOf(uid);
+            isLiking = likedIndex === -1;
+
+            if (isLiking) {
+                blog.likes.push(uid);
+                await updateDoc(blogRef, { likes: arrayUnion(uid) });
+            } else {
+                blog.likes.splice(likedIndex, 1);
+                await updateDoc(blogRef, { likes: arrayRemove(uid) });
+            }
+        } else {
+            let likedPosts = JSON.parse(localStorage.getItem('cricket_user_liked_posts') || '[]');
+            const likedIndex = likedPosts.indexOf(id);
+            let currentLikes = typeof blog.likes === 'number' ? blog.likes : 0;
+            
+            if (likedIndex === -1) {
+                currentLikes++;
+                likedPosts.push(id);
+            } else {
+                currentLikes = Math.max(0, currentLikes - 1);
+                likedPosts.splice(likedIndex, 1);
+            }
+            
+            blog.likes = currentLikes;
+            localStorage.setItem('cricket_user_liked_posts', JSON.stringify(likedPosts));
+            await updateDoc(blogRef, { likes: currentLikes });
+        }
+        
+        renderBlogsOnProfile(isProfileOwner); // Re-render to update UI
+    };
+
+    window.shareBlog = async function(id, title) { /* ... (existing code) ... */ };
+    window.readAloud = function(blogId) { /* ... (existing code) ... */ };
+
+    window.addBlogComment = async function(blogId) {
+        if (!auth.currentUser) { alert("Please login to comment!"); return; }
+        const input = document.getElementById(`comment-input-${blogId}`);
+        const text = input.value.trim();
+        if (!text) return;
+
+        let authorName = auth.currentUser.displayName || "User";
+        let authorPhoto = "https://via.placeholder.com/40";
+        try {
+            const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                if (userData.name) authorName = userData.name;
+                if (userData.photoURL) authorPhoto = userData.photoURL;
+            }
+        } catch(e) {}
+
+        const newComment = {
+            author: authorName,
+            userUid: auth.currentUser.uid,
+            photo: authorPhoto,
+            text: text,
+            date: new Date().toISOString(), // Store as ISO string
+            likes: [] // Store UIDs of users who liked this comment
+        };
+
+        const blogRef = doc(db, "blogs", blogId);
+
+        const blogIndex = profilePageBlogs.findIndex(b => b.id === blogId);
+        if (blogIndex !== -1) {
+            if (!profilePageBlogs[blogIndex].comments) {
+                profilePageBlogs[blogIndex].comments = [];
+            }
+            profilePageBlogs[blogIndex].comments.push(newComment);
+            renderBlogsOnProfile(isProfileOwner);
+            input.value = '';
+        }
+
+        await updateDoc(blogRef, { comments: arrayUnion(newComment) });
+
+        // Send Notification
+        const blogSnap = await getDoc(blogRef);
+        if (blogSnap.exists()) {
+            const blogData = blogSnap.data();
+            if (blogData.authorUid && blogData.authorUid !== auth.currentUser.uid) {
+                await addDoc(collection(db, "notifications"), {
+                    recipientUid: blogData.authorUid,
+                    senderUid: auth.currentUser.uid,
+                    senderName: authorName,
+                    type: "comment",
+                    blogId: blogId,
+                    blogTitle: blogData.title,
+                    date: new Date().toISOString(),
+                    read: false
+                });
+            }
+        }
+    };
+
+    window.toggleCommentLike = async function(blogId, commentIndex) {
+        if (!auth.currentUser) { alert("Please login to like comments!"); return; }
+
+        const blogIndex = profilePageBlogs.findIndex(b => b.id === blogId);
+        if (blogIndex === -1) return;
+
+        let blog = profilePageBlogs[blogIndex];
+        let comment = blog.comments[commentIndex];
+        if (!comment) return;
+
+        if (!comment.likes) comment.likes = [];
+        const uid = auth.currentUser.uid;
+        const likedIndex = comment.likes.indexOf(uid);
+        const isLiking = likedIndex === -1;
+
+        if (isLiking) {
+            comment.likes.push(uid);
+        } else {
+            comment.likes.splice(likedIndex, 1);
+        }
+        
+        // Optimistic UI update
+        renderBlogsOnProfile(isProfileOwner);
+
+        // Update Firestore
+        try {
+            const blogRef = doc(db, "blogs", blogId);
+            const docSnap = await getDoc(blogRef);
+            if (docSnap.exists()) {
+                let blogData = docSnap.data();
+                blogData.comments[commentIndex] = comment; // Update the specific comment
+                await updateDoc(blogRef, { comments: blogData.comments });
+            }
+        } catch (e) {
+            console.error("Error toggling comment like:", e);
+            alert("Failed to update comment like.");
+        }
+    };
+
+    window.editProfileComment = async function(blogId, commentIndex) {
+        if (!auth.currentUser) return;
+        const blogIndex = profilePageBlogs.findIndex(b => b.id === blogId);
+        if (blogIndex === -1) return;
+        
+        let blog = profilePageBlogs[blogIndex];
+        let comment = blog.comments[commentIndex];
+        if (!comment) return;
+        const isOwner = comment.userUid === auth.currentUser.uid || (!comment.userUid && comment.author === auth.currentUser.displayName);
+        if (!isOwner) return;
+
+        const newText = prompt("Edit your comment:", comment.text);
+        if (newText !== null && newText.trim() !== "" && newText.trim() !== comment.text) {
+            comment.text = newText.trim();
+            renderBlogsOnProfile(isProfileOwner); // Optimistic UI update
+
+            try {
+                const blogRef = doc(db, "blogs", blogId);
+                const docSnap = await getDoc(blogRef);
+                if (docSnap.exists()) {
+                    let blogData = docSnap.data();
+                    blogData.comments[commentIndex].text = newText.trim();
+                    await updateDoc(blogRef, { comments: blogData.comments });
+                }
+            } catch (e) {
+                console.error("Error editing comment:", e);
+                alert("Failed to edit comment.");
+            }
+        }
+    };
+
+    window.deleteProfileComment = async function(blogId, commentIndex) {
+        if (!auth.currentUser) return;
+        if (!confirm("Are you sure you want to delete this comment?")) return;
+
+        const blogIndex = profilePageBlogs.findIndex(b => b.id === blogId);
+        if (blogIndex === -1) return;
+        
+        let blog = profilePageBlogs[blogIndex];
+        let comment = blog.comments[commentIndex];
+        if (!comment) return;
+        const isOwner = comment.userUid === auth.currentUser.uid || (!comment.userUid && comment.author === auth.currentUser.displayName);
+        if (!isOwner) return;
+
+        blog.comments.splice(commentIndex, 1);
+        renderBlogsOnProfile(isProfileOwner); // Optimistic UI update
+
+        try {
+            const blogRef = doc(db, "blogs", blogId);
+            const docSnap = await getDoc(blogRef);
+            if (docSnap.exists()) {
+                let blogData = docSnap.data();
+                blogData.comments.splice(commentIndex, 1);
+                await updateDoc(blogRef, { comments: blogData.comments });
+            }
+        } catch (e) {
+            console.error("Error deleting comment:", e);
+            alert("Failed to delete comment.");
+        }
+    };
 
     // Global functions for buttons
     window.editMyBlog = (id) => {
@@ -628,7 +1253,7 @@
         if(confirm("Are you sure you want to delete this blog?")) {
             try {
                 await deleteDoc(doc(db, "blogs", id));
-                if(currentUser) fetchMyBlogs(currentUser.uid);
+                if(currentUser) renderUserBlogs(currentUser.uid, true);
             } catch(e) { alert("Error: " + e.message); }
         }
     };
@@ -663,10 +1288,11 @@
                     div.style.cssText = "display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid rgba(255,255,255,0.1); cursor:pointer;";
                     div.onclick = () => window.location.href = `profile.html?uid=${snap.id}`;
                     
+
                     div.innerHTML = `
                         <img src="${u.photoURL || 'https://via.placeholder.com/40'}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid #555;">
                         <div>
-                            <div style="font-weight:bold; color:#fff;">${u.name || 'User'}</div>
+                            <strong style="color:#fff;">${u.name || 'User'}</strong>
                             <div style="font-size:0.8rem; color:#aaa;">${u.username || ''}</div>
                         </div>
                     `;
@@ -683,14 +1309,7 @@
         const username = document.getElementById('username').value.trim();
         const bio = document.getElementById('bio').value;
         const photoURL = base64Image || currentUser.photoURL;
-        
-        // Verification Criteria: Auto-verify if followers >= 50
-        let isVerified = currentProfileData.isVerified || false;
-        const followersCount = (currentProfileData.followers || []).length;
-        if (followersCount >= 9) {
-            isVerified = true;
-        }
-
+        let isVerified = (currentProfileData.followers || []).length >= 9;
         try {
             // 1. Update Firebase Auth Profile (for basic display)
             // Note: We don't update photoURL here because Firebase Auth has a small limit.
@@ -699,18 +1318,29 @@
                 displayName: name
             });
 
-            // Check Username Uniqueness
-            if (username) {
+            // Check Username
+            if (username !== currentProfileData.username) {
+                // Username has changed, so validate it fully
+                if (!username) {
+                    alert("Unique ID (Username) is required!");
+                    return;
+                }
+                if (username.length > 20 || !/^[a-z0-9_]+$/.test(username)) {
+                    alert("Username can only contain lowercase letters, numbers, and underscores, and be max 20 characters.");
+                    return;
+                }
+
                 const q = query(collection(db, "users"), where("username", "==", username));
                 const snap = await getDocs(q);
                 let isTaken = false;
                 snap.forEach(d => { if (d.id !== currentUser.uid) isTaken = true; });
-                
+
                 if (isTaken) {
                     alert("Username '" + username + "' is already taken. Please choose another.");
                     return;
                 }
-            } else {
+            } else if (!username) {
+                // Username is unchanged but empty. This is an error state for any user.
                 alert("Unique ID (Username) is required!");
                 return;
             }
@@ -794,6 +1424,39 @@
         } catch (error) {
             console.error("Error saving profile:", error);
             alert("Error saving profile: " + error.message);
+        }
+    });
+
+    // --- NEW: Post Story Button Logic ---
+    document.getElementById('post-story-btn').addEventListener('click', async () => {
+        if (!currentUser) return;
+
+        const statusMessage = document.getElementById('status-message').value.trim();
+        const statusImage = (base64StatusImage && base64StatusImage !== 'DELETE') ? base64StatusImage : null;
+
+        if (!statusMessage && !statusImage) {
+            alert("Please add some text or an image for your story.");
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, "stories"), {
+                authorUid: currentUser.uid,
+                authorName: currentProfileData.name || currentUser.displayName,
+                authorPhoto: currentProfileData.photoURL || currentUser.photoURL,
+                statusMessage: statusMessage || null,
+                statusImage: statusImage,
+                timestamp: new Date().toISOString(),
+                likes: [],
+                viewers: []
+            });
+            alert("Story posted successfully!");
+            // Clear fields after posting
+            document.getElementById('status-message').value = '';
+            document.getElementById('status-image-remove-btn').click(); // This will clear the preview and reset state
+        } catch (e) {
+            console.error("Error posting story:", e);
+            alert("Failed to post story. Check console for details.");
         }
     });
 
