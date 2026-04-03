@@ -398,6 +398,8 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         body.light-mode .latest-news h2 { color: #333; border-bottom-color: #ddd; }
+        body.light-mode #trending-section h2,
+        body.light-mode #trending-grid h3 { color: #120a88 !important; }
         body.light-mode .latest-news a { color: #0d6efd; }
         body.light-mode .news-card-content h2 a { color: #333; }
         body.light-mode .news-card-content p { color: #555; }
@@ -510,7 +512,7 @@
 
         <!-- Trending Section -->
         <div class="latest-news" id="trending-section" style="display:none; border-left: 4px solid #ffc107;">
-            <h2 style="color: #ffc107;">🔥 Trending Now (Top Liked in 24h)</h2>
+            <h2 style="color: #ffe600;">🔥 Trending Now (Top Liked in 24h)</h2>
             <div class="news-grid" id="trending-grid"></div>
         </div>
 
@@ -1818,30 +1820,50 @@
         };
         
 
-        window.likeUserBlog = async function(id, currentLikes) {
+        window.likeUserBlog = async function(id) {
             if (!auth.currentUser) {
                 alert("Please login to like posts!");
                 return;
             }
-            let likedPosts = JSON.parse(localStorage.getItem('cricket_user_liked_posts') || '[]');
-            
+
+            const blogIndex = fetchedBlogs.findIndex(b => b.id === id);
+            if (blogIndex === -1) return;
+
+            const blog = fetchedBlogs[blogIndex];
+            const blogRef = doc(db, "blogs", id);
+            const uid = auth.currentUser.uid;
+            let isLiking = false;
+
+            if (Array.isArray(blog.likes)) {
+                const likedIndex = blog.likes.indexOf(uid);
+                isLiking = likedIndex === -1;
+
+                if (isLiking) {
+                    blog.likes.push(uid);
+                    await updateDoc(blogRef, { likes: arrayUnion(uid) });
+                } else {
+                    blog.likes.splice(likedIndex, 1);
+                    await updateDoc(blogRef, { likes: arrayRemove(uid) });
+                }
+            } else {
+                let likedPosts = JSON.parse(localStorage.getItem('cricket_user_liked_posts') || '[]');
                 const likedIndex = likedPosts.indexOf(id);
-                let newLikes = currentLikes;
-                let isLiking = false;
-                
+                let currentLikes = typeof blog.likes === 'number' ? blog.likes : 0;
+
                 if (likedIndex === -1) {
-                    // Like (अगर पहले लाइक नहीं किया)
-                    newLikes++;
+                    currentLikes++;
                     likedPosts.push(id);
                     isLiking = true;
                 } else {
-                    // Unlike (अगर पहले से लाइक है तो हटा दें)
-                    newLikes = Math.max(0, newLikes - 1);
+                    currentLikes = Math.max(0, currentLikes - 1);
                     likedPosts.splice(likedIndex, 1);
                 }
 
-                const blogRef = doc(db, "blogs", id);
-                
+                blog.likes = currentLikes;
+                localStorage.setItem('cricket_user_liked_posts', JSON.stringify(likedPosts));
+                await updateDoc(blogRef, { likes: currentLikes });
+            }
+
                 // Send Notification on Like
                 if (isLiking) {
                     try {
@@ -1864,17 +1886,7 @@
                     } catch(e) { console.error("Notification error:", e); }
                 }
 
-                // Update local state immediately for UI
-                localStorage.setItem('cricket_user_liked_posts', JSON.stringify(likedPosts));
-                
-                // Update fetchedBlogs to reflect changes in renderBlogs
-                const blogIndex = fetchedBlogs.findIndex(b => b.id === id);
-                if (blogIndex !== -1) {
-                    fetchedBlogs[blogIndex].likes = newLikes;
-                }
                 renderBlogs(auth.currentUser);
-
-                await updateDoc(blogRef, { likes: newLikes });
         };
 
         window.shareBlog = async function(id, title) {

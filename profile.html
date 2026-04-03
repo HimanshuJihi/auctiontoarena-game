@@ -712,7 +712,7 @@
                 totalBlogs = blogsSnapshot.size;
                 blogsSnapshot.forEach(blogDoc => {
                     const blogData = blogDoc.data();
-                    totalLikes += Array.isArray(blogData.likes) ? blogData.likes.length : (typeof blogData.likes === 'number' ? blogData.likes : 0);
+                    totalLikes += Array.isArray(blogData.likes) ? blogData.likes.length : (typeof blogData.likes === 'number' && !isNaN(blogData.likes) ? blogData.likes : 0);
                 });
 
                 document.getElementById('blogs-count').innerText = totalBlogs;
@@ -880,7 +880,7 @@
                 likeCount = blog.likes.length;
                 isLiked = user && blog.likes.includes(user.uid);
             } else {
-                likeCount = typeof blog.likes === 'number' ? blog.likes : 0;
+                likeCount = typeof blog.likes === 'number' && !isNaN(blog.likes) ? blog.likes : 0;
                 let likedPosts = JSON.parse(localStorage.getItem('cricket_user_liked_posts') || '[]');
                 isLiked = likedPosts.includes(blog.id);
             }
