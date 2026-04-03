@@ -12,7 +12,8 @@ const urlsToCache = [
   '/ind-match-news.html',
   '/ipl-news.html',
   '/style.css',
-  '/game-logo.png'
+  '/game-logo.png',
+  '/manifest.json'
   // अगर आपकी कोई और महत्वपूर्ण एसेट्स (जैसे JS फाइलें या इमेज) हैं जो लोकल हैं, तो उन्हें यहां जोड़ सकते हैं।
   // CDN से लोड होने वाली लाइब्रेरीज़ को आमतौर पर सीधे कैश करने की ज़रूरत नहीं होती।
 ];
