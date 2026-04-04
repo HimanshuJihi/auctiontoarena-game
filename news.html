@@ -1135,6 +1135,8 @@
                     }
                 } catch(e) { console.error("Error loading following:", e); }
 
+                loadStories(user);
+
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (!userDoc.exists() || !userDoc.data().username) {
                     // Redirect to profile to create unique ID
