@@ -24,6 +24,8 @@
     <meta name="6dbf1ff4c7af21ca5a4851b5de5ce1ea504e32a4" content="6dbf1ff4c7af21ca5a4851b5de5ce1ea504e32a4" />
     <!-- Link to external CSS -->
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <!-- Suppress favicon.ico 404 error -->
     <link rel="icon" href="game-logo.png" type="image/png">
     <link rel="apple-touch-icon" href="game-logo.png">
@@ -32,8 +34,6 @@
     <!-- Three.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4993635171115303"
-     crossorigin="anonymous"></script>
     
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6FBZXVMTR6"></script>
@@ -205,6 +205,69 @@
         #live-news-list li { padding: 4px 0; font-size: 0.85rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
         #live-news-list a { color: #eee; text-decoration: none; }
         #live-news-list a:hover { color: gold; }
+
+        /* Cookie Consent Banner */
+        #cookie-consent-banner {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: rgba(18, 18, 18, 0.95);
+            border-top: 2px solid gold;
+            padding: 15px 20px;
+            z-index: 9999;
+            box-sizing: border-box;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+        }
+        .cookie-content {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; flex-direction: column; align-items: center; gap: 15px; text-align: center;
+        }
+        @media (min-width: 768px) {
+            .cookie-content { flex-direction: row; text-align: left; justify-content: space-between; }
+        }
+        .cookie-content p { margin: 0; color: #ddd; font-size: 0.9rem; }
+        .cookie-content a { color: #87ceeb; text-decoration: underline; }
+
+        /* Viyo Stylish Button */
+        .viyo-btn {
+            background: linear-gradient(135deg, #ff007a, #7a00ff) !important;
+            border: 2px solid rgba(255, 255, 255, 0.2) !important;
+            color: #fff !important;
+            font-size: 1.5rem !important;
+            font-weight: 900 !important;
+            padding: 12px 40px !important;
+            border-radius: 50px !important;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            box-shadow: 0 0 15px rgba(255, 0, 122, 0.6), inset 0 0 10px rgba(122, 0, 255, 0.4) !important;
+            animation: viyo-glow 2s infinite alternate;
+            transition: all 0.3s ease !important;
+            position: relative;
+            overflow: hidden;
+        }
+        .viyo-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            animation: viyo-shine 3s infinite;
+        }
+        .viyo-btn:hover {
+            transform: translateY(-5px) scale(1.05) !important;
+            box-shadow: 0 10px 25px rgba(255, 0, 122, 0.8), inset 0 0 15px rgba(122, 0, 255, 0.6) !important;
+            background: linear-gradient(135deg, #7a00ff, #ff007a) !important;
+        }
+        @keyframes viyo-glow {
+            0% { box-shadow: 0 0 10px rgba(255, 0, 122, 0.5); }
+            100% { box-shadow: 0 0 25px rgba(255, 0, 122, 0.9), 0 0 15px rgba(122, 0, 255, 0.7); }
+        }
+        @keyframes viyo-shine {
+            0% { left: -100%; }
+            20% { left: 200%; }
+            100% { left: 200%; }
+        }
     </style>
 </head>
 <body>
@@ -224,25 +287,12 @@
             <button class="btn" id="btn-new-career">New Career</button>
             <button class="btn" id="btn-challenge-mode" style="border-color: #ff5722; color: #ff5722;">🔥 Challenge Mode</button>
             <button class="btn" id="btn-practice-mode">Practice Mode</button>
+            <a href="https://viyou.in" target="_blank"><button class="btn">Cricket News & Chat</button></a>
             <button class="btn" id="btn-target-practice">Target Practice</button>
             <button class="btn" id="resume-btn" style="display:none;">Resume Career</button>
             <button class="btn btn-secondary" id="btn-settings">Settings</button>
             <button class="btn btn-secondary" id="btn-help">Help</button>
             
-            <div id="live-news-section">
-                <h3>Live Cricket Updates</h3>
-                <ul id="live-news-list"><li>Loading...</li></ul>
-            </div>
-
-            <div style="margin-top: 20px;">
-                <!-- Auction to arena -->
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-4993635171115303"
-                     data-ad-slot="2735076524"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-            </div>
             <div id="footer-links" style="padding-top: 10px; text-align: center;">
                 <a href="privacy.html" style="color: #aaa; margin: 0 15px; text-decoration: none;">Privacy Policy</a>
                 <a href="terms.html" style="color: #aaa; margin: 0 15px; text-decoration: none;">Terms and Conditions</a>
@@ -256,16 +306,16 @@
             <h1>Challenges</h1>
             <p>Complete these scenarios to prove your skill!</p>
             <div id="challenges-list" style="display: flex; flex-direction: column; gap: 15px; width: 90%; max-width: 600px; max-height: 60vh; overflow-y: auto; padding: 10px;"></div>
-            <button class="btn btn-secondary" id="btn-back-from-challenges">Back</button>
+            <button class="btn btn-secondary" id="btn-back-from-challenges"> <i class="fa-solid fa-arrow-left"></i> Back</button>
         </div>
 
         <!-- Practice Select Screen -->
         <div id="practice-select-screen" class="screen">
-            <h1>Practice Mode</h1>
+            <h1> Practice Mode</h1>
             <p>What would you like to practice?</p>
-            <button class="btn" id="btn-practice-batting">Batting</button>
-            <button class="btn" id="btn-practice-bowling">Bowling</button>
-            <button class="btn btn-secondary" id="btn-back-from-practice-select">Back</button>
+            <button class="btn" id="btn-practice-batting"><img src="batting-icon.png" alt="Batting" style="width: 70px; height: 100px;">Batting</button>
+            <button class="btn" id="btn-practice-bowling"><img src="bowling-icon.png" alt="Bowling" style="width: 70px; height: 100px;">Bowling</button>
+            <button class="btn btn-secondary" id="btn-back-from-practice-select"> <i class="fa-solid fa-arrow-left"></i> Back</button>
         </div>
 
         <!-- Team Select Screen -->
@@ -274,8 +324,8 @@
             <select id="team-dropdown" style="padding: 15px; font-size: 1.5rem; margin: 20px; background: #333; color: white; border: 1px solid gold;">
                 <!-- Options populated by JS -->
             </select>
-            <button class="btn" id="btn-confirm-team">Confirm & Go to Auction</button>
-            <button class="btn btn-secondary" id="btn-back-from-team">Back</button>
+            <button class="btn" id="btn-confirm-team"> <i class="fa-solid fa-gavel fa-shake"></i> Confirm & Go to Auction</button>
+            <button class="btn btn-secondary" id="btn-back-from-team"> <i class="fa-solid fa-arrow-left"></i> Back</button>
         </div>
 
         <!-- Settings Screen -->
@@ -283,15 +333,15 @@
             <h1>Settings</h1>
             <div style="width: 60%; margin: 0 auto; text-align: left;">
                 <div style="margin-bottom: 20px;">
-                    <label style="font-size: 1.5rem; display: block; margin-bottom: 10px;">Master Volume: <span id="vol-display">100%</span></label>
+                    <label style="font-size: 1.5rem; display: block; margin-bottom: 10px;"><i class="fa-solid fa-volume-high"></i>  Master Volume: <span id="vol-display">100%</span></label>
                     <input type="range" id="master-vol-slider" min="0" max="1" step="0.1" value="1" style="width: 100%;">
                 </div>
                 <div style="margin-bottom: 20px;">
-                    <label style="font-size: 1.5rem; display: block; margin-bottom: 10px;">Commentary Volume: <span id="commentary-vol-display">100%</span></label>
+                    <label style="font-size: 1.5rem; display: block; margin-bottom: 10px;"><i class="fa-solid fa-comment"></i> Commentary Volume: <span id="commentary-vol-display">100%</span></label>
                     <input type="range" id="commentary-vol-slider" min="0" max="1" step="0.1" value="1" style="width: 100%;">
                 </div>
                 <div style="margin-bottom: 20px;">
-                    <label style="font-size: 1.5rem; display: block; margin-bottom: 10px;">Crowd Volume: <span id="crowd-vol-display">100%</span></label>
+                    <label style="font-size: 1.5rem; display: block; margin-bottom: 10px;"><i class="fa-solid fa-users"></i> Crowd Volume: <span id="crowd-vol-display">100%</span></label>
                     <input type="range" id="crowd-vol-slider" min="0" max="1" step="0.1" value="1" style="width: 100%;">
                 </div>
                 <div style="margin-bottom: 20px;">
@@ -303,7 +353,7 @@
                     </select>
                 </div>
             </div>
-            <button class="btn" id="btn-back-from-settings">Back</button>
+            <button class="btn" id="btn-back-from-settings"> <i class="fa-solid fa-arrow-left"></i> Back</button>
         </div>
 
         <!-- Help Screen -->
@@ -367,13 +417,13 @@
                         <div>Auction starting...</div>
                     </div>
                     <div style="margin-top: 20px;">
-                        <h3 style="color:var(--accent-color)">Current Bid: <span id="auc-current-bid">2.0 Cr</span></h3>
+                        <h3 style="color:var(--accent-color)"> Current Bid: <span id="auc-current-bid">2.0 Cr</span></h3>
                         <h4 id="auc-current-holder">None</h4>
                     </div>
-                    <button class="btn" id="btn-bid">BID (+25L)</button>
-                    <button class="btn btn-secondary" id="btn-pause-bid">PAUSE</button>
-                    <button class="btn btn-secondary" id="btn-skip-player">SKIP</button>
-                    
+                    <button class="btn" id="btn-bid"> <i class="fa-solid fa-bolt" style="color: rgb(255, 212, 59);"></i> BID (+25L)</button>
+                    <button class="btn btn-secondary" id="btn-pause-bid"> <i class="fa-solid fa-pause" style="color: rgb(255, 212, 59);"></i> PAUSE</button>
+                    <button class="btn btn-secondary" id="btn-skip-player"> <i class="fa-solid fa-forward" style="color: rgb(255, 212, 59);"></i> SKIP</button>
+
                     <div style="margin-top: 20px; display: flex; gap: 20px; justify-content: center;">
                         <h3>Budget: <span id="user-budget" style="color: #4caf50;">100.0 Cr</span></h3>
                         <h3>Squad: <span id="squad-count">0</span>/25</h3>
@@ -412,14 +462,14 @@
                 </div>
                 <div id="ai-decision-text" style="display:none;">
                     <p id="ai-decision-msg" style="font-size: 1.5rem; margin: 20px;"></p>
-                    <button class="btn" id="btn-start-match-from-toss">Start Match</button>
+                    <button class="btn" id="btn-start-match-from-toss"><i class="fa-solid fa-play" style="color: rgb(255, 212, 59);"></i> Start Match</button>
                 </div>
             </div>
         </div>
 
         <!-- Tournament Hub -->
         <div id="tournament-screen" class="screen">
-            <h1>IPL 2025 Tournament</h1>
+            <h1>IPL 2026 Tournament</h1>
             <h2 id="user-team-title">Your Team</h2>
             <div style="max-height: 600px; overflow-y: auto; width: 100%; display: flex; justify-content: center;">
                 <table id="points-table">
@@ -437,8 +487,8 @@
                 </select>
                 <label style="font-size: 1.5rem; color: var(--accent-color); margin-left: 20px;">Time: </label>
                 <select id="time-select" style="padding: 10px; font-size: 1.2rem; background: #333; color: white; border: 1px solid gold;">
-                    <option value="day">Day</option>
-                    <option value="night">Night</option>
+                    <option value="day"><i class="fa-solid fa-sun" style="color: rgb(255, 212, 59);"></i> Day</option>
+                    <option value="night"><i class="fa-solid fa-moon" style="color: rgb(255, 212, 59);"></i> Night</option>
                 </select>
             </div>
             <button id="tournament-action-btn" class="btn">Play Next Match</button>
@@ -462,7 +512,7 @@
                 </div>
                 <div style="width: 45%; border-left: 1px solid #555; padding-left: 20px;">
                     <h3 id="selection-instruction">Select Striker</h3>
-                    <div id="current-selection-display" style="font-size: 1.5rem; color: var(--accent-color); margin: 20px;">None</div>
+                    <div id="current-selection-display" style="font-size: 1.5rem; color: var(--accent-color); margin: 20px;"><i class="fa-solid fa-triangle-exclamation" style="color: rgb(226, 23, 23);"></i> None</div>
                     <button class="btn" id="confirm-batsman-btn">Confirm</button>
                 </div>
             </div>
@@ -478,8 +528,8 @@
                 </div>
                 <div style="width: 45%; border-left: 1px solid #555; padding-left: 20px;">
                     <h3>Selected Bowler</h3>
-                    <div id="current-bowler-display" style="font-size: 1.5rem; color: var(--accent-color); margin: 20px;">None</div>
-                    <button class="btn" id="btn-confirm-bowler">Confirm</button>
+                    <div id="current-bowler-display" style="font-size: 1.5rem; color: var(--accent-color); margin: 20px;"><i class="fa-solid fa-triangle-exclamation" style="color: rgb(226, 23, 23);"></i> None</div>
+                    <button class="btn" id="btn-confirm-bowler"><i class="fa-solid fa-check"></i> Confirm</button>
                 </div>
             </div>
         </div>
@@ -488,30 +538,30 @@
         <div id="summary-screen" class="screen">
             <h1>Match Summary</h1>
             <div class="summary-card">
-                <h2 id="summary-result" style="font-size: 3rem; color: gold; margin: 10px 0;">You Won!</h2>
+                <h2 id="summary-result" style="font-size: 3rem; color: gold; margin: 10px 0;"><i class="fa-solid fa-crown" style="color: rgb(255, 212, 59);"></i> You Won!</h2>
                 <div style="display: flex; justify-content: space-around; width: 100%; margin: 30px 0; border-top: 1px solid #444; border-bottom: 1px solid #444; padding: 20px 0;">
                     <div>
-                        <h3 style="color: var(--primary-color);">Your Score</h3>
+                        <h3 style="color: var(--primary-color);"> Your Score</h3>
                         <p id="summary-user-score" style="font-size: 2.5rem; margin: 5px;">120/3</p>
                     </div>
                     <div>
-                        <h3 style="color: #aaa;">Opponent</h3>
+                        <h3 style="color: #aaa;"> Opponent</h3>
                         <p id="summary-opp-score" style="font-size: 2.5rem; margin: 5px;">115/5</p>
                     </div>
                 </div>
                 <div id="summary-stats" style="font-size: 1.2rem; color: #ddd; margin-bottom: 20px;"></div>
-                <button class="btn" id="btn-continue-tournament">Continue Tournament</button>
+                <button class="btn" id="btn-continue-tournament"><i class="fa-solid fa-arrow-right"></i> Continue Tournament</button>
             </div>
         </div>
 
         <!-- Game HUD -->
         <div id="hud">
-            <button id="pause-btn" style="position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;">II</button>
-            <button id="exit-btn" style="position: absolute; bottom: 20px; left: 80px; background: rgba(221, 31, 45, 0.8); color: white; border: 1px solid white; border-radius: 5px; height: 50px; padding: 0 15px; font-size: 1.2rem; cursor: pointer; z-index: 20; pointer-events: auto;">EXIT</button>
-            <button id="cam-btn" style="position: absolute; bottom: 20px; left: 150px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;">🎥</button>
-            <button id="master-sound-btn" style="position: absolute; bottom: 20px; left: 210px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;">🔊</button>
-            <button id="commentary-mute-btn" style="position: absolute; bottom: 20px; left: 270px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;">🗣️</button>
-            <button id="crowd-mute-btn" style="position: absolute; bottom: 20px; left: 330px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;">🏟️</button>
+            <button id="pause-btn" style="position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;"><i class="fa-solid fa-pause"></i></button>
+            <button id="exit-btn" style="position: absolute; bottom: 20px; left: 80px; background: rgba(221, 31, 45, 0.8); color: white; border: 1px solid white; border-radius: 5px; height: 50px; padding: 0 15px; font-size: 1.2rem; cursor: pointer; z-index: 20; pointer-events: auto;"> <i class="fa-solid fa-arrow-right"></i> EXIT</button>
+            <button id="cam-btn" style="position: absolute; bottom: 20px; left: 150px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;"><i class="fa-solid fa-camera"></i></button>
+            <button id="master-sound-btn" style="position: absolute; bottom: 20px; left: 210px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;"><i class="fa-solid fa-volume-high"></i></button>
+            <button id="commentary-mute-btn" style="position: absolute; bottom: 20px; left: 270px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;"><i class="fa-solid fa-comment"></i></button>
+            <button id="crowd-mute-btn" style="position: absolute; bottom: 20px; left: 330px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto;"><i class="fa-solid fa-users"></i></button>
             <button id="field-btn" style="position: absolute; bottom: 20px; left: 390px; background: rgba(0,0,0,0.5); color: white; border: 1px solid gold; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 20; pointer-events: auto; display: none;">🎽</button>
             <div class="score-board" style="position: relative;">
                 <div style="text-align: left;">
@@ -565,8 +615,8 @@
         <!-- Mobile Controls Overlay -->
         <div id="mobile-controls">
             <div class="d-pad">
-                <div class="control-btn" id="btn-left">←</div>
-                <div class="control-btn" id="btn-right">→</div>
+                <div class="control-btn" id="btn-left" style="color: #ff5303;"><i class="fa-solid fa-arrow-left"></i></div>
+                <div class="control-btn" id="btn-right" style="color: #ff5303;"><i class="fa-solid fa-arrow-right"></i></div>
             </div>
             <div class="action-pad">
                 <div class="control-btn red-btn" id="btn-ground">DEF</div>
@@ -578,6 +628,20 @@
         </div>
     </div>
 
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent-banner">
+        <div class="cookie-content">
+            <p>
+                We use cookies to personalize content and ads, provide social media features, and analyze our traffic. By clicking "Accept", you consent to our use of cookies for Google AdSense and other services. 
+                <a href="privacy.html" target="_blank">Read our Privacy Policy</a>.
+            </p>
+            <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                <button id="btn-accept-cookies" class="btn" style="background-color: #4caf50; border-color: #4caf50;">Accept</button>
+                <button id="btn-reject-cookies" class="btn btn-secondary" style="background-color: #dc3545; border-color: #dc3545;">Decline</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
@@ -586,19 +650,6 @@
                     .then(registration => console.log('Service Worker Registered:', registration))
                     .catch(error => console.error('Service Worker Registration Failed:', error));
             });
-        }
-
-        // --- AdSense Interstitial Trigger ---
-        function triggerInterstitialAd() {
-            console.log("Interstitial ad requested. AdSense will show an ad if available and configured.");
-            // This function is a placeholder for triggering a page-level ad (vignette).
-            // You must enable Vignette ads in your AdSense account for this to have an effect.
-            // Pushing an empty object can signal to AdSense that a new "view" has occurred.
-            try {
-                (adsbygoogle = window.adsbygoogle || []).push({});
-            } catch (e) {
-                console.error("Interstitial ad push error:", e);
-            }
         }
 
         //** Global Error Handler for better debugging
@@ -1425,6 +1476,7 @@
                 }, undefined, (error) => {
                     console.error("Ball model cricket_ball.glb not loaded, using sphere.", error);
                     const ballGeo = new THREE.SphereGeometry(0.08, 16, 16);
+                    const ballMat = new THREE.MeshStandardMaterial({ color: 0x8b0000, roughness: 0.7 });
                     this.ball.add(new THREE.Mesh(ballGeo, ballMat));
                 });
                 this.ball.visible = false;
@@ -2598,19 +2650,8 @@
                 const screen = document.getElementById(id);
                 if(screen) screen.classList.add('active');
 
-                // When the menu screen is shown, request the banner ad.
                 if (id === 'menu-screen') {
                     this.updateCareerStatsUI();
-                    // Use setTimeout to allow the DOM to update visibility/width before requesting ad
-                    setTimeout(() => {
-                        try {
-                            const adIns = document.querySelector('#menu-screen ins.adsbygoogle');
-                            // Only push if element is visible (width > 0) and not already processed
-                            if (adIns && adIns.offsetWidth > 0 && !adIns.getAttribute('data-ad-status')) {
-                                (adsbygoogle = window.adsbygoogle || []).push({});
-                            }
-                        } catch (e) { console.log("AdSense info:", e); }
-                    }, 200);
                 }
             }
 
@@ -4020,6 +4061,7 @@
                 this.isTargetMode = false;
                 this.isRunning = false;
                     this.isChallengeMode = false;
+                this.isChallengeMode = false;
                 this.shotPlayed = false;
                 this.bowlingState = 'idle';
 
@@ -4044,6 +4086,7 @@
                 document.getElementById('controls-hint').style.display = 'none';
                 document.getElementById('speedometer').style.display = 'none';
                 document.getElementById('field-btn').style.display = 'none';;
+                document.getElementById('field-btn').style.display = 'none';
                 const fastControls = document.getElementById('fast-bowling-controls');
                 if(fastControls) fastControls.style.display = 'none';
                 const spinControls = document.getElementById('spin-bowling-controls');
@@ -4327,6 +4370,10 @@
                                 this.ballVelocity.y *= -0.4; // Bounce off hands
                                 this.ballVelocity.x *= 0.5;
                                 this.ballVelocity.z *= 0.5;
+                                    // Ball bounces off hands, can take runs
+                                    this.ballVelocity.y *= -0.4; // Bounce off hands
+                                    this.ballVelocity.x *= 0.5;
+                                    this.ballVelocity.z *= 0.5;
                                 } else { // OUT
                                     this.wickets++;
                                     if (this.playerRole === 'batting') {
@@ -4696,6 +4743,16 @@
                             this.showCommentary("Press BOWL to start", false);
                         }, replayDelay);
                     }
+                        if (this.isRunning) { // If batsmen are still running, wait for them to finish
+                            // Don't show "Press BOWL" yet, wait for run to complete.
+                            this.showCommentary("Batsmen Running...", false);
+                        } else {
+                            // After a normal delivery, reset state and prompt user.
+                            setTimeout(() => {
+                                this.bowlingState = 'idle';
+                                this.showCommentary("Press BOWL to start", false);
+                            }, replayDelay);
+                        }
                     } else { // User is batting, AI will bowl next
                         if (this.isRunning) {
                             // Ball is dead, but we are waiting for a run to complete.
@@ -5216,10 +5273,6 @@
             }
 
             showMatchSummary(result, runs, wickets, oppRuns, oppWickets) {
-                // --- AdSense Interstitial Trigger ---
-                // An ad will be requested here. If available, it will show before the summary.
-                triggerInterstitialAd();
-
                 this.soundManager.stopCrowdLoop();
                 this.showScreen('summary-screen');
                 document.getElementById('summary-result').innerText = result;
@@ -5270,39 +5323,9 @@
         // Initialize Game Systems
         document.addEventListener('DOMContentLoaded', () => {
             try {
-                // Fetch Live News
-                async function fetchLiveNews() {
-                    // Using News18 Hindi Cricket RSS as fallback
-                    const rssUrl = 'https://hindi.news18.com/rss/sports/cricket.xml';
-                    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
-                    try {
-                        const response = await fetch(apiUrl);
-                        if (!response.ok) throw new Error("Network response was not ok");
-                        const data = await response.json();
-                        if (data.status === 'ok' && data.items.length > 0) {
-                            const list = document.getElementById('live-news-list');
-                            if(list) {
-                                list.innerHTML = '';
-                                data.items.slice(0, 3).forEach(item => {
-                                    const li = document.createElement('li');
-                                    li.innerHTML = `<a href="${item.link}" target="_blank" rel="noopener">${item.title}</a>`;
-                                    list.appendChild(li);
-                                });
-                            }
-                        } else {
-                            throw new Error("Feed status not ok");
-                        }
-                    } catch (e) { 
-                        console.log("News fetch error", e);
-                        const list = document.getElementById('live-news-list');
-                        if(list) list.innerHTML = '<li><a href="https://www.cricbuzz.com/" target="_blank">Check Live Scores</a></li>';
-                    }
-                }
-                fetchLiveNews();
-
                 window.auctionSystem = new AuctionSystem();
                 window.gameApp = new GameApp();
-                window.gameApp.init(); // Trigger initial screen and ad load
+                window.gameApp.init(); // Trigger initial screen
             } catch (e) {
                 console.error("Fatal Error: Failed to initialize the game systems.", e);
                 // Display a user-friendly error if initialization fails catastrophically.
@@ -5310,6 +5333,42 @@
             }
         });
 
+        // --- Google AdSense Cookie Consent Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const cookieBanner = document.getElementById('cookie-consent-banner');
+            const acceptBtn = document.getElementById('btn-accept-cookies');
+            const rejectBtn = document.getElementById('btn-reject-cookies');
+            
+            // Check local storage to see if user already responded
+            const consentStatus = localStorage.getItem('adsense_cookie_consent');
+            
+            if (!consentStatus) {
+                cookieBanner.style.display = 'block'; // Show banner if no consent history
+            } else if (consentStatus === 'accepted') {
+                loadAdSense(); // Load ads immediately if previously accepted
+            }
+
+            acceptBtn.addEventListener('click', () => {
+                localStorage.setItem('adsense_cookie_consent', 'accepted');
+                cookieBanner.style.display = 'none';
+                loadAdSense();
+            });
+
+            rejectBtn.addEventListener('click', () => {
+                localStorage.setItem('adsense_cookie_consent', 'rejected');
+                cookieBanner.style.display = 'none';
+            });
+
+            function loadAdSense() {
+                // Replace 'ca-pub-XXXXXXXXXXXXXXXX' with your actual Google AdSense Publisher ID
+                const script = document.createElement('script');
+                script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4993635171115303";
+                script.async = true;
+                script.crossOrigin = "anonymous";
+                document.head.appendChild(script);
+                console.log("Google AdSense script loaded based on cookie consent.");
+            }
+        });
     </script>
     <script>
 (function(jdrdd){

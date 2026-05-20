@@ -11,12 +11,14 @@
         button { width: 100%; padding: 10px; background: #ff9800; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold; margin-top: 10px; }
         button:hover { background: #e68900; }
         .profile-pic { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid white; margin-bottom: 15px; cursor: pointer; }
-        .back-btn { background: transparent; border: 1px solid white; margin-top: 10px; }
-        .back-btn:hover { background: rgba(255,255,255,0.1); }        
         /* CropperJS CSS Fix */
         .cropper-container { max-width: 100%; }
-        .follow-profile-btn { width: auto; padding: 8px 20px; margin-top: 10px; background: #0d6efd; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; color: white; transition: background 0.2s; }
-        .follow-profile-btn.following { background: #555; border: 1px solid #777; }
+
+        /* Styling for followed/blocked state of transparent buttons */
+        .btn-transparent.following { color: #aaa !important; }
+        .btn-transparent.following::before { background: linear-gradient(45deg, #777, #444) !important; }
+        body.light-mode .btn-transparent.following { color: #666 !important; }
+        body.light-mode .btn-transparent.following::before { background: linear-gradient(45deg, #aaa, #888) !important; }
         .verified-badge { color: #1da1f2; margin-left: 5px; font-size: 1rem; vertical-align: middle; }
         
         /* Badge Styles */
@@ -43,10 +45,32 @@
             font-size: 0.85rem;
             font-weight: bold;
         }
+        
+        .stat-label { font-size: 0.85rem; color: #aaa; }
+        body.light-mode .stat-label { color: #555; font-weight: bold; }
 
         @media (max-width: 480px) {
             .container { width: 90%; padding: 20px; }
         }
+
+        /* Profile Inputs & Bio Styling */
+        #username, #name, #bio {
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+        #username:focus, #name:focus, #bio:focus {
+            outline: none;
+            border-color: #87ceeb;
+            box-shadow: 0 0 8px rgba(135, 206, 235, 0.4);
+            background: rgba(0, 0, 0, 0.4);
+        }
+        #bio { resize: vertical; min-height: 80px; line-height: 1.5; }
 
         /* Light Mode */
         body.light-mode { background: #f4f7f6; color: #333; }
@@ -60,6 +84,18 @@
         }
         body.light-mode .badge-title { color: #333; }
 
+        /* Light Mode for Inputs & Bio */
+        body.light-mode #username, body.light-mode #name, body.light-mode #bio {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ced4da;
+        }
+        body.light-mode #username:focus, body.light-mode #name:focus, body.light-mode #bio:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 8px rgba(13, 110, 253, 0.3);
+            background: #fff;
+        }
+
         body.light-mode #user-list-modal > div { background: #fff; border-color: #ddd; color: #333; }
         body.light-mode #user-list-title { color: #0d6efd; }
         body.light-mode #user-list-content > div { border-bottom-color: #eee; }
@@ -71,6 +107,48 @@
         .btn {
             display: inline-block; padding: 10px 20px; font-size: 1rem; font-weight: bold; color: #fff; background-color: #0d6efd; border: none; border-radius: 5px; text-decoration: none; cursor: pointer; transition: background-color 0.2s ease;
         }
+
+    .theme-btn {
+        position: relative;
+        z-index: 1;
+        border: none !important;
+        background: transparent !important;
+        color: #fff !important;
+        font-size: 1.5rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .theme-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+    }
+    
+    .btn-transparent {
+        position: relative;
+        background: transparent !important;
+        color: #fff !important;
+        border: none !important;
+        z-index: 1;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn-transparent::before, .theme-btn::before {
+        content: "";
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        border-radius: 5px;
+        padding: 1.5px;
+        background: linear-gradient(45deg, #0d6efd, #ffc107);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        z-index: -1;
+        pointer-events: none;
+    }
+    .btn-transparent:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+    }
+    body.light-mode .theme-btn { color: #333 !important; }
+    body.light-mode .btn-transparent { color: #333 !important; }
 
         /* Styles from news.html for blog cards */
         .news-card {
@@ -128,79 +206,78 @@
         body.light-mode .replies-list { border-left-color: #eee; }
 
         /* Lightbox styles */
-        .lightbox-modal { display: none; position: fixed; z-index: 2000; padding-top: 50px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
-        .lightbox-content { margin: auto; display: block; max-width: 90%; max-height: 90vh; object-fit: contain; }
+        body.light-mode .replies-list { border-left-color: #eee; }
+
+        /* Lightbox styles */
+        .lightbox-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 30%; overflow: hidden; background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+        .lightbox-content { display: block; max-width: 90vw; max-height: 85vh; object-fit: contain; transition: transform 0.3s ease; }
+        .profile-lightbox {  border-radius: 50%;left:0; top:0; width: 100%; height: 70%; max-width: 400px; max-height: 400px; object-fit: cover; align-items: center; justify-content: center; }
         .close-lightbox { position: absolute; top: 20px; right: 30px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; z-index: 2001; }
-        .close-lightbox:hover { color: #bbb; }
+        .close-lightbox:hover { color: #bbb; }        
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Fluid Player for VAST Ads -->
+    <link rel="stylesheet" href="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.css" type="text/css"/>
+    <script src="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.js"></script>
 </head>
 <body>
 
 <div class="container">
     <h2>My Profile</h2>
-    <img id="preview" src="https://via.placeholder.com/100" class="profile-pic" onclick="document.getElementById('file-input').click()" title="Click to change photo">
+    <img id="preview" src="https://via.placeholder.com/100" class="profile-pic" onclick="window.openLightbox(this.src, true)" title="View Photo">
     <input type="file" id="file-input" style="display: none;" accept="image/*">
     <div id="profile-action-buttons" style="margin-top: 10px; display: none;">
-        <button id="follow-btn" class="follow-profile-btn" style="display: none;">Follow</button>
-        <button id="message-profile-btn" class="follow-profile-btn" style="display: none; background-color: #198754; margin-left: 10px;">Message</button>
-        <button id="block-btn" class="follow-profile-btn" style="display: none; background-color: #dc3545; margin-left: 10px;">Block</button>
+        <button id="follow-btn" class="btn-transparent" style="display: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">Follow</button>
+        <button id="message-profile-btn" class="btn-transparent" style="display: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-left: 10px;"><img src="messages-icon.png" alt="Message" height="20px" width="20px" style="vertical-align: middle;"> Message</button>
+        <button id="block-btn" class="btn-transparent" style="display: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-left: 10px;"><img src="block-icon.png" alt="Block" height="20px" width="20px" style="vertical-align: middle;"> Block</button>
     </div>
-    <p id="photo-hint" style="font-size: 0.8rem; opacity: 0.8;">Tap image to change</p>
+    <p id="photo-hint" style="font-size: 0.9rem; color: #87ceeb; cursor: pointer; margin-top: -5px; " onclick="document.getElementById('file-input').click()"><img src="camera-icon.png" alt="Change Photo" height="20px" width="20px" style="vertical-align: middle;"> Change Photo</p>
     
     <!-- Status display removed from profile, will be handled by stories on news page -->
     <!-- Followers/Following Stats -->
     <div style="display: flex; gap: 30px; margin: 15px 0; justify-content: center; width: 100%;">
-        <div onclick="window.showUserList('followers')" style="cursor: pointer; text-align: center;">
-            <span id="followers-count" style="font-size: 1.4rem; font-weight: bold; color: gold;">0</span><br>
-            <span style="font-size: 0.85rem; color: #aaa;">Followers</span>
+        <div id="followers-box" onclick="window.showUserList('followers')" style="cursor: pointer; text-align: center;">
+            <span id="followers-count" class="gold-text" style="font-size: 1.4rem; font-weight: bold;">0</span><br>
+            <span class="stat-label">Followers</span>
         </div>
-        <div onclick="window.showUserList('following')" style="cursor: pointer; text-align: center;">
-            <span id="following-count" style="font-size: 1.4rem; font-weight: bold; color: gold;">0</span><br>
-            <span style="font-size: 0.85rem; color: #aaa;">Following</span>
-        </div>
-        <div style="text-align: center;">
-            <span id="blogs-count" style="font-size: 1.4rem; font-weight: bold; color: gold;">0</span><br>
-            <span style="font-size: 0.85rem; color: #aaa;">Blogs</span>
+        <div id="following-box" onclick="window.showUserList('following')" style="cursor: pointer; text-align: center;">
+            <span id="following-count" class="gold-text" style="font-size: 1.4rem; font-weight: bold;">0</span><br>
+            <span class="stat-label">Following</span>
         </div>
         <div style="text-align: center;">
-            <span id="likes-count" style="font-size: 1.4rem; font-weight: bold; color: gold;">0</span><br>
-            <span style="font-size: 0.85rem; color: #aaa;">Likes</span>
+            <span id="blogs-count" class="gold-text" style="font-size: 1.4rem; font-weight: bold;">0</span><br>
+            <span class="stat-label">Blogs</span>
+        </div>
+        <div style="text-align: center;">
+            <span id="likes-count" class="gold-text" style="font-size: 1.4rem; font-weight: bold;">0</span><br>
+            <span class="stat-label">Likes</span>
         </div>
     </div>
 
-    <div id="verified-indicator" style="display:none; color:#1da1f2; font-weight:bold; margin: 5px 0;">✔ Verified Account</div>
+    <div id="verified-indicator" style="display:none; color:#1da1f2; font-weight:bold; margin: 5px 0;"><img src="verify-icon.png" alt="Verified" height="20px" width="20px" style="vertical-align: middle;"> Verified Account</div>
     
     <div id="badges-section" style="margin: 20px 0; text-align: center;">
         <!-- Badges will be populated by JavaScript -->
     </div>
 
-    <input type="text" id="username" placeholder="Unique ID (e.g. @cricket_lover)" style="background: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+    <input type="text" id="username" placeholder="Unique ID (e.g. @cricket_lover)">
     <input type="text" id="name" placeholder="Display Name">
     <textarea id="bio" rows="3" placeholder="Bio (e.g. Cricket Lover from Mumbai)"></textarea>
     
-    <!-- Story Creator Section -->
-    <div id="story-creator-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); display: none;">
-        <h3 style="color: gold;">Post a Story (lasts 24h)</h3>
-        <input type="text" id="status-message" placeholder="What's happening?" maxlength="80" style="background: rgba(0,0,0,0.2); color: #ffc107; border: 1px solid rgba(255,255,255,0.3); text-align:center; font-style:italic;">
-        <div id="status-image-controls" style="margin: 10px 0;">
-            <img id="status-image-preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-bottom: 10px; display: none;">
-            <input type="file" id="status-image-input" style="display: none;" accept="image/*">
-            <button type="button" id="status-image-upload-btn" class="btn" style="background-color: #17a2b8; width: auto; padding: 5px 10px; font-size: 0.8rem;">Add Image</button>
-            <button type="button" id="status-image-remove-btn" class="btn" style="background-color: #dc3545; width: auto; padding: 5px 10px; font-size: 0.8rem; display: none;">Remove Image</button>
-        </div>
-        <button id="post-story-btn" class="btn" style="background-color: #198754; width: 100%; margin-top: 10px;">Post Story</button>
-    </div>
+    <button id="create-story-btn" class="btn" style="background-color: #ffc107; color: black; margin-top: 20px; width: 100%; display: none;" onclick="window.location.href='story-editor.html'">➕ Create New Story</button>
+    <button id="studio-btn" class="btn" style="background: linear-gradient(45deg, #9b59b6, #8e44ad); margin-top: 10px; width: 100%; display: none;" onclick="window.location.href='studio.html'">🚀 Creator Studio</button>
     
-    <button id="save-btn">Save Profile</button>
-    <button id="theme-toggle" class="btn" style="background-color: #6c757d; margin-top: 10px;">☀️</button>
-    <button id="change-pwd-btn" style="background-color: #198754; margin-top: 10px; width: 100%; padding: 10px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Change Password</button>
-    <button class="back-btn" onclick="window.location.href='news.html'">Back to News</button>
-    <button id="delete-acc-btn" style="background-color: #dc3545; margin-top: 30px; width: 100%; padding: 10px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Delete Account</button>
+    <button id="save-btn" class="btn-transparent"><img src="save-icon.png" alt="Save Profile" height="30px" width="30px" style="vertical-align: middle;"> Save Profile</button>
+    <button id="theme-toggle" class="btn theme-btn" style="margin-top: 10px;">☀️</button>
+    <button id="change-pwd-btn" class="btn-transparent" style="margin-top: 10px; width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;"><img src="change-pwd-icon.png" alt="Change Password" height="30px" width="30px" style="vertical-align: middle;"> Change Password</button>
+    <button id="back-to-news-btn" class="btn-transparent" style="margin-top: 10px; width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;" onclick="window.location.href='index.html'"><i class="fa-solid fa-arrow-left"></i> Back to Home</button>
+    <button id="delete-acc-btn" class="btn-transparent" style="margin-top: 30px; width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;"><img src="delete-acc-icon.png" alt="Delete Account" height="30px" width="30px" style="vertical-align: middle;"> Delete Account</button>
 
     <div id="my-blogs-section" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; text-align: left;">
-        <h3 style="color: gold; margin-bottom: 15px; text-align: center;">My Blogs</h3>
+        <h3 class="gold-text" style="margin-bottom: 15px; text-align: center;"><img src="blog-icon.png" alt="Blogs" height="30px" width="30px" style="vertical-align: middle;"> Blogs</h3>
         <div id="my-blogs-list">Loading...</div>
     </div>
 
@@ -222,10 +299,10 @@
     </div>
 
     <!-- User List Modal (Followers/Following) -->
-    <div id="user-list-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; flex-direction:column; align-items:center; justify-content:center;">
+    <div id="user-list-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; flex-direction:column; align-items:center; justify-content:center;" onclick="if(event.target === this) this.style.display='none'">
         <div style="width:90%; max-width:400px; background:#1e1e1e; border: 1px solid #444; border-radius:12px; padding:20px; max-height:70vh; display:flex; flex-direction:column;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 1px solid #333; padding-bottom: 10px;">
-                <h3 id="user-list-title" style="margin:0; color:gold;">Users</h3>
+                <h3 id="user-list-title" class="gold-text" style="margin:0;">Users</h3>
                 <button onclick="document.getElementById('user-list-modal').style.display='none'" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
             <div id="user-list-content" style="overflow-y:auto; flex:1;">Loading...</div>
@@ -233,9 +310,9 @@
     </div>
 
     <!-- Password Modal (For Change Password & Delete Account) -->
-    <div id="password-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:3000; align-items:center; justify-content:center;">
+    <div id="password-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:3000; align-items:center; justify-content:center;" onclick="if(event.target === this) this.style.display='none'">
         <div style="background:#1e1e1e; padding:25px; border-radius:10px; width:90%; max-width:400px; border: 1px solid #444; text-align: center; color: white;">
-            <h3 id="pwd-modal-title" style="color:gold; margin-top:0; margin-bottom: 15px;">Title</h3>
+            <h3 id="pwd-modal-title" class="gold-text" style="margin-top:0; margin-bottom: 15px;">Title</h3>
             <p id="pwd-modal-desc" style="color:#ccc; font-size:0.9rem; margin-bottom: 20px;">Description</p>
             
             <div id="pwd-auth-section">
@@ -272,6 +349,17 @@
     let isViewerAdmin = false;
     let isProfileOwner = false;
 
+    let globalAdConfig = { showAds: false, vastUrl: '' };
+
+    async function loadAdSettings() {
+        try {
+            const adDoc = await getDoc(doc(db, "settings", "ads"));
+            if (adDoc.exists()) {
+                globalAdConfig = adDoc.data();
+            }
+        } catch(e) { console.error("Error loading ad settings:", e); }
+    }
+
     // Theme Toggle Logic
     const themeToggleBtn = document.getElementById('theme-toggle');
     const body = document.body;
@@ -304,37 +392,6 @@
     const fileInput = document.getElementById('file-input');
     const preview = document.getElementById('preview');
     let base64Image = null;
-    let base64StatusImage = null;
-
-    // Image Compression Function
-    function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = event => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
-                    } else {
-                        if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
-                    }
-
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
-                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', quality));
-                };
-                img.onerror = error => reject(error);
-            };
-            reader.onerror = error => reject(error);
-        });
-    }
 
     // Cropper variables
     let cropper;
@@ -437,16 +494,22 @@
             document.getElementById('change-pwd-btn').style.display = 'none';
             document.getElementById('profile-action-buttons').style.display = 'block';
             document.getElementById('delete-acc-btn').style.display = 'none';
-            document.getElementById('preview').onclick = null;
-            document.getElementById('preview').style.cursor = 'default';
+            document.getElementById('preview').onclick = function() {
+                window.openLightbox(this.src, true);
+            };
+            document.getElementById('preview').style.cursor = 'pointer';
             document.getElementById('preview').style.border = '3px solid #87ceeb';
+            document.getElementById('followers-box').style.cursor = 'default';
+            document.getElementById('following-box').style.cursor = 'default';
             
-            ['username', 'name', 'bio', 'status-message'].forEach(id => {
+            ['username', 'name', 'bio'].forEach(id => {
                 const el = document.getElementById(id);
-                el.readOnly = true;
-                el.style.border = 'none';
-                el.style.background = 'transparent';
-                el.style.textAlign = 'center';
+                if (el) {
+                    el.readOnly = true;
+                    el.style.border = 'none';
+                    el.style.background = 'transparent';
+                    el.style.textAlign = 'center';
+                }
             });
 
             // Load my data first to check for blocks
@@ -500,39 +563,17 @@
         } else if (user) {
             // Edit Mode (My Profile)
             // Load existing profile
-                document.getElementById('story-creator-section').style.display = 'block';
+                document.getElementById('studio-btn').style.display = 'block';
+                document.getElementById('create-story-btn').style.display = 'block';
                 document.getElementById('profile-action-buttons').style.display = 'none';
 
                 isProfileOwner = true;
-                // Setup status image controls only in edit mode
-                document.getElementById('status-image-upload-btn').onclick = () => document.getElementById('status-image-input').click();
-    
-                document.getElementById('status-image-remove-btn').addEventListener('click', () => {
-                    base64StatusImage = 'DELETE'; // Special flag to signal deletion
-                    document.getElementById('status-image-preview').style.display = 'none';
-
-                    document.getElementById('status-image-preview').src = ''; // Clear src
-                    document.getElementById('status-image-input').value = ''; // Clear file input
-                    document.getElementById('status-image-remove-btn').style.display = 'none';
-                });
             
             // Also load my following list if I am viewing my own profile (for my blogs)
             if (user) {
                 const myDocSnap = await getDoc(doc(db, "users", user.uid));
                 if (myDocSnap.exists()) currentUserFollowing = myDocSnap.data().following || [];
             }
-
-                document.getElementById('status-image-input').addEventListener('change', async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    try {
-                        const compressedDataUrl = await compressImage(file, 600, 600, 0.8);
-                        base64StatusImage = compressedDataUrl;
-                        document.getElementById('status-image-preview').src = compressedDataUrl;
-                        document.getElementById('status-image-preview').style.display = 'block';
-                        document.getElementById('status-image-remove-btn').style.display = 'inline-block';
-                    } catch (err) { alert('Failed to process image.'); console.error(err); }
-                });
 
                 loadProfileData(user.uid, user);
                 renderUserBlogs(user.uid, true);
@@ -541,7 +582,7 @@
                 if (urlParams.get('requireUsername') === 'true' && !document.getElementById('username').value) {
                     alert("Please create a Unique ID (Username) to continue.");
                     document.getElementById('username').focus();
-                    document.querySelector('.back-btn').style.display = 'none'; // Hide back button to enforce creation
+                    document.getElementById('back-to-news-btn').style.display = 'none'; // Hide back button to enforce creation
                 }
         } else {
             window.location.href = 'news.html';
@@ -552,7 +593,7 @@
         document.querySelector('.container').innerHTML = `
             <h2 style="color: #ff6b6b;">Access Denied</h2>
             <p style="color: #ccc;">${message}</p>
-            <button class="back-btn" onclick="window.location.href='news.html'">Back to News</button>
+            <button class="btn-transparent" style="margin-top: 10px; width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;" onclick="window.location.href='news.html'"><i class="fa-solid fa-arrow-left"></i> Back to News</button>
         `;
     }
 
@@ -675,7 +716,6 @@
                     }
                 }
 
-                const statusMessageInput = document.getElementById('status-message');
                 currentProfileData = data; // Store for list access
                 document.getElementById('name').value = data.name || "";
                 document.getElementById('username').value = data.username || "";
@@ -787,7 +827,7 @@
         if (badges.length > 0) {
             const header = document.createElement('h3');
             header.innerText = 'Badges';
-            header.style.color = 'gold';
+            header.classList.add('gold-text');
             header.style.marginBottom = '10px';
             header.style.marginTop = '0';
             badgesSection.appendChild(header);
@@ -811,8 +851,14 @@
 
     // --- Blog Rendering Logic ---
 
-    window.openLightbox = function(src) {
-        document.getElementById('lightbox-img').src = src;
+    window.openLightbox = function(src, isProfilePic = false) {
+        const img = document.getElementById('lightbox-img');
+        img.src = src;
+        if (isProfilePic) {
+            img.classList.add('profile-lightbox');
+        } else {
+            img.classList.remove('profile-lightbox');
+        }
         document.getElementById('lightbox-modal').style.display = "flex";
     };
     window.closeLightbox = function() {
@@ -836,6 +882,7 @@
         const list = document.getElementById('my-blogs-list');
         list.innerHTML = '<p style="text-align:center; color:#aaa;">Loading...</p>';
         try {
+            await loadAdSettings();
             const constraints = [where("authorUid", "==", uid)];
             if (!isOwner) {
                 constraints.push(where("status", "==", "published"));
@@ -888,12 +935,12 @@
             
             let actionButtons = `
                 <button onclick="window.likeUserBlog('${blog.id}')" style="background:none; border:none; color:#ff69b4; cursor:pointer; font-size: 1rem; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">${likeIcon} ${likeCount}</button>
-                <button onclick="window.shareBlog('${blog.id}', '${blog.title.replace(/'/g, "\\'")}')" style="background:none; border:none; color:#0d6efd; cursor:pointer; font-size: 1rem; margin-left: 10px;">📤 Share</button>
+                <button onclick="window.shareBlog('${blog.id}', '${blog.title.replace(/'/g, "\\'")}')" style="background:none; border:none; color:#0d6efd; cursor:pointer; font-size: 1rem; margin-left: 10px;"><i class="fa-solid fa-share-nodes"></i> Share</button>
             `;
 
             if (isOwner) {
-                actionButtons += `<button onclick="window.editMyBlog('${blog.id}')" style="background:none; border:none; color:#ffc107; cursor:pointer; text-decoration:underline; font-size: 0.9rem;">✏️ Edit</button>`;
-                actionButtons += `<button onclick="window.deleteMyBlog('${blog.id}')" style="background:none; border:none; color:#ff6b6b; cursor:pointer; text-decoration:underline; font-size: 0.9rem;">🗑️ Delete</button>`;
+                actionButtons += `<button onclick="window.editMyBlog('${blog.id}')" style="background:none; border:none; color:#ffc107; cursor:pointer; font-size: 0.9rem;"><i class="fa-solid fa-pen"></i> Edit</button>`;
+                actionButtons += `<button onclick="window.deleteMyBlog('${blog.id}')" style="background:none; border:none; color:#ff6b6b; cursor:pointer; font-size: 0.9rem;"><i class="fa-regular fa-trash-can" style="color: rgb(220, 37, 23);"></i> Delete</button>`;
             }
 
             let mediaHtml = '';
@@ -902,6 +949,13 @@
                 if (videoId) {
                     mediaHtml += `<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 8px; margin-bottom: 10px;"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>`;
                 }
+            }
+
+            if (blog.video) {
+                mediaHtml += `
+                    <video id="video-${blog.id}" controls style="width: 100%; max-height: 300px; border-radius: 8px; margin-bottom: 10px; background: #000;">
+                        <source src="${blog.video}" type="video/mp4">
+                    </video>`;
             }
 
             if (blog.images && blog.images.length > 0) {
@@ -945,8 +999,8 @@
                                 const commentLikeIcon = isCommentLiked ? '❤️' : '🤍';
                                 const isCommentOwner = user && (c.userUid === user.uid || (!c.userUid && c.author === user.displayName));
                                 const editDelBtns = isCommentOwner ? `
-                                    <button onclick="window.editProfileComment('${blog.id}', ${index})" style="background:none; border:none; color:#ffc107; cursor:pointer; font-size: 0.8rem; margin-left: 10px;">Edit</button>
-                                    <button onclick="window.deleteProfileComment('${blog.id}', ${index})" style="background:none; border:none; color:#ff6b6b; cursor:pointer; font-size: 0.8rem; margin-left: 10px;">Delete</button>
+                                    <button onclick="window.editProfileComment('${blog.id}', ${index})" style="background:none; border:none; color:#ffc107; cursor:pointer; font-size: 0.8rem; margin-left: 10px;"><i class="fa-solid fa-pen"></i> Edit</button>
+                                    <button onclick="window.deleteProfileComment('${blog.id}', ${index})" style="background:none; border:none; color:#ff6b6b; cursor:pointer; font-size: 0.8rem; margin-left: 10px;"><i class="fa-regular fa-trash-can" style="color: rgb(220, 37, 23);"></i> Delete</button>
                                 ` : '';
                                 return `
                                 <div id="comment-${blog.id}-${index}" style="background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; margin-bottom: 10px;">
@@ -973,6 +1027,24 @@
                 </div>
             `;
             grid.appendChild(article);
+
+            // Initialize Fluid Player for VAST ads if video exists
+            if (blog.video) {
+                let playerOptions = {};
+                if (globalAdConfig && globalAdConfig.showAds && globalAdConfig.vastUrl) {
+                    playerOptions = {
+                        vastOptions: {
+                            adList: [
+                                {
+                                    roll: 'preRoll',
+                                    vastTag: globalAdConfig.vastUrl
+                                }
+                            ]
+                        }
+                    };
+                }
+                fluidPlayer(`video-${blog.id}`, playerOptions);
+            }
         });
     }
 
@@ -1260,6 +1332,10 @@
 
     // Function to show Followers/Following list
     window.showUserList = async (type) => {
+        if (!isProfileOwner) {
+            return; // Exit completely if the viewer is not the profile owner
+        }
+        
         const modal = document.getElementById('user-list-modal');
         const title = document.getElementById('user-list-title');
         const content = document.getElementById('user-list-content');
@@ -1325,12 +1401,12 @@
                     alert("Unique ID (Username) is required!");
                     return;
                 }
-                if (username.length > 20 || !/^[a-z0-9_]+$/.test(username)) {
-                    alert("Username can only contain lowercase letters, numbers, and underscores, and be max 20 characters.");
+                if (username.length > 20 || !/^[a-zA-Z0-9_]+$/.test(username)) {
+                    alert("Username can only contain letters, numbers, and underscores, and be max 20 characters.");
                     return;
                 }
 
-                const q = query(collection(db, "users"), where("username", "==", username));
+                const q = query(collection(db, "users"), where("usernameLower", "==", username.toLowerCase()));
                 const snap = await getDocs(q);
                 let isTaken = false;
                 snap.forEach(d => { if (d.id !== currentUser.uid) isTaken = true; });
@@ -1349,6 +1425,7 @@
             await setDoc(doc(db, "users", currentUser.uid), {
                 name: name,
                 username: username,
+                usernameLower: username.toLowerCase(),
                 bio: bio,
                 photoURL: photoURL,
                 email: currentUser.email,
@@ -1424,39 +1501,6 @@
         } catch (error) {
             console.error("Error saving profile:", error);
             alert("Error saving profile: " + error.message);
-        }
-    });
-
-    // --- NEW: Post Story Button Logic ---
-    document.getElementById('post-story-btn').addEventListener('click', async () => {
-        if (!currentUser) return;
-
-        const statusMessage = document.getElementById('status-message').value.trim();
-        const statusImage = (base64StatusImage && base64StatusImage !== 'DELETE') ? base64StatusImage : null;
-
-        if (!statusMessage && !statusImage) {
-            alert("Please add some text or an image for your story.");
-            return;
-        }
-
-        try {
-            await addDoc(collection(db, "stories"), {
-                authorUid: currentUser.uid,
-                authorName: currentProfileData.name || currentUser.displayName,
-                authorPhoto: currentProfileData.photoURL || currentUser.photoURL,
-                statusMessage: statusMessage || null,
-                statusImage: statusImage,
-                timestamp: new Date().toISOString(),
-                likes: [],
-                viewers: []
-            });
-            alert("Story posted successfully!");
-            // Clear fields after posting
-            document.getElementById('status-message').value = '';
-            document.getElementById('status-image-remove-btn').click(); // This will clear the preview and reset state
-        } catch (e) {
-            console.error("Error posting story:", e);
-            alert("Failed to post story. Check console for details.");
         }
     });
 

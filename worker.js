@@ -1,4 +1,4 @@
-const CACHE_NAME = 'auction-to-arena-cache-v2';
+const CACHE_NAME = 'auction-to-arena-cache-v4';
 const urlsToCache = [
   '/',
   '/index.html',
